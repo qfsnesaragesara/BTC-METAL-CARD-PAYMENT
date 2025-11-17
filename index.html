@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Metal Card Bitcoin Payment</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  --accent: #4a6cff;
+  --accent-2: #28c57a;
+  --muted: #7a7a7a;
+}
+body {
+  font-family: Segoe UI, Roboto, Arial, sans-serif;
+  background: linear-gradient(135deg,#eef2ff,#d9e4ff);
+  margin: 0;
+  padding: 32px;
+  display: flex;
+  justify-content: center;
+}
+.wrap {
+  width: 420px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 26px;
+  box-shadow: 0 14px 40px rgba(15,30,60,.12);
+  text-align: center;
+}
+h1 {
+  font-size: 20px;
+  margin: 0 0 12px;
+}
+.banner {
+  background:#fffae6;
+  border:1px solid #ffe58f;
+  padding:12px;
+  border-radius:10px;
+  font-weight:600;
+  margin-bottom:14px;
+}
+.message {
+  background:#f4f7ff;
+  border:1px solid #c7d4ff;
+  padding:14px;
+  border-radius:10px;
+  text-align:left;
+  font-size:14px;
+  line-height:1.4;
+  margin-bottom:14px;
+}
+.count {
+  background:#fff3f3;
+  border:1px solid #ffd2d2;
+  padding:10px;
+  border-radius:10px;
+  font-weight:700;
+  margin-bottom:14px;
+}
+label {
+  display:block;
+  text-align:left;
+  font-weight:700;
+  margin-bottom:8px;
+}
+select {
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  font-size:15px;
+}
+.total {
+  font-size:18px;
+  font-weight:700;
+  margin:10px 0;
+}
+.wallet-box {
+  background:#fafafa;
+  border:1px solid #e5e7eb;
+  padding:14px;
+  border-radius:12px;
+  font-weight:700;
+  word-break:break-all;
+  margin:10px 0;
+}
+.btn {
+  display:inline-block;
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  text-decoration:none;
+  text-align:center;
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+  border:none;
+}
+.btn-pay { background: var(--accent-2); margin-top:12px; }
+.btn-copy { background: var(--accent); margin-top:10px; }
+
+.small { font-size:13px; color: var(--muted); margin-top: 8px; }
+
+.qr-inline {
+  display:block;
+  margin:14px auto 4px;
+  max-width:260px;
+  border-radius:12px;
+  border:6px solid #fff;
+  box-shadow:0 8px 30px rgba(0,0,0,.08);
+}
+
+/* Modal */
+.modal-bg {
+  position:fixed;
+  inset:0;
+  display:none;
+  background:rgba(10,20,40,.55);
+  justify-content:center;
+  align-items:center;
+  z-index:200;
+}
+.modal {
+  background:#fff;
+  padding:18px;
+  border-radius:12px;
+  width:340px;
+  text-align:center;
+  box-shadow:0 20px 60px rgba(10,20,40,.35);
+}
+.modal .btn { width: 100%; margin-top: 10px; }
+
+.row { display:flex; gap:8px; }
+.row .half { flex:1; }
+
+.info-note { font-size:13px; color:#555; margin-top:10px; }
+
+@media (max-width:480px){
+  .wrap { width:92%; padding:18px; }
+  .modal { width:92%; }
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <h1>Metal Card Bitcoin Payment</h1>
+
+  <div class="banner">
+    Current Price: <strong>$500</strong> per card.<br>
+    After 48 hours: <strong>$750</strong> per card.
+  </div>
+
+  <div class="message">
+    <strong>Welcome.</strong> Please send the exact Bitcoin amount shown below to the wallet address or scan the QR code.
+    Payments are processed securely. Your Metal Card will be shipped once BTC payment is confirmed.
+  </div>
+
+  <div class="count">Price increases in: <span id="timer">--h --m --s</span></div>
+
+  <label>Select Quantity (1–10)</label>
+  <select id="quantity" onchange="updateTotal(); updateBTC();">
+    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+    <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+    <option value="9">9</option><option value="10">10</option>
+  </select>
+
+  <div class="total">Total: <span id="totalAmount">$500</span></div>
+
+  <!-- Main QR: RAW ADDRESS ONLY (always works) -->
+  <img id="mainQr" class="qr-inline" alt="Scan to pay" />
+
+  <div style="font-size:14px;font-weight:700;margin-top:8px">Bitcoin Wallet Address</div>
+  <div id="wallet" class="wallet-box">bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8</div>
+
+  <button class="btn btn-copy" id="copyMainBtn" onclick="copyWalletMain()">Copy Wallet Address</button>
+
+  <div class="small">Click Pay Now to see the BTC amount and wallet options.</div>
+
+  <button class="btn btn-pay" onclick="openPaymentPanel()">Pay Now</button>
+
+</div>
+
+<!-- Modal -->
+<div id="modalBg" class="modal-bg">
+  <div class="modal">
+    <h3>Pay — Scan or Copy</h3>
+
+    <!-- FIXED modal QR: RAW ADDRESS ONLY -->
+    <img id="modalQr" class="qr-inline" style="max-width:220px" alt="Scan to pay" />
+
+    <div style="font-weight:700;margin-top:6px">Bitcoin Wallet</div>
+    <div id="walletModal" class="wallet-box">bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8</div>
+
+    <div style="font-size:16px;margin:6px 0;">
+      BTC Amount: <strong id="btcAmount">--</strong>
+    </div>
+
+    <div class="row">
+      <button class="btn half btn-copy" onclick="copyWalletModal()">Copy</button>
+      <a id="openWalletLink" class="btn half" style="background:#222;color:#fff;text-decoration:none;" href="#">
+        Open in Wallet
+      </a>
+    </div>
+
+    <div class="info-note">Scan the QR or use “Open in Wallet”.</div>
+
+    <button class="btn" style="margin-top:10px;background:#ddd;color:#111" onclick="closePaymentPanel()">Close</button>
+  </div>
+</div>
+
+<script>
+const BTC_ADDRESS = "bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8";
+
+/* QR function - RAW address (always valid) */
+function rawQrUrl(addr){
+  return "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
+         encodeURIComponent(addr);
+}
+
+/* Countdown */
+let end = Date.now() + 48*60*60*1000;
+function tick(){
+  let diff = end - Date.now();
+  if(diff <= 0){
+    document.getElementById("timer").textContent = "Price increased to $750";
+    return;
+  }
+  const h = Math.floor(diff/3600000),
+        m = Math.floor((diff%3600000)/60000),
+        s = Math.floor((diff%60000)/1000);
+  document.getElementById("timer").textContent = `${h}h ${m}m ${s}s`;
+}
+tick();
+setInterval(tick, 1000);
+
+/* Set main QR */
+document.getElementById("mainQr").src = rawQrUrl(BTC_ADDRESS);
+
+/* Update USD total */
+function updateTotal(){
+  const qty = Number(document.getElementById("quantity").value);
+  document.getElementById("totalAmount").textContent = "$" + (qty * 500);
+}
+
+/* Live BTC conversion via CoinGecko */
+async function updateBTC(){
+  const qty = Number(document.getElementById("quantity").value);
+  const usdTotal = qty * 500;
+
+  try {
+    const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+    const d = await r.json();
+    const btcPrice = d.bitcoin.usd;
+    const btcAmount = (usdTotal / btcPrice).toFixed(8);
+
+    document.getElementById("btcAmount").textContent = btcAmount;
+
+    /* Modal QR STILL uses RAW address (never breaks) */
+    document.getElementById("modalQr").src = rawQrUrl(BTC_ADDRESS);
+
+    /* 'Open in Wallet' uses full amount */
+    document.getElementById("openWalletLink").href =
+      `bitcoin:${BTC_ADDRESS}?amount=${btcAmount}`;
+
+  } catch (e) {
+    document.getElementById("btcAmount").textContent = "Error";
+  }
+}
+
+/* Copy buttons */
+function copyWalletMain(){
+  navigator.clipboard.writeText(BTC_ADDRESS).then(()=>{
+    const btn = document.getElementById("copyMainBtn");
+    btn.textContent = "✔ Copied!";
+    btn.style.background = "#2ecc71";
+    setTimeout(()=>{
+      btn.textContent="Copy Wallet Address";
+      btn.style.background="";
+      }, 1400);
+  });
+}
+function copyWalletModal(){
+  navigator.clipboard.writeText(BTC_ADDRESS).then(()=>{
+    alert("Wallet address copied");
+  });
+}
+
+/* Modal open/close */
+function openPaymentPanel(){
+  updateBTC();
+  document.getElementById("modalBg").style.display = "flex";
+}
+function closePaymentPanel(){
+  document.getElementById("modalBg").style.display = "none";
+}
+</script>
+
+</body>
+</html>
