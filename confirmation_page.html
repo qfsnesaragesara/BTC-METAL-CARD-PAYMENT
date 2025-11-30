@@ -1,18 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Payment Processing</title>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmation</title>
+
 <style>
-body { font-family:'Segoe UI'; background:#eef3ff; text-align:center; padding:60px; }
-.box { max-width:450px; background:white; margin:auto; padding:35px; border-radius:18px; box-shadow:0 10px 35px rgba(0,0,0,0.15); }
-.spinner { margin:auto; width:60px; height:60px; border:7px solid #ddd; border-top-color:#28c57a; border-radius:50%; animation:spin 1s linear infinite; }
-@keyframes spin { 100% { transform:rotate(360deg); } }
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        background: #0b0e1a;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        text-align: center;
+    }
+
+    .container {
+        max-width: 500px;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 40px;
+        border-radius: 15px;
+        backdrop-filter: blur(6px);
+        box-shadow: 0 0 20px rgba(255, 204, 0, 0.25);
+        border: 1px solid rgba(255, 204, 0, 0.3);
+    }
+
+    h1 {
+        font-size: 28px;
+        margin-bottom: 15px;
+        color: #ffcc00;
+    }
+
+    p {
+        font-size: 18px;
+        line-height: 1.6;
+    }
+
+    .btn {
+        display: inline-block;
+        margin-top: 25px;
+        background: #ffcc00;
+        color: black;
+        padding: 12px 26px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: 0.2s;
+    }
+
+    .btn:hover {
+        background: #ffe066;
+    }
 </style>
 </head>
+
 <body>
-<div class="box">
-    <div class="spinner"></div>
-    <h2 style="margin-top:25px;">Awaiting Payment Confirmation…</h2>
-    <p>We are monitoring the blockchain for your transaction.</p>
+<div class="container">
+    <h1>Order Submitted Successfully</h1>
+    <p>Thank you for completing your Metal Card request.</p>
+    <p>Our team will review your submission and begin processing your order.</p>
+    <p>You will receive an email confirmation shortly.</p>
+
+    <a href="index.html" class="btn">Return to Homepage</a>
 </div>
 </body>
 </html>
