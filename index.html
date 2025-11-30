@@ -28,7 +28,13 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
         header img { height: 60px; border-radius: 10px; }
-        header nav a { color: var(--light); text-decoration: none; margin-left: 25px; font-weight: 600; transition: 0.3s; }
+        header nav a {
+          background: none !important;
+          color: #000 !important;
+          padding: 5px 0 !important;
+          border-radius: 0 !important;
+          font-weight: normal !important;
+       }
         header nav a:hover { color: var(--gold); }
 
         .hero {
@@ -42,8 +48,31 @@
         .hero h1 { font-size: 3rem; max-width: 800px; margin: auto; }
         .hero p { font-size: 1.2rem; max-width: 700px; margin: 20px auto; line-height: 1.6; }
         .hero .cta { margin-top: 30px; background: var(--gold); padding: 15px 35px; border-radius: 40px; color: var(--dark); font-size: 1.2rem; font-weight: 700; text-decoration: none; transition: 0.3s; display: inline-block; }
-        .hero .cta:hover { background: var(--light); }
+        .hero .cta:hover { background: var(--light); 
+        
+        }
+       .btn-primary {
+         background: linear-gradient(90deg, #d4af37, #f7d774) !important;
+         color: #000 !important;
+         padding: 12px 24px;
+         border-radius: 8px;
+         font-weight: bold;
+         text-decoration: none !important;
+         display: inline-block;
+         transition: 0.3s;
+         cursor: pointer;
+         z-index: 9999;
+         position: relative;
+        }
 
+       .btn-primary:hover {
+         background: linear-gradient(90deg, #f7d774, #d4af37) !important;
+         transform: scale(1.05);
+        }
+
+
+
+        
         /* ABOUT */
         #about { padding: 70px 20px; text-align: center; background: var(--light); }
         #about h2 { font-size: 2.4rem; font-weight: 700; }
@@ -200,6 +229,32 @@
             .notif-line1 { font-size: 13px; }
             .notif-line2 { font-size: 12px; }
         }
+
+        /* RESET MENU LINKS */
+        nav ul li a {
+           background: none !important;
+           color: #fff !important;   /* or black if your menu is white */
+           padding: 8px 0 !important;
+           border-radius: 0 !important;
+           font-weight: normal !important;
+           display: block;
+           text-decoration: none !important;
+        }
+
+      /* ONLY BUTTONS LOOK LIKE BUTTONS */
+           .register-btn {
+           background: linear-gradient(90deg, #d4af37, #f7d774) !important;
+           color: black !important;
+           padding: 10px 20px !important;
+           border-radius: 6px !important;
+           font-weight: bold !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+        }
+
+      
+
+
     </style>
 </head>
 <body>
@@ -207,19 +262,28 @@
 <header>
     <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="Brand Logo" />
     <nav>
-        <a href="#about">About</a>
-        <a href="#metal-card">Metal Card</a>
-        <a href="#testimonials">Testimonials</a>
-        <a href="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/registration.html" class="cta-button">
-    Register / Activate Your QFS Access
-</a>
+        <ul>
+      <li><a href="#home">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/registration.html" class="menu-btn">Register Now</a></li>
+
+      <li><a href="#metal-card">Metal Card</a></li>
+      <li><a href="#testimonials">Testimonials</a></li>
+       </ul>
+
+
     </nav>
 </header>
 
 <section class="hero">
     <h1>The Quantum Financial System Transition Has Already Begun</h1>
     <p>Secure your position early. Gain access to the operational phase of QFS NESARA GESARA a new era of structured national and global finance framework.</p>
-    <a class="cta" href="registration.html">Register Now</a>
+
+    <a href="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/registration.html" 
+       class="btn-primary">
+       Register Now
+    </a>
+
 </section>
 
 <section id="about">
