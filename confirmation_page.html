@@ -20,7 +20,7 @@
     }
 
     .container {
-        max-width: 500px;
+        max-width: 520px;
         background: rgba(255, 255, 255, 0.05);
         padding: 40px;
         border-radius: 15px;
@@ -29,27 +29,69 @@
         border: 1px solid rgba(255, 204, 0, 0.3);
     }
 
+    .logo {
+        width: 150px;
+        height: auto;
+        display: block;
+        margin: 0 auto 25px auto;
+        filter: drop-shadow(0 0 10px rgba(255, 204, 0, 0.6));
+    }
+
     h1 {
         font-size: 28px;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
         color: #ffcc00;
     }
 
     p {
-        font-size: 18px;
-        line-height: 1.6;
+        font-size: 17px;
+        line-height: 1.5;
+        margin-bottom: 20px;
+    }
+
+    form {
+        margin-top: 15px;
+        text-align: left;
+    }
+
+    label {
+        font-size: 15px;
+        font-weight: bold;
+        color: #ffcc00;
+        display: block;
+        margin-bottom: 6px;
+        margin-top: 18px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="file"] {
+        width: 100%;
+        padding: 12px;
+        margin-top: 5px;
+        border-radius: 8px;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 16px;
+        outline: none;
     }
 
     .btn {
-        display: inline-block;
+        display: block;
+        width: 100%;
         margin-top: 25px;
         background: #ffcc00;
         color: black;
-        padding: 12px 26px;
+        padding: 14px 0;
         border-radius: 8px;
         text-decoration: none;
         font-weight: bold;
         transition: 0.2s;
+        text-align: center;
+        border: none;
+        cursor: pointer;
+        font-size: 17px;
     }
 
     .btn:hover {
@@ -60,12 +102,37 @@
 
 <body>
 <div class="container">
-    <h1>Order Submitted Successfully</h1>
-    <p>Thank you for completing your Metal Card request.</p>
-    <p>Our team will review your submission and begin processing your order.</p>
-    <p>You will receive an email confirmation shortly.</p>
 
-    <a href="index.html" class="btn">Return to Homepage</a>
+    <!-- LOGO (unchanged) -->
+    <img class="logo" 
+         src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="Brand Logo">
+
+    <h1>Order Submitted Successfully</h1>
+    <p>Payment Confirmation Required.</p>
+    <p>Please upload your payment screenshot and details below so we can verify and mail your order to your mailing address.</p>
+
+
+    <form action="https://formsubmit.co/YOUR_EMAIL_HERE" method="POST" enctype="multipart/form-data">
+
+        <!-- Redirect to success page -->
+        <input type="hidden" name="_next" 
+               value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success.html">
+
+        <!-- TXID -->
+        <label>Transaction Hash (TXID)</label>
+        <input type="text" name="Transaction Hash" placeholder="Enter your TXID" required>
+
+        <!-- Email -->
+        <label>Your Email Address</label>
+        <input type="email" name="Email" placeholder="Enter your email" required>
+
+        <!-- Screenshot -->
+        <label>Upload Payment Screenshot</label>
+        <input type="file" name="Payment Screenshot" accept="image/*" required>
+
+        <button type="submit" class="btn">Submit Confirmation</button>
+    </form>
+
 </div>
 </body>
 </html>
