@@ -113,7 +113,7 @@
     <p>Please upload your payment screenshot and details below so we can verify and mail your order to your mailing address.</p>
 
 
-    <form action="https://formsubmit.co/YOUR_EMAIL_HERE" method="POST" enctype="multipart/form-data">
+    <form action="https://formsubmit.co/support@qfsnesaragesara.org" method="POST" enctype="multipart/form-data">
 
         <!-- Redirect to success page -->
         <input type="hidden" name="_next" 
@@ -133,6 +133,9 @@
 
         <!-- ✅ GOOGLE RECAPTCHA (added here, unchanged layout) -->
         <div class="g-recaptcha" data-sitekey="YOUR_SITE_KEY_HERE" style="margin-top:20px;"></div>
+       
+        <input type="hidden" name="_captcha" value="true">
+
 
         <button type="submit" class="btn">Submit Confirmation</button>
     </form>
