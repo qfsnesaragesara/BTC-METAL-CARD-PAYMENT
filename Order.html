@@ -22,11 +22,8 @@
     font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
     background:var(--bg);
     color:var(--text);
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
   }
 
-  /* outer container */
   .wrap {
     max-width:960px;
     margin:28px auto;
@@ -37,7 +34,6 @@
     justify-content:center;
   }
 
-  /* left: visual */
   .visual {
     flex:1 1 520px;
     display:flex;
@@ -47,14 +43,14 @@
   }
 
   .card-view {
-    width:420px;               /* user chose medium ~420px */
+    width:420px;
     height:auto;
     border-radius:12px;
     overflow:hidden;
     display:flex;
     align-items:center;
     justify-content:center;
-    background:transparent;    /* transparent as requested */
+    background:transparent;
     position:relative;
   }
 
@@ -62,24 +58,15 @@
     width:100%;
     max-width:420px;
     height:auto;
-    display:block;
     object-fit:cover;
     border-radius:8px;
     transition: opacity 0.35s ease;
     opacity:1;
-    backface-visibility:hidden;
   }
 
-  /* small caption */
-  .visual .title {
-    font-size:18px;
-    font-weight:700;
-    text-align:center;
-    margin-top:6px;
-  }
-  .visual .desc { color:var(--muted); text-align:center; font-size:13px; margin-top:4px; }
+  .title { font-size:18px; font-weight:700; text-align:center; margin-top:6px; }
+  .desc { color:var(--muted); text-align:center; font-size:13px; margin-top:4px; }
 
-  /* right: controls panel */
   .panel {
     width:var(--panel-w);
     background:var(--card);
@@ -92,66 +79,31 @@
     gap:10px;
   }
 
-  .panel .heading { font-size:20px; font-weight:800; margin:0; }
-  .panel .sub { color:var(--muted); font-size:13px; line-height:1.4; margin-bottom:6px; }
+  .heading { font-size:20px; font-weight:800; }
+  .sub { color:var(--muted); font-size:13px; }
 
   label { display:block; font-size:13px; color:var(--muted); margin-top:8px; margin-bottom:6px; }
-  select, input[type="text"] {
+  select {
     width:100%;
     padding:10px 12px;
     border-radius:10px;
     border:1px solid rgba(15,20,32,0.06);
-    background: #fff;
+    background:#fff;
     color:var(--text);
     font-size:15px;
-    outline:none;
   }
-  select:focus, input:focus { box-shadow: 0 8px 30px rgba(63,160,255,0.08); border-color: rgba(63,160,255,0.12); }
-  
+
+  .pay-now-wrapper { display:flex; justify-content:center; margin-top:20px; }
   .pay-btn {
-    display: inline-block;
-    padding: 12px 26px;
-    background: #1a73e8;
-    color: white;
-    font-size: 16px;
-    font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.2s ease;
-    text-align: center;
-    text-decoration: none;
-}
-
-.pay-btn:hover {
-    background: #155fc3;
-}
-
-.pay-now-wrapper {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-}
-
-.pay-btn {
-    padding: 14px 32px;
-    background: #1a73e8;
-    color: white;
-    font-size: 16px;
-    font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.2s ease;
-    text-align: center;
-    white-space: nowrap; /* keeps it on one line */
-}
-
-.pay-btn:hover {
-    background: #155fc3;
-}
-
-
+    padding:14px 32px;
+    background:#1a73e8;
+    color:white;
+    font-size:16px;
+    font-weight:600;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+  }
 
   .price-box {
     margin-top:12px;
@@ -159,111 +111,79 @@
     border-radius:10px;
     text-align:center;
     border:1px solid rgba(212,175,55,0.04);
-    background: linear-gradient(180deg, rgba(212,175,55,0.02), rgba(212,175,55,0.005));
   }
-  .price-box .usd { font-size:20px; font-weight:800; color:var(--text); }
-  .price-box .btc { margin-top:6px; color:#0b8bd6; font-weight:700; }
 
-  .countdown { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  .usd { font-size:20px; font-weight:800; }
+  .btc { margin-top:6px; color:#0b8bd6; font-weight:700; }
 
-  .actions { display:flex; gap:10px; margin-top:12px; }
-  .btn {
-    flex:1;
-    padding:12px 14px;
-    border-radius:10px;
-    border:none;
-    font-weight:800;
-    cursor:pointer;
-    font-size:15px;
-  }
-  .btn-pay { background: linear-gradient(90deg,#2fc788,#22c25b); color:#02120b; box-shadow:0 10px 30px rgba(46,197,122,0.08); }
-  .btn-info { background: linear-gradient(90deg,#2b7bf6,#3fa0ff); color:#fff; box-shadow:0 10px 30px rgba(47,125,253,0.08); }
+  .countdown { text-align:center; color:var(--muted); font-size:13px; }
+  .muted { text-align:center; color:var(--muted); font-size:13px; }
 
-  .muted { font-size:13px; color:var(--muted); text-align:center; margin-top:8px; }
-
-  /* mobile */
-  @media (max-width:980px){
-    .wrap{padding:12px; flex-direction:column; align-items:center}
-    .panel{width:100%; max-width:640px}
-    .card-view{width:90%; max-width:420px}
-  }
 </style>
 </head>
 <body>
 
 <div class="wrap">
 
-  <!-- LEFT: visual (medium image area, fade transition gallery style) -->
   <div class="visual">
-    <div class="card-view" aria-hidden="false">
-      <img id="cardImage" class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/GoldCard.png" alt="Metal Card Preview">
+    <div class="card-view">
+      <img id="cardImage" class="card-img"
+      src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/GoldCard.png">
     </div>
 
     <div class="title">Physical Metal Bitcoin Access Card</div>
-    <div class="desc">Premium laser-etched metal card with QR activation. Choose type and quantity, then pay to reserve.</div>
+    <div class="desc">Premium laser-etched metal card with QR activation.</div>
   </div>
 
-  <!-- RIGHT: order controls -->
-  <div class="panel" role="region" aria-labelledby="orderHeading">
-    <div>
-      <div class="heading" id="orderHeading">Order Details</div>
-      <div class="sub">Select card type and quantity. Price updates automatically. After the countdown each card increases by $250.</div>
-    </div>
+  <div class="panel">
+
+    <div class="heading">Order Details</div>
+    <div class="sub">Select card type and quantity.</div>
 
     <label for="cardType">Card Type</label>
-    <select id="cardType" aria-label="Card type">
+    <select id="cardType">
       <option value="black">Black — $1,000</option>
       <option value="gold" selected>Gold — $750</option>
       <option value="silver">Silver — $500</option>
     </select>
 
-    <label for="quantity">Quantity (1–10)</label>
-    <select id="quantity" aria-label="Quantity">
-      <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
-      <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
-      <option value="9">9</option><option value="10">10</option>
+    <label for="quantity">Quantity</label>
+    <select id="quantity">
+      <option>1</option><option>2</option><option>3</option><option>4</option>
+      <option>5</option><option>6</option><option>7</option><option>8</option>
+      <option>9</option><option>10</option>
     </select>
 
-    <div class="price-box" aria-live="polite">
+    <div class="price-box">
       <div class="usd" id="totalUSD">$0</div>
       <div class="btc" id="totalBTC">0 BTC</div>
-      <div class="btc-sub" id="btcPriceLine">BTC Price: Loading…</div>
+      <div id="btcPriceLine">BTC Price: Loading…</div>
     </div>
 
     <div class="countdown">Discount ends in: <span id="countdown">--:--:--</span></div>
 
     <div class="pay-now-wrapper">
-    <button type="button" id="payNow" class="pay-btn">Pay Now</button>
-  </div>
+      <button id="payNow" class="pay-btn">Pay Now</button>
+    </div>
 
-    <div class="muted">After clicking Pay Now you will be redirected to the secure payment page where the exact BTC amount will be prefilled.</div>
+    <div class="muted">You will be redirected to the BTC payment page.</div>
   </div>
 
 </div>
 
 <script>
-/* ========== Config ========== */
+/* ========== CONFIG ========= */
 const IMAGES = {
   black: "https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/BlackCard.png",
   gold:  "https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/GoldCard.png",
   silver:"https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/SilverCard.png"
 };
+
 const BASE_PRICES = { black:1000, gold:750, silver:500 };
 const INCREASED_PRICES = { black:1250, gold:1000, silver:750 };
 const WALLET_ADDR = "bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8";
 
-/* Persisted countdown key */
-const END_KEY = "qfs_order_end_ts";
-function getOrCreateEndTs(){
-  const existing = localStorage.getItem(END_KEY);
-  if(existing) return Number(existing);
-  const ts = Date.now() + 48*60*60*1000;
-  localStorage.setItem(END_KEY, String(ts));
-  return ts;
-}
-let endTs = getOrCreateEndTs();
-
-/* ========== Elements ========== */
+/* ========== ELEMENTS ========= */
 const cardImage = document.getElementById("cardImage");
 const cardTypeEl = document.getElementById("cardType");
 const qtyEl = document.getElementById("quantity");
@@ -271,31 +191,39 @@ const totalUSDEl = document.getElementById("totalUSD");
 const totalBTCEle = document.getElementById("totalBTC");
 const btcPriceLine = document.getElementById("btcPriceLine");
 const countdownEl = document.getElementById("countdown");
-const payNowBtn = document.getElementById("payNowBtn");
-const infoBtn = document.getElementById("infoBtn");
+const payNowBtn = document.getElementById("payNow");
 
-/* ========== Utils ========== */
-const fmtUSD = n => "$" + Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
-const to8 = n => Number(n).toFixed(8);
+/* ========== BTC PRICE ========= */
+let currentBtcPrice = null;
 
-/* ========== Fade-transition helper (small gallery feel) ========== */
-let fadeTimeout = null;
-function setCardImage(type){
-  const src = IMAGES[type] || IMAGES.gold;
-  // fade out -> change src -> fade in
-  cardImage.style.opacity = 0;
-  if(fadeTimeout) clearTimeout(fadeTimeout);
-  fadeTimeout = setTimeout(() => {
-    cardImage.src = src;
-    cardImage.style.opacity = 1;
-  }, 220); // fade timing (220ms out, 350ms in via CSS)
+async function fetchBtcPrice(){
+    try {
+        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+        const json = await res.json();
+        currentBtcPrice = Number(json.bitcoin.usd);
+        btcPriceLine.innerText = "BTC Price: $" + currentBtcPrice.toLocaleString();
+        updateTotals();
+    } catch {
+        btcPriceLine.innerText = "BTC Price unavailable";
+    }
 }
+fetchBtcPrice();
 
-/* ========== Countdown ========== */
+/* ========== COUNTDOWN ========= */
+const END_KEY = "qfs_order_end_ts";
+function getOrCreateEndTs(){
+  const existing = localStorage.getItem(END_KEY);
+  if(existing) return Number(existing);
+  const ts = Date.now() + 48*3600*1000;
+  localStorage.setItem(END_KEY, ts);
+  return ts;
+}
+let endTs = getOrCreateEndTs();
+
 function runCountdown(){
   const diff = endTs - Date.now();
-  if(diff <= 0){
-    countdownEl.innerText = "Discount ended";
+  if(diff <= 0) {
+    countdownEl.innerText = "Expired";
     return true;
   }
   const h = Math.floor(diff/3600000);
@@ -304,99 +232,57 @@ function runCountdown(){
   countdownEl.innerText = `${h}h ${m}m ${s}s`;
   return false;
 }
-setInterval(() => {
-  const ended = runCountdown();
-  if(ended) updateTotals();
-}, 1000);
+setInterval(runCountdown, 1000);
 runCountdown();
 
-/* ========== BTC Price via CoinGecko ========== */
-let currentBtcPrice = null;
-async function fetchBtcPrice(){
-  try{
-    const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
-    const json = await res.json();
-    currentBtcPrice = Number(json.bitcoin.usd);
-    btcPriceLine.innerText = "BTC Price: $" + currentBtcPrice.toLocaleString();
-    updateTotals();
-  }catch(e){
-    btcPriceLine.innerText = "BTC Price: unavailable";
-    totalBTCEle.innerText = "⚠ BTC price unavailable";
-  }
-}
-fetchBtcPrice();
-setInterval(fetchBtcPrice, 30000); // refresh every 30s
-
-/* ========== Totals calculation ========== */
+/* ========== PRICE ========= */
 function getPriceMap(){
   return (Date.now() >= endTs) ? INCREASED_PRICES : BASE_PRICES;
 }
+
 function updateTotals(){
   const type = cardTypeEl.value;
-  const qty = Number(qtyEl.value) || 1;
+  const qty = Number(qtyEl.value);
   const priceMap = getPriceMap();
-  const unit = Number(priceMap[type] || 500);
-  const totalUSD = unit * qty;
+  const usd = priceMap[type] * qty;
 
-  // USD display
-  totalUSDEl.innerText = fmtUSD(totalUSD);
+  totalUSDEl.innerText = "$" + usd.toLocaleString();
 
-  // BTC display (do digit-accurate division)
-  if(currentBtcPrice && currentBtcPrice > 0){
-    // compute btc with high precision
-    const btc = totalUSD / currentBtcPrice;
-    totalBTCEle.innerText = to8(btc) + " BTC";
-  } else {
-    totalBTCEl.innerText = "⚠ BTC price unavailable";
+  if (currentBtcPrice) {
+    const btc = (usd / currentBtcPrice).toFixed(8);
+    totalBTCEle.innerText = btc + " BTC";
   }
 }
 
-/* ========== Events ========== */
 cardTypeEl.addEventListener("change", () => {
-  setCardImage(cardTypeEl.value);
+  cardImage.src = IMAGES[cardTypeEl.value];
   updateTotals();
 });
 qtyEl.addEventListener("change", updateTotals);
 
-/* initial */
-setCardImage(cardTypeEl.value);
 updateTotals();
 
-/* ========== Pay Now (redirect to wallet.html with params) ========== */
-payNowBtn.addEventListener("click", async () => {
+/* ========== PAY NOW ========= */
+payNowBtn.addEventListener("click", () => {
   const type = cardTypeEl.value;
-  const qty = Number(qtyEl.value) || 1;
+  const qty = Number(qtyEl.value);
+
   const priceMap = getPriceMap();
-  const unit = Number(priceMap[type] || 500);
-  const totalUSD = unit * qty;
+  const usd = priceMap[type] * qty;
 
-  if(!currentBtcPrice) await fetchBtcPrice(); // try to ensure fresh price
-
-  const btcAmount = (currentBtcPrice && currentBtcPrice > 0) ? (totalUSD / currentBtcPrice).toFixed(8) : "";
+  const btc = currentBtcPrice ? (usd / currentBtcPrice).toFixed(8) : "";
 
   const params = new URLSearchParams({
-    type: type,
-    qty: String(qty),
-    usd: String(totalUSD),
-    btc: btcAmount,
+    type,
+    qty,
+    usd,
+    btc,
     addr: WALLET_ADDR
   });
 
   window.location.href = "wallet.html?" + params.toString();
 });
-
-/* info button opens your repo (keeps existing behavior minimal) */
-infoBtn.addEventListener("click", () => {
-  window.open("https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT", "_blank");
-});
-</script>
-<script>
-document.getElementById("payNow").addEventListener("click", function (event) {
-    event.preventDefault();    // stop any form behavior
-    window.location.href = "wallet.html";    // go to wallet page
-});
 </script>
 
 </body>
 </html>
-
