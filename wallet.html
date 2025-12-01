@@ -239,8 +239,10 @@
     </div>
 
     <div class="actions">
-      <button id="copyBtn" class="btn btn-copy">Copy Address</button>
-      <button id="openWalletBtn" class="btn btn-wallet">Open in Wallet</button>
+      <button id="copyBtn" class="btn btn-copy" style="cursor:pointer;">
+  Copy Address
+</button>
+
     </div>
 
     <div style="margin-top:8px;">
@@ -253,7 +255,9 @@
       <a id="backToOrder" class="linkless" href="#">
         <button class="btn" style="flex:1;background:#f3f4f6;border:1px solid rgba(15,20,32,0.04);font-weight:700">Back to Order</button>
       </a>
-      <button id="paidBtn" class="btn" style="flex:1;background:linear-gradient(90deg,#2b7bf6,#3fa0ff);color:#fff;font-weight:800">I Have Paid</button>
+      <button id="paidBtn" class="btn" style="flex:1;background:linear-gradient(90deg,#2b7bf6,#3fa0ff);color:#fff;font-weight:800">
+  <a href="confirmation-page.html" style="color:inherit; text-decoration:none; display:block; width:100%; height:100%;">I Have Paid</a>
+</button>
     </div>
 
   </aside>
@@ -352,7 +356,7 @@ function runPaymentTimer(){
     payTimer.innerText = "00:00";
     paidBtn.disabled = true;
     openWalletBtn.disabled = true;
-    copyBtn.disabled = true;
+    copyBtn.disabled = false;
     return;
   }
   const mm = Math.floor(diff / 60000);
@@ -364,22 +368,24 @@ function showAwaiting(){
   awaiting.style.display = "flex";
 }
 
-copyBtn.onclick = ()=>{
-  navigator.clipboard.writeText(addr).then(()=>{
+/* FIXED BUTTON — SAFEST REDIRECT */
+copyBtn.onclick = () => {
+  navigator.clipboard.writeText(addr).then(() => {
     copyBtn.innerText = "Copied!";
-    setTimeout(()=> copyBtn.innerText="Copy Address",1500);
+    setTimeout(() => copyBtn.innerText = "Copy Address", 1500);
   });
 };
 
-openWalletBtn.onclick = ()=>{
-  const uri = makeBitcoinURI(addr, btc);
-  window.location.href = uri;
-};
 
 paidBtn.onclick = ()=>{
   showAwaiting();
   paidBtn.disabled = true;
   paidBtn.style.opacity = 0.6;
+
+  /* FINAL FIX — redirect to confirmation page */
+  setTimeout(() => {
+    window.location.href = "confirmation-page.html";
+  }, 1200);
 };
 
 async function init(){
@@ -405,4 +411,5 @@ init();
 </script>
 
 </body>
+
 </html>
