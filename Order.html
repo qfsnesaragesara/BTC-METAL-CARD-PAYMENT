@@ -6,146 +6,200 @@
 <title>Order Metal Card — QFS</title>
 
 <style>
-  :root{
-    --gold:#d4af37;
-    --bg:#ffffff;
-    --card:#ffffff;
-    --text:#0b1220;
-    --muted:#6b7280;
-    --accent:#3fa0ff;
-    --radius:14px;
-    --panel-w:420px;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
-    background:var(--bg);
-    color:var(--text);
-  }
+:root{
+  --gold:#d4af37;
+  --bg:#ffffff;
+  --card:#ffffff;
+  --text:#0b1220;
+  --muted:#6b7280;
+  --accent:#3fa0ff;
+  --radius:14px;
+  --panel-w:420px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
+  background:var(--bg);
+  color:var(--text);
+}
 
-  .wrap {
-    max-width:960px;
-    margin:28px auto;
-    padding:18px;
-    display:flex;
-    gap:20px;
-    align-items:flex-start;
-    justify-content:center;
-  }
+.wrap {
+  max-width:960px;
+  margin:28px auto;
+  padding:18px;
+  display:flex;
+  gap:20px;
+  align-items:flex-start;
+  justify-content:center;
+  flex-wrap:wrap;
+}
 
-  .visual {
-    flex:1 1 520px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-    align-items:center;
-  }
+.visual {
+  flex:1 1 520px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+  transition: box-shadow 0.3s ease;
+  border-radius:12px;
+}
 
-  .card-view {
-    width:420px;
-    height:auto;
-    border-radius:12px;
-    overflow:hidden;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:transparent;
-    position:relative;
-  }
+.visual.active {
+  box-shadow: 0 0 20px rgba(63,160,255,0.5);
+}
 
-  .card-img {
-    width:100%;
-    max-width:420px;
-    height:auto;
-    object-fit:cover;
-    border-radius:8px;
-    transition: opacity 0.35s ease;
-    opacity:1;
-  }
+.card-row {
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:10px;
+}
 
-  .title { font-size:18px; font-weight:700; text-align:center; margin-top:6px; }
-  .desc { color:var(--muted); text-align:center; font-size:13px; margin-top:4px; }
+.card-view {
+  width:140px;
+  height:80px;
+  border-radius:12px;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent;
+  position:relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  perspective:1000px;
+}
 
-  .panel {
-    width:var(--panel-w);
-    background:var(--card);
-    border-radius:var(--radius);
-    padding:18px;
-    border:1px solid rgba(15,20,32,0.04);
-    box-shadow: 0 8px 30px rgba(2,6,23,0.04);
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
+.card-view:hover {
+  cursor:pointer;
+  box-shadow: 0 15px 25px rgba(0,0,0,0.25);
+}
 
-  .heading { font-size:20px; font-weight:800; }
-  .sub { color:var(--muted); font-size:13px; }
+.card-img {
+  width:100%;
+  height:auto;
+  object-fit:cover;
+  border-radius:8px;
+  transition: transform 0.2s ease, border 0.2s ease;
+  border:2px solid transparent;
+}
 
-  label { display:block; font-size:13px; color:var(--muted); margin-top:8px; margin-bottom:6px; }
-  select {
-    width:100%;
-    padding:10px 12px;
-    border-radius:10px;
-    border:1px solid rgba(15,20,32,0.06);
-    background:#fff;
-    color:var(--text);
-    font-size:15px;
-  }
+.card-img.selected {
+  border:3px solid var(--accent);
+}
 
-  .pay-now-wrapper { display:flex; justify-content:center; margin-top:20px; }
-  .pay-btn {
-    padding:14px 32px;
-    background:#1a73e8;
-    color:white;
-    font-size:16px;
-    font-weight:600;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-  }
+.title { font-size:18px; font-weight:700; text-align:center; margin-top:6px; }
+.desc { color:var(--muted); text-align:center; font-size:13px; margin-top:4px; }
 
-  .price-box {
-    margin-top:12px;
-    padding:12px;
-    border-radius:10px;
-    text-align:center;
-    border:1px solid rgba(212,175,55,0.04);
-  }
+/* === Perks panel with gradient, bold text, slide effect === */
+.perks-panel {
+  margin-top:10px;
+  padding:12px;
+  border-radius:10px;
+  background: linear-gradient(to bottom, #d3d3d3, #f0f0f0);
+  border:1px solid rgba(15,20,32,0.06);
+  width:100%;
+  max-width:420px;
+  opacity:0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.perks-panel.show {
+  opacity:1;
+  transform: translateY(0);
+}
+.perks-panel strong {
+  display:block;
+  font-size:16px;
+  color:#222;
+  margin-bottom:6px;
+}
+.perks-panel ul { padding-left:20px; margin:6px 0 0 0; }
+.perks-panel li { margin-bottom:4px; font-weight:600; }
 
-  .usd { font-size:20px; font-weight:800; }
-  .btc { margin-top:6px; color:#0b8bd6; font-weight:700; }
+.panel {
+  width:var(--panel-w);
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:18px;
+  border:1px solid rgba(15,20,32,0.04);
+  box-shadow: 0 8px 30px rgba(2,6,23,0.04);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
 
-  .countdown { text-align:center; color:var(--muted); font-size:13px; }
-  .muted { text-align:center; color:var(--muted); font-size:13px; }
+.heading { font-size:20px; font-weight:800; }
+.sub { color:var(--muted); font-size:13px; }
 
+label { display:block; font-size:13px; color:var(--muted); margin-top:8px; margin-bottom:6px; }
+
+.pay-now-wrapper { display:flex; justify-content:center; margin-top:20px; }
+.pay-btn {
+  padding:14px 32px;
+  background:#1a73e8;
+  color:white;
+  font-size:16px;
+  font-weight:600;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  transition: background 0.3s ease;
+}
+.pay-btn:hover { background:#1558b0; }
+
+.price-box {
+  margin-top:12px;
+  padding:12px;
+  border-radius:10px;
+  text-align:center;
+  border:1px solid rgba(212,175,55,0.04);
+  transition: background 0.3s ease;
+}
+.price-box.update {
+  background: rgba(63,160,255,0.05);
+}
+
+.usd { font-size:20px; font-weight:800; }
+.btc { margin-top:6px; color:#0b8bd6; font-weight:700; }
+
+.countdown { text-align:center; color:var(--muted); font-size:13px; }
+.muted { text-align:center; color:var(--muted); font-size:13px; }
+
+@media(max-width:960px) {
+  .wrap { flex-direction:column; align-items:center; }
+  .panel, .visual { width:90%; max-width:420px; }
+  .card-row { justify-content:space-around; }
+}
 </style>
 </head>
 <body>
 
 <div class="wrap">
 
-  <div class="visual">
-    <div class="card-view">
-      <img id="cardImage" class="card-img"
-      src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/GoldCard.png">
+  <div class="visual" id="visualCard">
+
+    <div class="card-row">
+      <div class="card-view" data-type="black">
+        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/BlackCard.png" alt="Black Card">
+      </div>
+      <div class="card-view" data-type="gold">
+        <img class="card-img selected" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/GoldCard.png" alt="Gold Card">
+      </div>
+      <div class="card-view" data-type="silver">
+        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/SilverCard.png" alt="Silver Card">
+      </div>
     </div>
 
     <div class="title">Physical Metal Bitcoin Access Card</div>
     <div class="desc">Premium laser-etched metal card with QR activation.</div>
+    <div id="cardPerks" class="perks-panel"></div>
   </div>
 
   <div class="panel">
 
     <div class="heading">Order Details</div>
-    <div class="sub">Select card type and quantity.</div>
-
-    <label for="cardType">Card Type</label>
-    <select id="cardType">
-      <option value="black">Black — $1,000</option>
-      <option value="gold" selected>Gold — $750</option>
-      <option value="silver">Silver — $500</option>
-    </select>
+    <div class="sub">Select quantity.</div>
 
     <label for="quantity">Quantity</label>
     <select id="quantity">
@@ -154,7 +208,7 @@
       <option>9</option><option>10</option>
     </select>
 
-    <div class="price-box">
+    <div class="price-box" id="priceBox">
       <div class="usd" id="totalUSD">$0</div>
       <div class="btc" id="totalBTC">0 BTC</div>
       <div id="btcPriceLine">BTC Price: Loading…</div>
@@ -172,44 +226,77 @@
 </div>
 
 <script>
-/* ========== CONFIG ========= */
 const IMAGES = {
   black: "https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/BlackCard.png",
   gold:  "https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/GoldCard.png",
   silver:"https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/SilverCard.png"
 };
-
 const BASE_PRICES = { black:1000, gold:750, silver:500 };
 const INCREASED_PRICES = { black:1250, gold:1000, silver:750 };
 const WALLET_ADDR = "bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8";
 
-/* ========== ELEMENTS ========= */
-const cardImage = document.getElementById("cardImage");
-const cardTypeEl = document.getElementById("cardType");
+const CARD_PERKS = {
+  black: [
+    "Black matte, black + gold mix, maybe engraved logo",
+    "Very heavy solid feel, feels like a collectible",
+    "QR code + NFC + embedded security (cold storage seed or tamper-evident)",
+    "Rare, numbered, maybe custom engraving options",
+    "Customizable engraving, premium finishes, unique patterns or textures",
+    "VIP perks: early access to NFT drops, crypto airdrops, exclusive events, premium",
+    "Luxury display case with certificate of authenticity",
+    "Advanced: encrypted QR, holographic verification, or embedded secure chip"
+  ],
+  gold: [
+    "Gold-plated / higher-quality metal",
+    "Heavier, more premium",
+    "QR code + NFC chip for easy wallet access",
+    "Limited batch, numbered",
+    "Detailed engraving, maybe laser-etched hologram",
+    "Small perks like access to community or exclusive digital content",
+    "Premium box",
+    "Tamper-evident hologram or seal"
+  ],
+  silver: [
+    "Standard stainless steel or simple metal",
+    "Light, basic card feel",
+    "QR code for wallet address printed",
+    "Generic design",
+    "Basic logo, simple engraving",
+    "None added perks",
+    "Simple sleeve",
+    "Basic"
+  ]
+};
+
+const cardViews = document.querySelectorAll(".card-view");
 const qtyEl = document.getElementById("quantity");
 const totalUSDEl = document.getElementById("totalUSD");
 const totalBTCEle = document.getElementById("totalBTC");
 const btcPriceLine = document.getElementById("btcPriceLine");
 const countdownEl = document.getElementById("countdown");
 const payNowBtn = document.getElementById("payNow");
+const cardPerksEl = document.getElementById("cardPerks");
+const priceBox = document.getElementById("priceBox");
+const visualCard = document.getElementById("visualCard");
 
-/* ========== BTC PRICE ========= */
+let selectedCard = "gold";
 let currentBtcPrice = null;
 
+/* BTC PRICE */
 async function fetchBtcPrice(){
-    try {
-        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
-        const json = await res.json();
-        currentBtcPrice = Number(json.bitcoin.usd);
-        btcPriceLine.innerText = "BTC Price: $" + currentBtcPrice.toLocaleString();
-        updateTotals();
-    } catch {
-        btcPriceLine.innerText = "BTC Price unavailable";
-    }
+  try {
+      const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+      const json = await res.json();
+      currentBtcPrice = Number(json.bitcoin.usd);
+      btcPriceLine.innerText = "BTC Price: $" + currentBtcPrice.toLocaleString();
+      updateTotals();
+  } catch {
+      btcPriceLine.innerText = "BTC Price unavailable";
+  }
 }
 fetchBtcPrice();
 
-/* ========== COUNTDOWN ========= */
+/* COUNTDOWN */
 const END_KEY = "qfs_order_end_ts";
 function getOrCreateEndTs(){
   const existing = localStorage.getItem(END_KEY);
@@ -219,68 +306,89 @@ function getOrCreateEndTs(){
   return ts;
 }
 let endTs = getOrCreateEndTs();
-
 function runCountdown(){
   const diff = endTs - Date.now();
-  if(diff <= 0) {
-    countdownEl.innerText = "Expired";
-    return true;
-  }
+  if(diff <= 0) { countdownEl.innerText = "Expired"; return; }
   const h = Math.floor(diff/3600000);
   const m = Math.floor((diff%3600000)/60000);
   const s = Math.floor((diff%60000)/1000);
   countdownEl.innerText = `${h}h ${m}m ${s}s`;
-  return false;
 }
-setInterval(runCountdown, 1000);
+setInterval(runCountdown,1000);
 runCountdown();
 
-/* ========== PRICE ========= */
-function getPriceMap(){
-  return (Date.now() >= endTs) ? INCREASED_PRICES : BASE_PRICES;
-}
-
+/* PRICE & PERKS */
+function getPriceMap(){ return (Date.now()>=endTs)?INCREASED_PRICES:BASE_PRICES; }
 function updateTotals(){
-  const type = cardTypeEl.value;
   const qty = Number(qtyEl.value);
-  const priceMap = getPriceMap();
-  const usd = priceMap[type] * qty;
-
-  totalUSDEl.innerText = "$" + usd.toLocaleString();
-
-  if (currentBtcPrice) {
-    const btc = (usd / currentBtcPrice).toFixed(8);
-    totalBTCEle.innerText = btc + " BTC";
-  }
+  const usd = getPriceMap()[selectedCard]*qty;
+  totalUSDEl.innerText = "$"+usd.toLocaleString();
+  if(currentBtcPrice) totalBTCEle.innerText = (usd/currentBtcPrice).toFixed(8)+" BTC";
+  priceBox.classList.add("update");
+  setTimeout(()=>priceBox.classList.remove("update"),300);
+}
+function updatePerks(){
+  const perks = CARD_PERKS[selectedCard]||[];
+  cardPerksEl.classList.remove("show");
+  void cardPerksEl.offsetWidth;
+  cardPerksEl.innerHTML = "<strong>Perks:</strong><ul>"+perks.map(p=>`<li>${p}</li>`).join("")+"</ul>";
+  cardPerksEl.classList.add("show");
 }
 
-cardTypeEl.addEventListener("change", () => {
-  cardImage.src = IMAGES[cardTypeEl.value];
-  updateTotals();
+/* 3D TILT EFFECT */
+cardViews.forEach(view=>{
+  const img = view.querySelector(".card-img");
+
+  view.addEventListener("mousemove", e=>{
+    const rect = view.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width/2;
+    const y = e.clientY - rect.top - rect.height/2;
+    const rotateX = (y/rect.height)*15;
+    const rotateY = -(x/rect.width)*15;
+    img.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${img.classList.contains("selected")?1.05:1})`;
+  });
+  view.addEventListener("mouseleave", ()=>{
+    img.style.transform = `scale(${img.classList.contains("selected")?1.03:1})`;
+  });
 });
+
+/* EVENTS */
+cardViews.forEach(view=>{
+  const img = view.querySelector(".card-img");
+  // Hover preview
+  view.addEventListener("mouseenter", ()=>{
+    const type = view.dataset.type;
+    updateHover(type);
+  });
+  view.addEventListener("mouseleave", ()=>{
+    updateHover(selectedCard);
+  });
+  // Click selection
+  view.addEventListener("click", ()=>{
+    cardViews.forEach(v=>v.querySelector(".card-img").classList.remove("selected"));
+    img.classList.add("selected");
+    selectedCard = view.dataset.type;
+    updateHover(selectedCard);
+  });
+});
+
+function updateHover(type){
+  selectedCard = type;
+  updateTotals();
+  updatePerks();
+}
+
 qtyEl.addEventListener("change", updateTotals);
 
-updateTotals();
+updateHover(selectedCard);
 
-/* ========== PAY NOW ========= */
-payNowBtn.addEventListener("click", () => {
-  const type = cardTypeEl.value;
+/* PAY NOW */
+payNowBtn.addEventListener("click", ()=>{
   const qty = Number(qtyEl.value);
-
-  const priceMap = getPriceMap();
-  const usd = priceMap[type] * qty;
-
-  const btc = currentBtcPrice ? (usd / currentBtcPrice).toFixed(8) : "";
-
-  const params = new URLSearchParams({
-    type,
-    qty,
-    usd,
-    btc,
-    addr: WALLET_ADDR
-  });
-
-  window.location.href = "wallet.html?" + params.toString();
+  const usd = getPriceMap()[selectedCard]*qty;
+  const btc = currentBtcPrice?(usd/currentBtcPrice).toFixed(8):"";
+  const params = new URLSearchParams({type:selectedCard, qty, usd, btc, addr: WALLET_ADDR});
+  window.location.href="wallet.html?"+params.toString();
 });
 </script>
 
