@@ -36,6 +36,35 @@
           font-weight: normal !important;
        }
         header nav a:hover { color: var(--gold); }
+        
+     
+
+
+        .top-nav {
+    width: 100%;
+    background: #ffffff;
+    padding: 16px 0;
+    display: flex;
+    justify-content: center;
+    gap: 38px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.top-nav a {
+    text-decoration: none;
+    color: #1a1a1a;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: "Segoe UI", Inter, sans-serif;
+    transition: 0.25s;
+    padding-bottom: 4px;
+}
+
+.top-nav a:hover {
+    color: #d4af37;
+    border-bottom: 2px solid #d4af37;
+}
+
 
         .hero {
             padding: 120px 20px;
@@ -231,15 +260,35 @@
         }
 
         /* RESET MENU LINKS */
-        nav ul li a {
-           background: none !important;
-           color: #fff !important;   /* or black if your menu is white */
-           padding: 8px 0 !important;
-           border-radius: 0 !important;
-           font-weight: normal !important;
-           display: block;
-           text-decoration: none !important;
-        }
+        nav {
+    display: flex;
+    justify-content: flex-end;  /* moves menu to the right */
+    background: #1a1a1a;        /* optional — makes menu look cleaner */
+    padding: 15px 40px;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;              /* put items in a row */
+    gap: 35px;                  /* spacing between menu items */
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li a {
+    text-decoration: none;
+    font-weight: 600;           /* bolder, modern text */
+    font-size: 17px;
+    color: #fff;
+    font-family: "Poppins", sans-serif;
+    letter-spacing: 0.5px;
+    transition: 0.3s ease;
+}
+
+nav ul li a:hover {
+    color: #ffd700;             /* modern gold hover effect */
+}
+
 
       /* ONLY BUTTONS LOOK LIKE BUTTONS */
            .register-btn {
@@ -253,6 +302,50 @@
         }
 
       
+/* ===== FIXED TOP NAV (SAFE VERSION) ===== */
+
+.top-nav {
+    width: 100%;
+    background: #f7d700;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    padding: 12px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.nav-container {
+    width: 95%;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.nav-menu {
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-menu li a {
+    color: #000;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 16px;
+    padding: 8px 12px;
+    transition: opacity 0.3s ease;
+}
+
+.nav-menu li a:hover {
+    opacity: 0.6;
+}
+
+body {
+    padding-top: 70px !important; /* Keeps content below the nav */
+}
 
 
     </style>
@@ -261,18 +354,19 @@
 
 <header>
     <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="Brand Logo" />
-    <nav>
-        <ul>
-      <li><a href="#home">Home</a></li>
-      <li><a href="#about">About</a></li>
-      <li><a href="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/registration.html" class="menu-btn">Register Now</a></li>
+ <nav class="top-nav">
+    <div class="nav-container">
+        <ul class="nav-menu">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/registration.html">Register Now</a></li>
+            <li><a href="#metal-card">Metal Card</a></li>
+            <li><a href="order.html">Order Card</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+    </div>
+</nav>
 
-      <li><a href="#metal-card">Metal Card</a></li>
-      <li><a href="#testimonials">Testimonials</a></li>
-       </ul>
-
-
-    </nav>
 </header>
 
 <section class="hero">
