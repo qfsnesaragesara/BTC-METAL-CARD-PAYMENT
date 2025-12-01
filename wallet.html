@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Wallet — Complete Payment</title>
+
+<!-- QR library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+
+<style>
+  :root{
+    --bg:#f6f8fb;
+    --card:#ffffff;
+    --muted:#6b7280;
+    --accent:#3fa0ff;
+    --gold:#d4af37;
+    --glass: rgba(255,255,255,0.8);
+    --radius:14px;
+    --maxw:920px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
+    background:linear-gradient(180deg,#fbfdff,var(--bg));
+    color:#0b1220;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    padding:24px;
+    display:flex;
+    justify-content:center;
+  }
+
+  .page {
+    width:100%;
+    max-width:var(--maxw);
+    display:flex;
+    gap:20px;
+    align-items:flex-start;
+  }
+
+  /* LEFT: QR + info */
+  .left {
+    flex:1 1 600px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    align-items:center;
+  }
+
+  .card {
+    width:420px;
+    padding:22px;
+    border-radius:16px;
+    background:var(--card);
+    box-shadow:0 12px 40px rgba(16,24,40,0.06);
+    border:1px solid rgba(15,20,32,0.04);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+  }
+
+  /* glowing QR frame */
+  .qr-wrap {
+    padding:18px;
+    border-radius:12px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.76));
+    position:relative;
+  }
+  .qr-frame {
+    border-radius:8px;
+    padding:12px;
+    background: #ffffff;
+    position:relative;
+    box-shadow: 0 8px 30px rgba(63,160,255,0.08);
+  }
+
+  /* animated glow */
+  .qr-wrap::after {
+    content:"";
+    position:absolute;
+    inset: -8px;
+    border-radius:16px;
+    background: radial-gradient(ellipse at center, rgba(63,160,255,0.22), rgba(63,160,255,0.06) 30%, transparent 50%);
+    filter: blur(10px);
+    opacity:0.9;
+    animation: glow 2.6s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes glow {
+    0%{ transform:scale(0.98); opacity:0.9;}
+    50%{ transform:scale(1.02); opacity:1;}
+    100%{ transform:scale(0.98); opacity:0.9;}
+  }
+
+  /* payment details */
+  .info-row{ width:100%; display:flex; justify-content:space-between; gap:12px; align-items:center; }
+  .label { color:var(--muted); font-size:13px; }
+  .value { font-weight:800; font-size:18px; color:#081225; }
+
+  .small { font-size:13px; color:var(--muted); }
+
+  /* right panel */
+  .right {
+    width:320px;
+    min-width:260px;
+    background:var(--card);
+    border-radius:14px;
+    padding:18px;
+    border:1px solid rgba(15,20,32,0.04);
+    box-shadow:0 8px 30px rgba(16,24,40,0.04);
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    align-items:stretch;
+  }
+
+  .heading { font-size:18px; font-weight:800; margin-bottom:2px; }
+  .muted { color:var(--muted); font-size:13px; }
+
+  .addr-box {
+    padding:10px;
+    border-radius:10px;
+    background:#fafbfd;
+    border:1px solid rgba(15,20,32,0.04);
+    font-family:monospace;
+    word-break:break-all;
+    font-size:14px;
+  }
+
+  .actions { display:flex; gap:10px; margin-top:6px; }
+  .btn {
+    flex:1;
+    padding:10px 12px;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    font-weight:700;
+    font-size:14px;
+  }
+  .btn-copy { background: linear-gradient(90deg,#2b7bf6,#3fa0ff); color:#fff; }
+  .btn-wallet { background: linear-gradient(90deg,#2fc788,#22c25b); color:#02120b; }
+
+  .pending {
+    margin-top:12px;
+    padding:12px;
+    border-radius:10px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,255,250,0.98));
+    border:1px solid rgba(34,194,139,0.08);
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+
+  .loader {
+    width:36px; height:36px; border-radius:50%;
+    border:5px solid rgba(34,194,139,0.15);
+    border-top-color: #22c25b;
+    animation:spin 1s linear infinite;
+  }
+  @keyframes spin { 100%{ transform:rotate(360deg); } }
+
+  .timer {
+    font-weight:800;
+    font-size:18px;
+    color:#0b1220;
+  }
+
+  .center { text-align:center; }
+  .linkless { text-decoration:none; color:inherit; }
+
+  @media (max-width:960px){
+    .page{ flex-direction:column; align-items:center; gap:14px; padding-bottom:40px;}
+    .right{ width:100%; max-width:640px; }
+    .card{ width:100%; max-width:640px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page" role="main">
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="card" aria-live="polite">
+      <div class="center small">Pay exactly the BTC amount shown — scan with your wallet</div>
+
+      <div class="qr-wrap" aria-hidden="false">
+        <div class="qr-frame" id="qrFrame">
+          <div id="qrCanvas" style="width:260px;height:260px;display:flex;align-items:center;justify-content:center"></div>
+        </div>
+      </div>
+
+      <div style="width:100%;display:flex;flex-direction:column;gap:8px;">
+        <div class="info-row"><div class="label">Amount (USD)</div><div class="value" id="usdAmt">—</div></div>
+        <div class="info-row"><div class="label">Amount (BTC)</div><div class="value" id="btcAmt">—</div></div>
+        <div class="info-row"><div class="label">To Wallet</div><div class="value small" id="addrShort">—</div></div>
+      </div>
+
+      <div id="awaiting" class="pending" style="display:none;">
+        <div class="loader"></div>
+        <div>
+          <div style="font-weight:800">Awaiting Confirmation…</div>
+          <div class="small">Network confirmations are being monitored automatically.</div>
+        </div>
+      </div>
+
+      <div class="center small">If payment was made with a different amount or currency, contact support.</div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <aside class="right">
+    <div>
+      <div class="heading">Order Summary</div>
+      <div class="muted" id="summaryType">Loading…</div>
+    </div>
+
+    <div>
+      <div class="label">Quantity</div>
+      <div class="value" id="summaryQty">—</div>
+    </div>
+
+    <div>
+      <div class="label">Total (USD)</div>
+      <div class="value" id="summaryUSD">—</div>
+    </div>
+
+    <div>
+      <div class="label">Total (BTC)</div>
+      <div class="value" id="summaryBTC">—</div>
+    </div>
+
+    <div>
+      <div class="label">Wallet Address</div>
+      <div class="addr-box" id="walletAddr">—</div>
+    </div>
+
+    <div class="actions">
+      <button id="copyBtn" class="btn btn-copy">Copy Address</button>
+      <button id="openWalletBtn" class="btn btn-wallet">Open in Wallet</button>
+    </div>
+
+    <div style="margin-top:8px;">
+      <div class="label">Payment window</div>
+      <div class="timer" id="payTimer">15:00</div>
+      <div class="small">Complete payment within the time shown to reserve price.</div>
+    </div>
+
+    <div style="margin-top:8px; display:flex; gap:8px;">
+      <a id="backToOrder" class="linkless" href="#">
+        <button class="btn" style="flex:1;background:#f3f4f6;border:1px solid rgba(15,20,32,0.04);font-weight:700">Back to Order</button>
+      </a>
+      <button id="paidBtn" class="btn" style="flex:1;background:linear-gradient(90deg,#2b7bf6,#3fa0ff);color:#fff;font-weight:800">I Have Paid</button>
+    </div>
+
+  </aside>
+
+</div>
+
+<script>
+/* ========== Configuration ========== */
+const DEFAULT_WALLET = "bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8";
+const PAYMENT_WINDOW_SECONDS = 15 * 60;
+
+let endTs = null;
+
+/* Utility */
+function qs(key){ return new URLSearchParams(location.search).get(key); }
+
+const fmtUSD = n => "$" + Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
+const to8 = n => Number(n).toFixed(8);
+
+/* Elements */
+const usdEl = document.getElementById("usdAmt");
+const btcEl = document.getElementById("btcAmt");
+const addrShort = document.getElementById("addrShort");
+const walletAddrEl = document.getElementById("walletAddr");
+const summaryType = document.getElementById("summaryType");
+const summaryQty = document.getElementById("summaryQty");
+const summaryUSD = document.getElementById("summaryUSD");
+const summaryBTC = document.getElementById("summaryBTC");
+const copyBtn = document.getElementById("copyBtn");
+const openWalletBtn = document.getElementById("openWalletBtn");
+const backToOrder = document.getElementById("backToOrder");
+const paidBtn = document.getElementById("paidBtn");
+const awaiting = document.getElementById("awaiting");
+const payTimer = document.getElementById("payTimer");
+const qrCanvas = document.getElementById("qrCanvas");
+
+/* Params */
+let cardType = qs("type") || "gold";
+let qty = Number(qs("qty") || 1);
+let usd = Number(qs("usd") || 0);
+let btc = qs("btc") || "";
+let addr = qs("addr") || DEFAULT_WALLET;
+
+summaryType.innerText = cardType[0].toUpperCase() + cardType.slice(1) + " Card";
+summaryQty.innerText = qty;
+summaryUSD.innerText = usd ? fmtUSD(usd) : "—";
+summaryBTC.innerText = btc ? (to8(Number(btc)) + " BTC") : "—";
+walletAddrEl.innerText = addr;
+addrShort.innerText = addr.slice(0,8) + "…" + addr.slice(-8);
+
+backToOrder.href = "order.html?type=" + cardType + "&qty=" + qty + "&usd=" + usd + "&btc=" + btc + "&addr=" + addr;
+
+async function ensureBtcAmount(){
+  if(btc) return Number(btc);
+  if(!usd) return null;
+
+  try {
+    const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+    const j = await r.json();
+    const price = j.bitcoin.usd;
+    return usd / price;
+  } catch(e){
+    return null;
+  }
+}
+
+function makeBitcoinURI(address, btcAmount){
+  const amt = Number(btcAmount);
+  const s = amt.toFixed(8).replace(/\.?0+$/,"");
+  return `bitcoin:${address}?amount=${s}`;
+}
+
+async function drawQR(uri){
+  qrCanvas.innerHTML = "";
+  await QRCode.toCanvas(uri, { width:260, margin:1 }, (err,canvas)=>{
+    if(err){ qrCanvas.textContent="QR unavailable"; return; }
+    qrCanvas.appendChild(canvas);
+  });
+}
+
+const TIMER_KEY = "qfs_payment_" + btoa(addr + usd).slice(0,24);
+
+function initPaymentWindow(){
+  const stored = localStorage.getItem(TIMER_KEY);
+  if(stored){
+    endTs = Number(stored);
+  } else {
+    endTs = Date.now() + PAYMENT_WINDOW_SECONDS*1000;
+    localStorage.setItem(TIMER_KEY, endTs);
+  }
+}
+
+function runPaymentTimer(){
+  const diff = endTs - Date.now();
+  if(diff <= 0){
+    payTimer.innerText = "00:00";
+    paidBtn.disabled = true;
+    openWalletBtn.disabled = true;
+    copyBtn.disabled = true;
+    return;
+  }
+  const mm = Math.floor(diff / 60000);
+  const ss = Math.floor((diff % 60000)/1000);
+  payTimer.innerText = `${String(mm).padStart(2,"0")}:${String(ss).padStart(2,"0")}`;
+}
+
+function showAwaiting(){
+  awaiting.style.display = "flex";
+}
+
+copyBtn.onclick = ()=>{
+  navigator.clipboard.writeText(addr).then(()=>{
+    copyBtn.innerText = "Copied!";
+    setTimeout(()=> copyBtn.innerText="Copy Address",1500);
+  });
+};
+
+openWalletBtn.onclick = ()=>{
+  const uri = makeBitcoinURI(addr, btc);
+  window.location.href = uri;
+};
+
+paidBtn.onclick = ()=>{
+  showAwaiting();
+  paidBtn.disabled = true;
+  paidBtn.style.opacity = 0.6;
+};
+
+async function init(){
+  const computed = await ensureBtcAmount();
+  if(computed){
+    const val = to8(computed);
+    btc = val;
+    btcEl.innerText = val + " BTC";
+    summaryBTC.innerText = val + " BTC";
+  }
+
+  usdEl.innerText = usd ? fmtUSD(usd) : "—";
+
+  const uri = makeBitcoinURI(addr, btc);
+  await drawQR(uri);
+
+  initPaymentWindow();
+  runPaymentTimer();
+  setInterval(runPaymentTimer, 1000);
+}
+
+init();
+</script>
+
+</body>
+</html>
