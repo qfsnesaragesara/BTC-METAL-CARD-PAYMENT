@@ -103,6 +103,17 @@
         .btn-send:hover {
             opacity: 0.8;
         }
+
+        /* Fix for Register Now menu link */
+.top-nav,
+.nav-container,
+.nav-menu li a {
+    pointer-events: auto; /* ensures links are clickable */
+    position: relative;   /* proper stacking */
+    z-index: 10000;       /* sits above overlapping elements */
+}
+        
+
     </style>
 </head>
 
@@ -113,9 +124,9 @@
     <div class="nav-container">
         <ul class="nav-menu">
             <li><a href="index.html">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="registration.html">Register Now</a></li>
-            <li><a href="#metal-card">Metal Card</a></li>
+            <li><a href="index.html#about" style="position: relative; z-index: 10000;">About</a></li>
+            <li><a href="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/registration.html">Register Now</a></li>
+            <li><a href="index.html#metal-card" style="position: relative; z-index: 10000;">Metal Card</a></li>
             <li><a href="order.html">Order Card</a></li>
             <li><a href="contact.html">Contact</a></li>
         </ul>
@@ -136,6 +147,7 @@
         <textarea name="message" required></textarea>
 
         <button class="btn-send" type="submit">Send Message</button>
+
     </form>
 </div>
 
