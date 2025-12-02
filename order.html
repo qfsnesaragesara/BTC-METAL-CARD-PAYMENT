@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Order Card — QFS</title>
+<title>Order Metal Card — QFS</title>
 
 <style>
 :root{
@@ -43,10 +43,6 @@ body{
   align-items:center;
   transition: box-shadow 0.3s ease;
   border-radius:12px;
-}
-
-.visual.active {
-  box-shadow: 0 0 20px rgba(63,160,255,0.5);
 }
 
 .card-row {
@@ -91,7 +87,7 @@ body{
 .title { font-size:18px; font-weight:700; text-align:center; margin-top:6px; }
 .desc { color:var(--muted); text-align:center; font-size:13px; margin-top:4px; }
 
-/* === Perks panel with gradient, bold text, slide effect === */
+/* === Perks panel with slide animation === */
 .perks-panel {
   margin-top:10px;
   padding:12px;
@@ -132,6 +128,17 @@ body{
 .heading { font-size:20px; font-weight:800; }
 .sub { color:var(--muted); font-size:13px; }
 
+.qty-note {
+  margin-top:8px;
+  font-size:13px;
+  color:#555;
+  text-align:center;
+  line-height:1.4;
+}
+.qty-note strong {
+  color:#000;
+}
+
 label { display:block; font-size:13px; color:var(--muted); margin-top:8px; margin-bottom:6px; }
 
 .pay-now-wrapper { display:flex; justify-content:center; margin-top:20px; }
@@ -156,21 +163,12 @@ label { display:block; font-size:13px; color:var(--muted); margin-top:8px; margi
   border:1px solid rgba(212,175,55,0.04);
   transition: background 0.3s ease;
 }
-.price-box.update {
-  background: rgba(63,160,255,0.05);
-}
 
 .usd { font-size:20px; font-weight:800; }
 .btc { margin-top:6px; color:#0b8bd6; font-weight:700; }
 
 .countdown { text-align:center; color:var(--muted); font-size:13px; }
 .muted { text-align:center; color:var(--muted); font-size:13px; }
-
-@media(max-width:960px) {
-  .wrap { flex-direction:column; align-items:center; }
-  .panel, .visual { width:90%; max-width:420px; }
-  .card-row { justify-content:space-around; }
-}
 </style>
 </head>
 <body>
@@ -181,19 +179,21 @@ label { display:block; font-size:13px; color:var(--muted); margin-top:8px; margi
 
     <div class="card-row">
       <div class="card-view" data-type="black">
-        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/BlackCard.png" alt="Black Card">
+        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/BlackCard.png">
       </div>
       <div class="card-view" data-type="gold">
-        <img class="card-img selected" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/GoldCard.png" alt="Gold Card">
+        <img class="card-img selected" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/GoldCard.png">
       </div>
       <div class="card-view" data-type="silver">
-        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/SilverCard.png" alt="Silver Card">
+        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/SilverCard.png">
       </div>
     </div>
 
     <div class="title">Physical Metal Bitcoin Access Card</div>
     <div class="desc">Premium laser-etched metal card with QR activation.</div>
+
     <div id="cardPerks" class="perks-panel"></div>
+
   </div>
 
   <div class="panel">
@@ -202,16 +202,17 @@ label { display:block; font-size:13px; color:var(--muted); margin-top:8px; margi
     <div class="sub">Select quantity.</div>
 
     <label for="quantity">Quantity</label>
-    <select id="quantity">
-      <option>1</option><option>2</option><option>3</option><option>4</option>
-      <option>5</option><option>6</option><option>7</option><option>8</option>
-      <option>9</option><option>10</option>
-    </select>
+    <select id="quantity"></select>
 
     <div class="price-box" id="priceBox">
       <div class="usd" id="totalUSD">$0</div>
       <div class="btc" id="totalBTC">0 BTC</div>
       <div id="btcPriceLine">BTC Price: Loading…</div>
+    </div>
+
+    <div class="qty-note">
+      Black & Gold: <strong>Limited to 1 per order</strong>.<br>
+      Silver: <strong>Up to 50 per order</strong>.
     </div>
 
     <div class="countdown">Discount ends in: <span id="countdown">--:--:--</span></div>
@@ -226,48 +227,57 @@ label { display:block; font-size:13px; color:var(--muted); margin-top:8px; margi
 </div>
 
 <script>
-const IMAGES = {
-  black: "https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/BlackCard.png",
-  gold:  "https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/GoldCard.png",
-  silver:"https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/SilverCard.png"
+/* PRICE TIERS */
+const BASE_PRICES = {
+  black: 275850,
+  gold: 250765,
+  silver: 3229
 };
-const BASE_PRICES = { black:1000, gold:750, silver:500 };
-const INCREASED_PRICES = { black:1250, gold:1000, silver:750 };
+
+const INCREASED_PRICES = {
+  black: 375650,
+  gold: 255420,
+  silver: 5899
+};
+
 const WALLET_ADDR = "bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8";
 
+/* PERKS */
 const CARD_PERKS = {
   black: [
-    "Black matte, black + gold mix, maybe engraved logo",
-    "Very heavy solid feel, feels like a collectible",
-    "QR code + NFC + embedded security (cold storage seed or tamper-evident)",
-    "Rare, numbered, maybe custom engraving options",
-    "Customizable engraving, premium finishes, unique patterns or textures",
-    "VIP perks: early access to NFT drops, crypto airdrops, exclusive events, premium",
-    "Luxury display case with certificate of authenticity",
-    "Advanced: encrypted QR, holographic verification, or embedded secure chip"
+    "Black matte + gold finish",
+    "Very heavy collectible-grade metal",
+    "QR, NFC & embedded cold-storage security",
+    "Rare, numbered, custom engravings available",
+    "Premium finishes & elite patterns",
+    "VIP: NFT access, events, exclusive perks",
+    "Display case + certificate",
+    "Advanced: encrypted QR + holographic verification",
+    "25k Bitcoin"
   ],
   gold: [
-    "Gold-plated / higher-quality metal",
-    "Heavier, more premium",
-    "QR code + NFC chip for easy wallet access",
+    "Gold-plated premium metal",
+    "Heavy premium feel",
+    "QR + NFC chip",
     "Limited batch, numbered",
-    "Detailed engraving, maybe laser-etched hologram",
-    "Small perks like access to community or exclusive digital content",
-    "Premium box",
-    "Tamper-evident hologram or seal"
+    "Laser-etched hologram engraving",
+    "Exclusive digital community access",
+    "Premium presentation box",
+    "Tamper-evident hologram seal",
+    "25k Bitcoin"
   ],
   silver: [
-    "Standard stainless steel or simple metal",
-    "Light, basic card feel",
-    "QR code for wallet address printed",
-    "Generic design",
-    "Basic logo, simple engraving",
-    "None added perks",
-    "Simple sleeve",
-    "Basic"
+    "High-quality stainless steel",
+    "Light, durable entry card",
+    "Printed QR wallet address",
+    "Clean, simple design",
+    "Basic laser engraving",
+    "Simple protective sleeve",
+    "$25,000 in Bitcoin equivalent"
   ]
 };
 
+/* ELEMENTS */
 const cardViews = document.querySelectorAll(".card-view");
 const qtyEl = document.getElementById("quantity");
 const totalUSDEl = document.getElementById("totalUSD");
@@ -276,39 +286,57 @@ const btcPriceLine = document.getElementById("btcPriceLine");
 const countdownEl = document.getElementById("countdown");
 const payNowBtn = document.getElementById("payNow");
 const cardPerksEl = document.getElementById("cardPerks");
-const priceBox = document.getElementById("priceBox");
-const visualCard = document.getElementById("visualCard");
 
 let selectedCard = "gold";
 let currentBtcPrice = null;
 
-/* BTC PRICE */
+/* QUANTITY RULES */
+function setQuantityOptions(card){
+  qtyEl.innerHTML = "";
+  if(card === "silver"){
+    for(let i=1; i<=50; i++){
+      const opt = document.createElement("option");
+      opt.value = opt.textContent = i;
+      qtyEl.appendChild(opt);
+    }
+    qtyEl.disabled = false;
+  } else {
+    const opt = document.createElement("option");
+    opt.value = "1";
+    opt.textContent = "1";
+    qtyEl.appendChild(opt);
+    qtyEl.disabled = true;
+  }
+}
+
+/* BTC PRICE FETCH */
 async function fetchBtcPrice(){
   try {
-      const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
-      const json = await res.json();
-      currentBtcPrice = Number(json.bitcoin.usd);
-      btcPriceLine.innerText = "BTC Price: $" + currentBtcPrice.toLocaleString();
-      updateTotals();
-  } catch {
-      btcPriceLine.innerText = "BTC Price unavailable";
+    const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+    const json = await res.json();
+    currentBtcPrice = Number(json.bitcoin.usd);
+    btcPriceLine.innerText = "BTC Price: $" + currentBtcPrice.toLocaleString();
+    updateTotals();
+  } catch(e){
+    btcPriceLine.innerText = "BTC Price unavailable";
   }
 }
 fetchBtcPrice();
 
 /* COUNTDOWN */
-const END_KEY = "qfs_order_end_ts";
-function getOrCreateEndTs(){
-  const existing = localStorage.getItem(END_KEY);
-  if(existing) return Number(existing);
-  const ts = Date.now() + 48*3600*1000;
-  localStorage.setItem(END_KEY, ts);
-  return ts;
+const END_KEY = "order_end_ts_v1";
+function getOrSetEndTs(){
+  const exist = localStorage.getItem(END_KEY);
+  if(exist) return Number(exist);
+  const t = Date.now() + 48*3600*1000;
+  localStorage.setItem(END_KEY, t);
+  return t;
 }
-let endTs = getOrCreateEndTs();
+let endTs = getOrSetEndTs();
+
 function runCountdown(){
   const diff = endTs - Date.now();
-  if(diff <= 0) { countdownEl.innerText = "Expired"; return; }
+  if(diff<=0){ countdownEl.innerText="Expired"; return; }
   const h = Math.floor(diff/3600000);
   const m = Math.floor((diff%3600000)/60000);
   const s = Math.floor((diff%60000)/1000);
@@ -317,81 +345,89 @@ function runCountdown(){
 setInterval(runCountdown,1000);
 runCountdown();
 
-/* PRICE & PERKS */
-function getPriceMap(){ return (Date.now()>=endTs)?INCREASED_PRICES:BASE_PRICES; }
+function getPriceMap(){ return Date.now()>=endTs ? INCREASED_PRICES : BASE_PRICES; }
+
+/* UPDATE PRICE */
 function updateTotals(){
-  const qty = Number(qtyEl.value);
-  const usd = getPriceMap()[selectedCard]*qty;
-  totalUSDEl.innerText = "$"+usd.toLocaleString();
-  if(currentBtcPrice) totalBTCEle.innerText = (usd/currentBtcPrice).toFixed(8)+" BTC";
-  priceBox.classList.add("update");
-  setTimeout(()=>priceBox.classList.remove("update"),300);
+  const qty = Number(qtyEl.value || 1);
+  const usd = getPriceMap()[selectedCard] * qty;
+  totalUSDEl.innerText = "$" + usd.toLocaleString();
+
+  if(currentBtcPrice){
+    totalBTCEle.innerText = (usd/currentBtcPrice).toFixed(8) + " BTC";
+  } else {
+    totalBTCEle.innerText = "0 BTC";
+  }
 }
+
+/* UPDATE PERKS */
 function updatePerks(){
-  const perks = CARD_PERKS[selectedCard]||[];
+  const list = CARD_PERKS[selectedCard];
   cardPerksEl.classList.remove("show");
   void cardPerksEl.offsetWidth;
-  cardPerksEl.innerHTML = "<strong>Perks:</strong><ul>"+perks.map(p=>`<li>${p}</li>`).join("")+"</ul>";
+  cardPerksEl.innerHTML = "<strong>Perks:</strong><ul>" + list.map(p=>`<li>${p}</li>`).join("") + "</ul>";
   cardPerksEl.classList.add("show");
 }
 
 /* 3D TILT EFFECT */
 cardViews.forEach(view=>{
   const img = view.querySelector(".card-img");
-
   view.addEventListener("mousemove", e=>{
-    const rect = view.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width/2;
-    const y = e.clientY - rect.top - rect.height/2;
-    const rotateX = (y/rect.height)*15;
-    const rotateY = -(x/rect.width)*15;
-    img.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${img.classList.contains("selected")?1.05:1})`;
+    const r = view.getBoundingClientRect();
+    const x = e.clientX - r.left - r.width/2;
+    const y = e.clientY - r.top - r.height/2;
+    const rx = (y/r.height)*15;
+    const ry = -(x/r.width)*15;
+    img.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
   });
   view.addEventListener("mouseleave", ()=>{
-    img.style.transform = `scale(${img.classList.contains("selected")?1.03:1})`;
+    img.style.transform = "rotateX(0) rotateY(0)";
   });
 });
 
-/* EVENTS */
-cardViews.forEach(view=>{
-  const img = view.querySelector(".card-img");
-  // Hover preview
-  view.addEventListener("mouseenter", ()=>{
-    const type = view.dataset.type;
-    updateHover(type);
-  });
-  view.addEventListener("mouseleave", ()=>{
-    updateHover(selectedCard);
-  });
-  // Click selection
-  view.addEventListener("click", ()=>{
-    cardViews.forEach(v=>v.querySelector(".card-img").classList.remove("selected"));
-    img.classList.add("selected");
-    selectedCard = view.dataset.type;
-    updateHover(selectedCard);
-  });
-});
-
-function updateHover(type){
+/* HOVER + CLICK LOGIC */
+function applySelection(type){
   selectedCard = type;
+  setQuantityOptions(type);
   updateTotals();
   updatePerks();
 }
 
+cardViews.forEach(view=>{
+  const img = view.querySelector(".card-img");
+  const type = view.dataset.type;
+
+  view.addEventListener("mouseenter", ()=> applySelection(type));
+
+  view.addEventListener("click", ()=>{
+    document.querySelectorAll(".card-img").forEach(i=>i.classList.remove("selected"));
+    img.classList.add("selected");
+    applySelection(type);
+  });
+});
+
 qtyEl.addEventListener("change", updateTotals);
 
-updateHover(selectedCard);
+/* INIT */
+setQuantityOptions(selectedCard);
+updateTotals();
+updatePerks();
 
 /* PAY NOW */
 payNowBtn.addEventListener("click", ()=>{
-  const qty = Number(qtyEl.value);
-  const usd = getPriceMap()[selectedCard]*qty;
-  const btc = currentBtcPrice?(usd/currentBtcPrice).toFixed(8):"";
-  const params = new URLSearchParams({type:selectedCard, qty, usd, btc, addr: WALLET_ADDR});
-  window.location.href="wallet.html?"+params.toString();
+  const qty = Number(qtyEl.value||1);
+  const usd = getPriceMap()[selectedCard] * qty;
+  const btc = currentBtcPrice ? (usd/currentBtcPrice).toFixed(8) : "";
+  const params = new URLSearchParams({
+    type:selectedCard,
+    qty,
+    usd,
+    btc,
+    addr: WALLET_ADDR
+  });
+  window.location.href = "wallet.html?" + params.toString();
 });
 </script>
 
 </body>
 </html>
-
