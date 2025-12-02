@@ -3,118 +3,165 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Order Confirmation</title>
+<title>Order Confirmation — QFS Metal Card</title>
 
 <style>
-    body {
-        margin: 0;
-        padding: 0;
-        font-family: Arial, sans-serif;
-        background: #f5f7fa;
-        color: #1a1a1a;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        text-align: center;
-    }
+  :root {
+    --bg:#020617;
+    --glass-bg:rgba(255,255,255,0.07);
+    --glass-border:rgba(255,255,255,0.18);
+    --text:#e2e8f0;
+    --muted:#94a3b8;
+    --accent:#38bdf8;
+    --accent2:#a855f7;
+  }
 
-    .container {
-        max-width: 520px;
-        background: white;
-        padding: 40px;
-        border-radius: 20px;
-        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-        border: 1px solid #e1e1e1;
-        animation: fadeIn 0.8s ease;
-    }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui;
+    background:
+      radial-gradient(circle at top, rgba(56,189,248,0.35), transparent 55%),
+      radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow-x: hidden;
+  }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: scale(0.96); }
-        to { opacity: 1; transform: scale(1); }
-    }
+  /* Floating Glass Panel */
+  .container {
+    width: 90%;
+    max-width: 520px;
+    padding: 40px 34px;
+    background: var(--glass-bg);
+    border-radius: 28px;
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(28px);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.12),
+      0 28px 80px rgba(0,0,0,0.65),
+      inset 0 0 50px rgba(56,189,248,0.05);
+    animation: floatUp 1.2s ease forwards;
+    transform: translateY(22px);
+    opacity: 0;
+  }
 
-    .logo {
-        width: 150px;
-        margin: 0 auto 20px auto;
-        display: block;
+  @keyframes floatUp {
+    to {
+      transform: translateY(0);
+      opacity: 1;
     }
+  }
 
-    h1 {
-        font-size: 30px;
-        margin-bottom: 8px;
-        color: #2a2a2a;
-        font-weight: 700;
-    }
+  /* Logo */
+  .logo {
+    width: 160px;
+    display: block;
+    margin: 0 auto 18px auto;
+    filter: drop-shadow(0 8px 14px rgba(56,189,248,0.25));
+  }
 
-    p {
-        font-size: 16px;
-        line-height: 1.6;
-        margin-bottom: 18px;
-        color: #444;
-    }
+  /* Heading */
+  h1 {
+    font-size: 32px;
+    margin-bottom: 8px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 
-    form {
-        margin-top: 10px;
-        text-align: left;
-    }
+  p {
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
 
-    label {
-        font-size: 14px;
-        font-weight: bold;
-        color: #2a2a2a;
-        margin-bottom: 6px;
-        display: block;
-    }
+  strong {
+    color: var(--accent);
+  }
 
-    input[type="text"],
-    input[type="email"],
-    input[type="file"] {
-        width: 100%;
-        padding: 14px;
-        margin-top: 5px;
-        border-radius: 10px;
-        border: 1px solid #dcdcdc;
-        background: #f9f9f9;
-        font-size: 16px;
-        outline: none;
-        transition: 0.2s ease;
-    }
+  /* Form Fields */
+  form {
+    margin-top: 22px;
+    text-align: left;
+  }
 
-    input[type="text"]:focus,
-    input[type="email"]:focus,
-    input[type="file"]:focus {
-        background: #fff;
-        border-color: #4caf50;
-        box-shadow: 0 0 8px rgba(76, 175, 80, 0.2);
-    }
+  label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+    display: block;
+  }
 
-    .btn {
-        display: block;
-        width: 100%;
-        margin: 30px auto 0 auto;
-        background: #4caf50;
-        color: white;
-        padding: 14px;
-        border-radius: 10px;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-        border: none;
-        transition: 0.25s ease;
-        text-align: center;
-    }
+  input[type="text"],
+  input[type="email"],
+  input[type="file"] {
+    width: 100%;
+    padding: 14px;
+    margin-top: 4px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+    font-size: 16px;
+    outline: none;
+    transition: 0.25s ease;
+    backdrop-filter: blur(12px);
+  }
 
-    .btn:hover {
-        background: #45a049;
-        box-shadow: 0 0 12px rgba(76, 175, 80, 0.35);
-        transform: translateY(-2px);
-    }
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="file"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(56,189,248,0.45);
+    background: rgba(255,255,255,0.12);
+  }
+
+  /* Submit Button */
+  .btn {
+    width: 100%;
+    margin-top: 30px;
+    padding: 15px;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: 0.25s ease;
+    letter-spacing: 0.5px;
+    box-shadow:
+      0 10px 35px rgba(56,189,248,0.35),
+      0 0 0 1px rgba(255,255,255,0.08);
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 14px 45px rgba(56,189,248,0.55),
+      0 0 0 1px rgba(255,255,255,0.18);
+  }
+
+  /* Response Animations */
+  @keyframes glowPulse {
+    0% { box-shadow: 0 0 0px rgba(56,189,248,0.5); }
+    50% { box-shadow: 0 0 18px rgba(56,189,248,1); }
+    100% { box-shadow: 0 0 0px rgba(56,189,248,0.5); }
+  }
 
 </style>
 </head>
 
 <body>
+
 <div class="container">
 
     <img class="logo"
@@ -123,18 +170,18 @@
 
     <h1>Order Submitted</h1>
     <p><strong>Payment Confirmation Required</strong></p>
-    <p>Please upload your payment screenshot and TXID so we can verify and ship your metal card.</p>
+    <p>Upload your payment screenshot and TXID so we can verify your payment and ship your metal card.</p>
 
     <form action="https://formsubmit.co/support@qfsnesaragesara.org" method="POST" enctype="multipart/form-data">
 
-        <!-- Redirect After Submit -->
+        <!-- After Submit Redirect -->
         <input type="hidden" name="_next"
                value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-payment.html">
 
-        <!-- HoneyPot Anti-Spam -->
+        <!-- Honeypot -->
         <input type="text" name="_honey" style="display:none">
 
-        <!-- FormSubmit Anti-Spam -->
+        <!-- Spam Filter -->
         <input type="hidden" name="_spam" value="true">
 
         <label>Transaction Hash (TXID)</label>
@@ -150,5 +197,6 @@
     </form>
 
 </div>
+
 </body>
 </html>
