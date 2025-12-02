@@ -2,348 +2,288 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
-<title>Track Your Order — QFS Metal Card</title>
+<title>QFS Order Tracking Portal</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-:root {
-    --bg:#020617;
-    --glass:rgba(255,255,255,0.06);
-    --glass-border:rgba(255,255,255,0.15);
-    --text:#e2e8f0;
-    --muted:#94a3b8;
-    --accent:#38bdf8;
-    --accent2:#a855f7;
-    --success:#22c55e;
-}
 
+/* GLOBAL */
 body {
-    margin:0;
-    padding:0;
-    font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui;
-    background:
-        radial-gradient(circle at top, rgba(56,189,248,0.35), transparent 55%),
-        radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
-        var(--bg);
-    color:var(--text);
-    display:flex;
-    justify-content:center;
-    padding:40px 20px;
+    margin: 0;
+    padding: 0;
+    font-family: "Inter", sans-serif;
+    background: #05060a;
+    color: #ffffff;
+    overflow-x: hidden;
 }
 
-/* PAGE WRAPPER */
-.wrapper {
-    width:100%;
-    max-width:720px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:26px;
-    text-align:center;
+/* QUANTUM PARTICLE BACKGROUND ---------------------- */
+.particles {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.06), transparent 60%);
+    overflow: hidden;
+    z-index: -2;
 }
 
-/* GLASS PANEL */
-.panel {
-    width:100%;
-    padding:32px;
-    background:var(--glass);
-    border-radius:28px;
-    border:1px solid var(--glass-border);
-    backdrop-filter:blur(26px);
-    box-shadow:
-        0 0 0 1px rgba(255,255,255,0.1),
-        0 28px 90px rgba(0,0,0,0.65),
-        inset 0 0 40px rgba(255,255,255,0.05);
-    animation: fadeUp 1s ease forwards;
-    transform: translateY(18px);
-    opacity:0;
+.particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 50%;
+    animation: float 14s infinite ease-in-out;
+}
+@keyframes float {
+    0% { transform: translateY(0) scale(1); opacity: 0.4; }
+    50% { transform: translateY(-140px) scale(1.4); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 0.4; }
 }
 
-@keyframes fadeUp {
-    to { opacity:1; transform:translateY(0); }
+/* CONTAINER */
+.container {
+    width: 100%;
+    max-width: 600px;
+    margin: 80px auto;
+    padding: 35px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 25px;
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(25px);
+    box-shadow: 0 0 45px rgba(0,0,0,0.55);
 }
 
-/* HEADER */
+/* TITLE */
 h1 {
-    font-size:32px;
-    margin-bottom:10px;
-    font-weight:800;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
+    text-align: center;
+    font-size: 32px;
+    margin-bottom: 20px;
+    font-weight: 800;
 }
 
-p {
-    color:var(--muted);
-    font-size:16px;
-    margin-bottom:10px;
+/* INPUT */
+input {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    margin-bottom: 20px;
+    outline: none;
+}
+input:focus {
+    box-shadow: 0 0 15px rgba(255,255,255,0.2);
 }
 
-/* ORDER INPUT */
-.input-box {
-    width:100%;
-    margin-bottom:12px;
+/* TRACK BUTTON */
+.track-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 14px;
+    background: linear-gradient(90deg, #ffd75e, #f5e89f);
+    border: none;
+    color: #000;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.track-btn:hover {
+    transform: scale(1.04);
+    box-shadow: 0 0 25px rgba(255,240,150,0.6);
 }
 
-input[type="text"] {
-    width:100%;
-    padding:15px;
-    border-radius:14px;
-    border:1px solid rgba(255,255,255,0.15);
-    background:rgba(255,255,255,0.07);
-    color:var(--text);
-    font-size:16px;
-    outline:none;
-    backdrop-filter:blur(10px);
-    transition:0.25s ease;
-}
-
-input[type="text"]:focus {
-    border-color:var(--accent);
-    box-shadow:0 0 14px rgba(56,189,248,0.35);
-    background:rgba(255,255,255,0.15);
-}
-
-.hint {
-    font-size:13px;
-    color:var(--muted);
-    margin-bottom:18px;
-}
-
-/* TIMELINE */
+/* TIMELINE ----------------------- */
 .timeline {
-    display:flex;
-    flex-direction:column;
-    gap:30px;
-    padding:10px 0;
+    margin-top: 30px;
+    position: relative;
+}
+.timeline-line {
+    position: absolute;
+    left: 28px;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #626262, #303030);
+    border-radius: 4px;
 }
 
+/* STAGE */
 .stage {
-    display:flex;
-    align-items:center;
-    gap:16px;
-    opacity:0.35;
-    transform:translateX(-10px);
-    transition:0.4s ease;
+    display: flex;
+    align-items: center;
+    margin-bottom: 26px;
+    position: relative;
 }
 
-.stage.active {
-    opacity:1;
-    transform:translateX(0);
+.stage .dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #444;
+    border: 3px solid #2c2c2c;
+    margin-right: 14px;
+    transition: 0.4s;
 }
 
-.stage.completed {
-    opacity:0.85;
+.stage.active .dot {
+    background: #00ff9d;
+    border-color: #00ff9d;
+    box-shadow: 0 0 12px #00ff9d;
 }
 
-/* CIRCLE ICON */
-.circle {
-    width:26px;
-    height:26px;
-    border-radius:50%;
-    border:3px solid var(--muted);
-    display:flex;
-    align-items:center;
-    justify-content:center;
+.stage span {
+    font-size: 17px;
+    font-weight: 600;
+    opacity: 0.75;
+    transition: 0.3s;
 }
 
-.circle.active {
-    border-color:var(--accent);
-    box-shadow:0 0 12px rgba(56,189,248,0.65);
+.stage.active span {
+    opacity: 1;
+    color: #00ffbf;
 }
 
-.circle.completed {
-    border-color:var(--success);
-    background:var(--success);
-    box-shadow:0 0 14px rgba(34,197,94,0.65);
+/* GLOW PULSE */
+@keyframes glowPulse {
+    0% { box-shadow: 0 0 8px rgba(0,255,150,0.3); }
+    50% { box-shadow: 0 0 20px rgba(0,255,150,0.6); }
+    100% { box-shadow: 0 0 8px rgba(0,255,150,0.3); }
+}
+.stage.active .dot {
+    animation: glowPulse 2s infinite;
 }
 
-/* CHECKMARK */
-.circle.completed::after {
-    content:"";
-    width:10px;
-    height:18px;
-    border-right:3px solid #fff;
-    border-bottom:3px solid #fff;
-    transform:rotate(45deg);
-}
-
-/* LABEL */
-.stage label {
-    font-size:17px;
-    font-weight:600;
-    color:var(--text);
-    letter-spacing:0.3px;
-}
-
-/* BUTTON */
-.btn {
-    margin-top:24px;
-    padding:14px;
-    width:250px;
-    border-radius:14px;
-    font-size:17px;
-    font-weight:700;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    color:white;
-    text-decoration:none;
-    transition:0.25s ease;
-    box-shadow:0 16px 45px rgba(56,189,248,0.35);
-}
-
-.btn:hover {
-    transform:translateY(-2px);
-    box-shadow:0 20px 55px rgba(56,189,248,0.55);
-}
 </style>
 </head>
+
 <body>
 
-<div class="wrapper">
-    <div class="panel">
-        <h1>Track Your Order</h1>
-        <p>Enter your Order ID to unlock live status tracking.</p>
-
-        <div class="input-box">
-            <input type="text" id="orderID" placeholder="Enter your Order ID (e.g. QFS-XXXXXXX)">
-        </div>
-        <div class="hint" id="trackingHint">
-            Your Order ID is shown on the confirmation success screen.
-        </div>
-
-        <div class="timeline">
-            <div class="stage" id="s1">
-                <div class="circle"></div>
-                <label>1. Order Received</label>
-            </div>
-            <div class="stage" id="s2">
-                <div class="circle"></div>
-                <label>2. Payment Verified</label>
-            </div>
-            <div class="stage" id="s3">
-                <div class="circle"></div>
-                <label>3. Card Minted</label>
-            </div>
-            <div class="stage" id="s4">
-                <div class="circle"></div>
-                <label>4. Card Engraved</label>
-            </div>
-            <div class="stage" id="s5">
-                <div class="circle"></div>
-                <label>5. Shipping Prepared</label>
-            </div>
-            <div class="stage" id="s6">
-                <div class="circle"></div>
-                <label>6. Out for Delivery</label>
-            </div>
-        </div>
-
-        <a href="index.html" class="btn">Return Home</a>
-    </div>
+<div class="particles">
+    <!-- generates 40 random particles -->
+    <script>
+        for (let i=0;i<40;i++){
+            const p=document.createElement("div");
+            p.className="particle";
+            p.style.top=Math.random()*100+"%";
+            p.style.left=Math.random()*100+"%";
+            p.style.animationDelay=(Math.random()*10)+"s";
+            document.body.querySelector(".particles").appendChild(p);
+        }
+    </script>
 </div>
 
+<div class="container">
+
+    <h1>Quantum Order Tracking</h1>
+
+    <input type="text" id="orderId" placeholder="Enter Order ID (QFS-ABC123)">
+
+    <button class="track-btn" id="trackBtn">Track Order</button>
+
+    <div class="timeline">
+        <div class="timeline-line"></div>
+
+        <div class="stage" id="stage1">
+            <div class="dot"></div>
+            <span>1. Payment Received</span>
+        </div>
+
+        <div class="stage" id="stage2">
+            <div class="dot"></div>
+            <span>2. Order Validated</span>
+        </div>
+
+        <div class="stage" id="stage3">
+            <div class="dot"></div>
+            <span>3. Card Engraving Started</span>
+        </div>
+
+        <div class="stage" id="stage4">
+            <div class="dot"></div>
+            <span>4. Quality Control Check</span>
+        </div>
+
+        <div class="stage" id="stage5">
+            <div class="dot"></div>
+            <span>5. Packaging & Dispatch Prep</span>
+        </div>
+
+        <div class="stage" id="stage6">
+            <div class="dot"></div>
+            <span>6. Shipping Begins (Next Monday)</span>
+        </div>
+    </div>
+
+</div>
+
+
 <script>
-const STAGE_1_TO_2_DELAY = 15 * 60 * 1000; // 15 minutes
-const STAGE_STEP_DELAY   = 10 * 60 * 1000; // 10 minutes between later stages (adjust if you want)
 
-let currentStage = 1;
-let unlocked     = false;
-let timerId      = null;
+/* VALID ID FORMAT */
+const validPattern = /^QFS-[A-Z0-9]{6}$/;
 
-// Get expected Order ID from localStorage or URL
-const params          = new URLSearchParams(window.location.search);
-const urlOrderId      = params.get("order");
-const storedOrderId   = localStorage.getItem("qfsOrderId");
-let expectedOrderId   = urlOrderId || storedOrderId || "";
+/* BUTTON CLICK */
+document.getElementById("trackBtn").onclick = function () {
+    const id = document.getElementById("orderId").value.trim();
 
-if (urlOrderId && !storedOrderId) {
-    localStorage.setItem("qfsOrderId", urlOrderId);
-    expectedOrderId = urlOrderId;
-}
-
-expectedOrderId = (expectedOrderId || "").trim().toUpperCase();
-
-const hintEl    = document.getElementById("trackingHint");
-const orderInput= document.getElementById("orderID");
-
-// Update visuals based on currentStage
-function updateTracking() {
-    for (let i = 1; i <= 6; i++) {
-        const stage  = document.getElementById(`s${i}`);
-        const circle = stage.querySelector('.circle');
-
-        stage.classList.remove('active', 'completed');
-        circle.classList.remove('active', 'completed');
-
-        if (!unlocked) {
-            // Locked mode: only show Stage 1 as baseline active
-            if (i === 1) {
-                stage.classList.add('active');
-                circle.classList.add('active');
-            }
-            continue;
-        }
-
-        if (i < currentStage) {
-            stage.classList.add('completed');
-            circle.classList.add('completed');
-        } else if (i === currentStage) {
-            stage.classList.add('active');
-            circle.classList.add('active');
-        }
-    }
-}
-
-// Schedule next stage jump
-function scheduleNext(initialDelay) {
-    clearTimeout(timerId);
-    timerId = setTimeout(() => {
-        if (!unlocked) return;
-        if (currentStage >= 6) return;
-
-        currentStage++;
-        updateTracking();
-
-        if (currentStage < 6) {
-            scheduleNext(STAGE_STEP_DELAY);
-        }
-    }, initialDelay);
-}
-
-function startTracking() {
-    if (unlocked) return;
-    unlocked = true;
-    currentStage = 1;
-    updateTracking();
-    hintEl.textContent = "Tracking unlocked. Status will update over time as your order progresses.";
-    scheduleNext(STAGE_1_TO_2_DELAY);
-}
-
-// Input validation
-orderInput.addEventListener("input", () => {
-    const entered = orderInput.value.trim().toUpperCase();
-
-    if (!expectedOrderId) {
-        hintEl.textContent = "No Order ID found for this browser. Please use the same device you used to confirm payment.";
+    if (!validPattern.test(id)) {
+        alert("Invalid Order ID. Use format: QFS-ABC123");
         return;
     }
 
-    if (entered.length === 0) {
-        hintEl.textContent = "Enter your Order ID to unlock tracking.";
-        return;
+    if (!localStorage.getItem("paymentTime")) {
+        localStorage.setItem("paymentTime", Date.now());
     }
 
-    if (entered === expectedOrderId) {
-        hintEl.textContent = "Order ID recognized. Unlocking tracking…";
-        startTracking();
-    } else {
-        hintEl.textContent = "Order ID not recognized. Please check and try again.";
-    }
-});
+    unlockStages();
+};
 
-// Initial locked view
-updateTracking();
+/* UNLOCK LOGIC */
+function unlockStages() {
+
+    const start = Number(localStorage.getItem("paymentTime"));
+    const now = Date.now();
+    const diff = now - start;
+
+    const mins = 60 * 1000;
+    const hours = 60 * mins;
+
+    if (diff >= 0) activate(1);
+    if (diff >= 15 * mins) activate(2);
+    if (diff >= 24 * hours) activate(3);
+    if (diff >= (24 * hours + 2 * hours)) activate(4);
+    if (diff >= 48 * hours) activate(5);
+
+    const nextMonday = getNextMonday(start);
+    if (now >= nextMonday) activate(6);
+}
+
+/* ACTIVATE VISUAL STAGE */
+function activate(n) {
+    document.getElementById("stage" + n).classList.add("active");
+}
+
+/* NEXT MONDAY CALCULATOR */
+function getNextMonday(timestamp) {
+    const date = new Date(timestamp);
+    const day = date.getDay();
+    let days = (1 - day + 7) % 7;
+    if (days === 0) days = 7;
+
+    const next = new Date(timestamp);
+    next.setDate(date.getDate() + days);
+    next.setHours(9,0,0,0);
+    return next.getTime();
+}
+
+/* AUTO UPDATE EVERY 15s */
+setInterval(unlockStages, 15000);
+unlockStages();
+
 </script>
 
 </body>
