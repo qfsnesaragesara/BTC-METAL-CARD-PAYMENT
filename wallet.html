@@ -10,23 +10,25 @@
 
 <style>
   :root{
-    --bg:#f6f8fb;
-    --card:#ffffff;
-    --muted:#6b7280;
-    --accent:#3fa0ff;
-    --gold:#d4af37;
-    --glass: rgba(255,255,255,0.8);
-    --radius:14px;
-    --maxw:920px;
+    --bg:#020617;
+    --card:#020617;
+    --muted:#9ca3af;
+    --accent:#38bdf8;
+    --accent-soft:rgba(56,189,248,0.35);
+    --gold:#fbbf24;
+    --glass:rgba(15,23,42,0.9);
+    --radius:18px;
+    --maxw:960px;
   }
   *{box-sizing:border-box}
   body{
     margin:0;
-    font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
-    background:linear-gradient(180deg,#fbfdff,var(--bg));
-    color:#0b1220;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background:
+      radial-gradient(circle at top, rgba(56,189,248,0.32), transparent 55%),
+      radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
+      var(--bg);
+    color:#e5e7eb;
     padding:24px;
     display:flex;
     justify-content:center;
@@ -36,128 +38,207 @@
     width:100%;
     max-width:var(--maxw);
     display:flex;
-    gap:20px;
+    gap:22px;
     align-items:flex-start;
+    flex-wrap:wrap;
   }
 
   /* LEFT: QR + info */
   .left {
-    flex:1 1 600px;
+    flex:1 1 560px;
     display:flex;
     flex-direction:column;
-    gap:18px;
+    gap:20px;
     align-items:center;
   }
 
+  .step-header {
+    text-align:center;
+    margin-bottom:-10px;
+  }
+  .step-header .step {
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:#38bdf8;
+    opacity:0.85;
+  }
+  .step-header .secure {
+    font-size:11px;
+    margin-top:6px;
+    color:#9ca3af;
+    letter-spacing:0.04em;
+  }
+
   .card {
-    width:420px;
-    padding:22px;
-    border-radius:16px;
-    background:var(--card);
-    box-shadow:0 12px 40px rgba(16,24,40,0.06);
-    border:1px solid rgba(15,20,32,0.04);
+    width:100%;
+    max-width:460px;
+    padding:22px 22px 20px;
+    border-radius:26px;
+    background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.86));
+    box-shadow:
+      0 28px 90px rgba(15,23,42,0.98),
+      0 0 0 1px rgba(15,23,42,0.9);
+    border:1px solid rgba(148,163,184,0.6);
+    backdrop-filter: blur(26px);
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:12px;
+    gap:14px;
   }
 
   /* glowing QR frame */
   .qr-wrap {
     padding:18px;
-    border-radius:12px;
-    background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.76));
+    border-radius:22px;
+    background:radial-gradient(circle at top, rgba(56,189,248,0.25), rgba(15,23,42,0.98));
     position:relative;
-  }
-  .qr-frame {
-    border-radius:8px;
-    padding:12px;
-    background: #ffffff;
-    position:relative;
-    box-shadow: 0 8px 30px rgba(63,160,255,0.08);
+    box-shadow:
+      0 24px 70px rgba(15,23,42,1),
+      0 0 36px rgba(56,189,248,0.28);
   }
 
-  /* animated glow */
+  .qr-frame {
+    border-radius:16px;
+    padding:14px;
+    background:#020617;
+    box-shadow:0 16px 50px rgba(15,23,42,0.9);
+  }
+
   .qr-wrap::after {
     content:"";
     position:absolute;
-    inset: -8px;
-    border-radius:16px;
-    background: radial-gradient(ellipse at center, rgba(63,160,255,0.22), rgba(63,160,255,0.06) 30%, transparent 50%);
-    filter: blur(10px);
-    opacity:0.9;
-    animation: glow 2.6s ease-in-out infinite;
-    pointer-events:none;
+    inset:-10px;
+    border-radius:26px;
+    background:
+      radial-gradient(ellipse at top, rgba(56,189,248,0.32), transparent 55%),
+      radial-gradient(ellipse at bottom, rgba(147,51,234,0.36), transparent 60%);
+    filter: blur(18px);
+    opacity:0.95;
+    animation: glow 3.2s ease-in-out infinite;
   }
+
   @keyframes glow {
-    0%{ transform:scale(0.98); opacity:0.9;}
+    0%{ transform:scale(0.97); opacity:0.8;}
     50%{ transform:scale(1.02); opacity:1;}
-    100%{ transform:scale(0.98); opacity:0.9;}
+    100%{ transform:scale(0.97); opacity:0.8;}
   }
 
   /* payment details */
-  .info-row{ width:100%; display:flex; justify-content:space-between; gap:12px; align-items:center; }
-  .label { color:var(--muted); font-size:13px; }
-  .value { font-weight:800; font-size:18px; color:#081225; }
+  .info-row{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:center;
+  }
+  .label {
+    color:var(--muted);
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+  }
+  .value {
+    font-weight:800;
+    font-size:18px;
+    color:#f9fafb;
+  }
+  .value.small {
+    font-size:13px;
+    font-weight:600;
+    color:#cbd5f5;
+  }
 
-  .small { font-size:13px; color:var(--muted); }
+  .small {
+    font-size:12px;
+    color:var(--muted);
+  }
 
-  /* right panel */
+  /* RIGHT SIDE PANEL */
   .right {
     width:320px;
     min-width:260px;
-    background:var(--card);
-    border-radius:14px;
-    padding:18px;
-    border:1px solid rgba(15,20,32,0.04);
-    box-shadow:0 8px 30px rgba(16,24,40,0.04);
+    background:linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.9));
+    border-radius:24px;
+    padding:20px 18px 22px;
+    border:1px solid rgba(148,163,184,0.6);
+    box-shadow:
+      0 28px 90px rgba(15,23,42,1),
+      0 0 0 1px rgba(15,23,42,0.95);
+    backdrop-filter: blur(28px);
     display:flex;
     flex-direction:column;
     gap:12px;
-    align-items:stretch;
   }
 
-  .heading { font-size:18px; font-weight:800; margin-bottom:2px; }
-  .muted { color:var(--muted); font-size:13px; }
+  .heading {
+    font-size:18px;
+    font-weight:780;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+  }
+  .muted {
+    color:var(--muted);
+    font-size:13px;
+  }
 
   .addr-box {
-    padding:10px;
-    border-radius:10px;
-    background:#fafbfd;
-    border:1px solid rgba(15,20,32,0.04);
+    padding:10px 11px;
+    border-radius:14px;
+    background:radial-gradient(circle at top, rgba(148,163,184,0.24), rgba(15,23,42,1));
+    border:1px solid rgba(148,163,184,0.7);
     font-family:monospace;
     word-break:break-all;
-    font-size:14px;
+    font-size:13px;
   }
 
-  .actions { display:flex; gap:10px; margin-top:6px; }
+  .actions {
+    display:flex;
+    gap:10px;
+  }
+
   .btn {
     flex:1;
     padding:10px 12px;
-    border-radius:10px;
+    border-radius:999px;
     border:none;
     cursor:pointer;
     font-weight:700;
-    font-size:14px;
+    font-size:13px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
   }
-  .btn-copy { background: linear-gradient(90deg,#2b7bf6,#3fa0ff); color:#fff; }
-  .btn-wallet { background: linear-gradient(90deg,#2fc788,#22c25b); color:#02120b; }
 
+  .btn-copy {
+    background:radial-gradient(circle at top left, #3b82f6, #38bdf8);
+    color:#f9fafb;
+    box-shadow:
+      0 16px 40px rgba(56,189,248,0.45),
+      0 0 0 1px rgba(15,23,42,1);
+    transition:transform 0.16s ease-out, box-shadow 0.16s ease-out, filter 0.16s ease-out;
+  }
+  .btn-copy:hover {
+    transform:translateY(-1px);
+    filter:brightness(1.05);
+  }
+
+  /* payment window */
   .pending {
-    margin-top:12px;
+    margin-top:10px;
     padding:12px;
-    border-radius:10px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,255,250,0.98));
-    border:1px solid rgba(34,194,139,0.08);
+    border-radius:18px;
+    background:linear-gradient(145deg, rgba(22,163,74,0.12), rgba(15,23,42,0.98));
+    border:1px solid rgba(34,197,94,0.35);
     display:flex;
     gap:12px;
     align-items:center;
   }
 
   .loader {
-    width:36px; height:36px; border-radius:50%;
-    border:5px solid rgba(34,194,139,0.15);
-    border-top-color: #22c25b;
+    width:34px; height:34px; border-radius:50%;
+    border:4px solid rgba(34,197,94,0.18);
+    border-top-color:#22c55e;
     animation:spin 1s linear infinite;
   }
   @keyframes spin { 100%{ transform:rotate(360deg); } }
@@ -165,16 +246,41 @@
   .timer {
     font-weight:800;
     font-size:18px;
-    color:#0b1220;
+    color:#e5e7eb;
   }
 
   .center { text-align:center; }
   .linkless { text-decoration:none; color:inherit; }
 
+  /* Buttons */
+  .btn-secondary {
+    background:radial-gradient(circle at top left, rgba(148,163,184,0.3), rgba(15,23,42,1));
+    border:1px solid rgba(148,163,184,0.7);
+    color:#e5e7eb;
+  }
+
+  .btn-primary {
+    background:linear-gradient(135deg,#38bdf8,#a855f7);
+    color:#f9fafb;
+    box-shadow:
+      0 20px 55px rgba(56,189,248,0.55),
+      0 0 0 1px rgba(15,23,42,1);
+  }
+
   @media (max-width:960px){
-    .page{ flex-direction:column; align-items:center; gap:14px; padding-bottom:40px;}
-    .right{ width:100%; max-width:640px; }
-    .card{ width:100%; max-width:640px; }
+    .page{
+      flex-direction:column;
+      align-items:center;
+      gap:18px;
+    }
+    .right{
+      width:100%;
+      max-width:480px;
+    }
+    .card{
+      width:100%;
+      max-width:480px;
+    }
   }
 </style>
 </head>
@@ -184,35 +290,53 @@
 
   <!-- LEFT -->
   <div class="left">
-    <div class="card" aria-live="polite">
-      <div class="center small">Pay exactly the BTC amount shown — scan with your wallet</div>
 
-      <div class="qr-wrap" aria-hidden="false">
+    <div class="step-header">
+      <div class="step">Step 2 of 2: Complete Payment</div>
+      <div class="secure">Secure • On-chain verified</div>
+    </div>
+
+    <div class="card" aria-live="polite">
+
+      <div class="center small">Scan with your Bitcoin wallet and pay exactly the amount shown.</div>
+
+      <div class="qr-wrap">
         <div class="qr-frame" id="qrFrame">
           <div id="qrCanvas" style="width:260px;height:260px;display:flex;align-items:center;justify-content:center"></div>
         </div>
       </div>
 
       <div style="width:100%;display:flex;flex-direction:column;gap:8px;">
-        <div class="info-row"><div class="label">Amount (USD)</div><div class="value" id="usdAmt">—</div></div>
-        <div class="info-row"><div class="label">Amount (BTC)</div><div class="value" id="btcAmt">—</div></div>
-        <div class="info-row"><div class="label">To Wallet</div><div class="value small" id="addrShort">—</div></div>
+        <div class="info-row">
+          <div class="label">Amount (USD)</div>
+          <div class="value" id="usdAmt">—</div>
+        </div>
+        <div class="info-row">
+          <div class="label">Amount (BTC)</div>
+          <div class="value" id="btcAmt">—</div>
+        </div>
+        <div class="info-row">
+          <div class="label">To Wallet</div>
+          <div class="value small" id="addrShort">—</div>
+        </div>
       </div>
 
       <div id="awaiting" class="pending" style="display:none;">
         <div class="loader"></div>
         <div>
-          <div style="font-weight:800">Awaiting Confirmation…</div>
+          <div style="font-weight:800;font-size:14px;">Awaiting Confirmation…</div>
           <div class="small">Network confirmations are being monitored automatically.</div>
         </div>
       </div>
 
-      <div class="center small">If payment was made with a different amount or currency, contact support.</div>
+      <div class="center small">Paid with wrong amount or currency? Contact support with TXID.</div>
     </div>
+
   </div>
 
   <!-- RIGHT -->
   <aside class="right">
+
     <div>
       <div class="heading">Order Summary</div>
       <div class="muted" id="summaryType">Loading…</div>
@@ -239,25 +363,20 @@
     </div>
 
     <div class="actions">
-      <button id="copyBtn" class="btn btn-copy" style="cursor:pointer;">
-  Copy Address
-</button>
-
+      <button id="copyBtn" class="btn btn-copy">Copy Address</button>
     </div>
 
-    <div style="margin-top:8px;">
+    <div style="margin-top:10px;">
       <div class="label">Payment window</div>
       <div class="timer" id="payTimer">15:00</div>
-      <div class="small">Complete payment within the time shown to reserve price.</div>
+      <div class="small">Complete payment within the time shown to reserve your price.</div>
     </div>
 
-    <div style="margin-top:8px; display:flex; gap:8px;">
+    <div style="margin-top:10px; display:flex; gap:8px;">
       <a id="backToOrder" class="linkless" href="#">
-        <button class="btn" style="flex:1;background:#f3f4f6;border:1px solid rgba(15,20,32,0.04);font-weight:700">Back to Order</button>
+        <button class="btn btn-secondary">Back to Order</button>
       </a>
-      <button id="paidBtn" class="btn" style="flex:1;background:linear-gradient(90deg,#2b7bf6,#3fa0ff);color:#fff;font-weight:800">
-  <a href="confirmation-page.html" style="color:inherit; text-decoration:none; display:block; width:100%; height:100%;">I Have Paid</a>
-</button>
+      <button id="paidBtn" class="btn btn-primary">I Have Paid</button>
     </div>
 
   </aside>
@@ -275,41 +394,48 @@ let endTs = null;
 function qs(key){ return new URLSearchParams(location.search).get(key); }
 
 const fmtUSD = n => "$" + Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
-const to8 = n => Number(n).toFixed(8);
+const to8   = n => Number(n).toFixed(8);
 
 /* Elements */
-const usdEl = document.getElementById("usdAmt");
-const btcEl = document.getElementById("btcAmt");
-const addrShort = document.getElementById("addrShort");
+const usdEl        = document.getElementById("usdAmt");
+const btcEl        = document.getElementById("btcAmt");
+const addrShort    = document.getElementById("addrShort");
 const walletAddrEl = document.getElementById("walletAddr");
-const summaryType = document.getElementById("summaryType");
-const summaryQty = document.getElementById("summaryQty");
-const summaryUSD = document.getElementById("summaryUSD");
-const summaryBTC = document.getElementById("summaryBTC");
-const copyBtn = document.getElementById("copyBtn");
-const openWalletBtn = document.getElementById("openWalletBtn");
-const backToOrder = document.getElementById("backToOrder");
-const paidBtn = document.getElementById("paidBtn");
-const awaiting = document.getElementById("awaiting");
-const payTimer = document.getElementById("payTimer");
-const qrCanvas = document.getElementById("qrCanvas");
+const summaryType  = document.getElementById("summaryType");
+const summaryQty   = document.getElementById("summaryQty");
+const summaryUSD   = document.getElementById("summaryUSD");
+const summaryBTC   = document.getElementById("summaryBTC");
+const copyBtn      = document.getElementById("copyBtn");
+const backToOrder  = document.getElementById("backToOrder");
+const paidBtn      = document.getElementById("paidBtn");
+const awaiting     = document.getElementById("awaiting");
+const payTimer     = document.getElementById("payTimer");
+const qrCanvas     = document.getElementById("qrCanvas");
 
 /* Params */
 let cardType = qs("type") || "gold";
-let qty = Number(qs("qty") || 1);
-let usd = Number(qs("usd") || 0);
-let btc = qs("btc") || "";
-let addr = qs("addr") || DEFAULT_WALLET;
+let qty      = Number(qs("qty") || 1);
+let usd      = Number(qs("usd") || 0);
+let btc      = qs("btc") || "";
+let addr     = qs("addr") || DEFAULT_WALLET;
 
+/* Summary fields */
 summaryType.innerText = cardType[0].toUpperCase() + cardType.slice(1) + " Card";
-summaryQty.innerText = qty;
-summaryUSD.innerText = usd ? fmtUSD(usd) : "—";
-summaryBTC.innerText = btc ? (to8(Number(btc)) + " BTC") : "—";
+summaryQty.innerText  = qty;
+summaryUSD.innerText  = usd ? fmtUSD(usd) : "—";
+summaryBTC.innerText  = btc ? (to8(Number(btc)) + " BTC") : "—";
 walletAddrEl.innerText = addr;
-addrShort.innerText = addr.slice(0,8) + "…" + addr.slice(-8);
+addrShort.innerText    = addr.slice(0,8) + "…" + addr.slice(-8);
 
-backToOrder.href = "order.html?type=" + cardType + "&qty=" + qty + "&usd=" + usd + "&btc=" + btc + "&addr=" + addr;
+/* Back link */
+backToOrder.href =
+  "order.html?type=" + cardType +
+  "&qty=" + qty +
+  "&usd=" + usd +
+  "&btc=" + btc +
+  "&addr=" + addr;
 
+/* Compute BTC if needed */
 async function ensureBtcAmount(){
   if(btc) return Number(btc);
   if(!usd) return null;
@@ -324,20 +450,25 @@ async function ensureBtcAmount(){
   }
 }
 
-function makeBitcoinURI(address, btcAmount){
-  const amt = Number(btcAmount);
-  const s = amt.toFixed(8).replace(/\.?0+$/,"");
+/* Build BTC URI */
+function makeBitcoinURI(address, btcAmt){
+  const s = Number(btcAmt).toFixed(8).replace(/\.?0+$/,"");
   return `bitcoin:${address}?amount=${s}`;
 }
 
+/* Draw QR */
 async function drawQR(uri){
   qrCanvas.innerHTML = "";
   await QRCode.toCanvas(uri, { width:260, margin:1 }, (err,canvas)=>{
-    if(err){ qrCanvas.textContent="QR unavailable"; return; }
+    if(err){
+      qrCanvas.textContent="QR unavailable";
+      return;
+    }
     qrCanvas.appendChild(canvas);
   });
 }
 
+/* Payment timer */
 const TIMER_KEY = "qfs_payment_" + btoa(addr + usd).slice(0,24);
 
 function initPaymentWindow(){
@@ -355,7 +486,6 @@ function runPaymentTimer(){
   if(diff <= 0){
     payTimer.innerText = "00:00";
     paidBtn.disabled = true;
-    openWalletBtn.disabled = true;
     copyBtn.disabled = false;
     return;
   }
@@ -368,26 +498,27 @@ function showAwaiting(){
   awaiting.style.display = "flex";
 }
 
-/* FIXED BUTTON — SAFEST REDIRECT */
+/* Copy wallet */
 copyBtn.onclick = () => {
   navigator.clipboard.writeText(addr).then(() => {
+    const original = copyBtn.innerText;
     copyBtn.innerText = "Copied!";
-    setTimeout(() => copyBtn.innerText = "Copy Address", 1500);
+    setTimeout(() => copyBtn.innerText = original, 1500);
   });
 };
 
-
+/* Paid button */
 paidBtn.onclick = ()=>{
   showAwaiting();
   paidBtn.disabled = true;
   paidBtn.style.opacity = 0.6;
 
-  /* FINAL FIX — redirect to confirmation page */
   setTimeout(() => {
     window.location.href = "confirmation-page.html";
   }, 1200);
 };
 
+/* INIT */
 async function init(){
   const computed = await ensureBtcAmount();
   if(computed){
@@ -411,5 +542,4 @@ init();
 </script>
 
 </body>
-
 </html>
