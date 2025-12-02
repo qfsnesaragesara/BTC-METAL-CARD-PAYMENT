@@ -33,7 +33,6 @@
         overflow:hidden;
     }
 
-    /* Vision Pro Floating Card */
     .panel {
         width: 90%;
         max-width: 480px;
@@ -59,7 +58,6 @@
         }
     }
 
-    /* Success Checkmark — Vision Pro Style */
     .checkmark {
         width:110px;
         height:110px;
@@ -120,33 +118,57 @@
         line-height:1.6;
     }
 
-    /* Button */
+    .order-id-label {
+        margin-top:10px;
+        font-size:14px;
+        color:var(--muted);
+    }
+
+    .order-id-value {
+        font-size:16px;
+        font-weight:700;
+        color:var(--text);
+        margin-top:4px;
+    }
+
+    .btn-row {
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+        margin-top:26px;
+        align-items:center;
+    }
+
     .btn {
         display:block;
         width:100%;
         max-width:260px;
-        margin:26px auto 0;
         padding:14px;
-        font-size:17px;
-        font-weight:700;
         border-radius:14px;
-        background:linear-gradient(135deg, var(--accent), var(--accent2));
-        color:#fff;
+        font-size:16px;
+        font-weight:700;
         text-decoration:none;
         transition:0.25s ease;
+    }
+
+    .btn-primary {
+        background:linear-gradient(135deg,var(--accent),var(--accent2));
+        color:#fff;
         box-shadow:
             0 16px 40px rgba(56,189,248,0.35),
             0 0 0 1px rgba(255,255,255,0.12);
     }
 
-    .btn:hover {
-        transform:translateY(-2px);
-        box-shadow:
-            0 22px 55px rgba(56,189,248,0.55),
-            0 0 0 1px rgba(255,255,255,0.18);
+    .btn-secondary {
+        background:rgba(15,23,42,0.9);
+        color:var(--muted);
+        border:1px solid rgba(148,163,184,0.5);
     }
 
-    /* Preloader */
+    .btn:hover {
+        transform:translateY(-2px);
+    }
+
     #loader {
         position:fixed;
         top:0;
@@ -173,17 +195,15 @@
     @keyframes spin {
         to { transform:rotate(360deg); }
     }
-
 </style>
+
 </head>
 <body>
 
-<!-- Loading Screen -->
 <div id="loader">
     <div class="spinner"></div>
 </div>
 
-<!-- Main Panel -->
 <div class="panel">
     <div class="checkmark"></div>
 
@@ -191,7 +211,13 @@
     <p>Thank you — your payment proof has been submitted.</p>
     <p>Our team will verify your transaction and prepare your Metal Card shipment.</p>
 
-    <a href="index.html" class="btn">Return to Homepage</a>
+    <div class="order-id-label">Your Order ID:</div>
+    <div class="order-id-value" id="orderIdDisplay">—</div>
+
+    <div class="btn-row">
+        <a href="index.html" class="btn btn-secondary">Return to Homepage</a>
+        <a id="trackBtn" href="tracking.html" class="btn btn-primary">Track Your Order</a>
+    </div>
 </div>
 
 <script>
@@ -202,7 +228,20 @@ setTimeout(() => {
     setTimeout(() => loader.style.display = "none", 600);
 }, 1800);
 
-/* Optional Auto Redirect */
+/* Show Order ID and link to tracking */
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    let orderId = params.get("order") || localStorage.getItem("qfsOrderId") || "";
+
+    if (orderId) {
+        document.getElementById("orderIdDisplay").textContent = orderId;
+        localStorage.setItem("qfsOrderId", orderId);
+        const trackBtn = document.getElementById("trackBtn");
+        trackBtn.href = "tracking.html?order=" + encodeURIComponent(orderId);
+    }
+})();
+
+/* Optional auto redirect back home */
 setTimeout(() => {
     window.location.href = "index.html";
 }, 20000);
