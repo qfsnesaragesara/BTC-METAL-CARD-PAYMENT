@@ -592,14 +592,25 @@ updatePerks();
 payNowBtn.addEventListener("click", ()=>{
   const qty = Number(qtyEl.value || 1);
   const usd = getPriceMap()[selectedCard] * qty;
-  const btc = currentBtcPrice ? (usd/currentBtcPrice).toFixed(8) : "";
+
+  let btcValue;
+
+  // Ensure BTC is NEVER empty
+  if (currentBtcPrice && currentBtcPrice > 0) {
+    btcValue = (usd / currentBtcPrice).toFixed(8);
+  } else {
+    // fallback if price didn't load yet
+    btcValue = "0.00000000";
+  }
+
   const params = new URLSearchParams({
     type: selectedCard,
     qty,
     usd,
-    btc,
+    btc: btcValue,
     addr: WALLET_ADDR
   });
+
   window.location.href = "wallet.html?" + params.toString();
 });
 </script>
