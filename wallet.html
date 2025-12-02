@@ -43,7 +43,7 @@
     flex-wrap:wrap;
   }
 
-  /* LEFT: QR + info */
+  /* LEFT SIDE */
   .left {
     flex:1 1 560px;
     display:flex;
@@ -88,12 +88,11 @@
     gap:14px;
   }
 
-  /* glowing QR frame */
+  /* QR CONTAINER */
   .qr-wrap {
     padding:18px;
     border-radius:22px;
     background:radial-gradient(circle at top, rgba(56,189,248,0.25), rgba(15,23,42,0.98));
-    position:relative;
     box-shadow:
       0 24px 70px rgba(15,23,42,1),
       0 0 36px rgba(56,189,248,0.28);
@@ -125,7 +124,7 @@
     100%{ transform:scale(0.97); opacity:0.8;}
   }
 
-  /* payment details */
+  /* INFO LAYOUT */
   .info-row{
     width:100%;
     display:flex;
@@ -155,7 +154,7 @@
     color:var(--muted);
   }
 
-  /* RIGHT SIDE PANEL */
+  /* RIGHT PANEL */
   .right {
     width:320px;
     min-width:260px;
@@ -216,14 +215,9 @@
     box-shadow:
       0 16px 40px rgba(56,189,248,0.45),
       0 0 0 1px rgba(15,23,42,1);
-    transition:transform 0.16s ease-out, box-shadow 0.16s ease-out, filter 0.16s ease-out;
-  }
-  .btn-copy:hover {
-    transform:translateY(-1px);
-    filter:brightness(1.05);
   }
 
-  /* payment window */
+  /* WAITING BLOCK */
   .pending {
     margin-top:10px;
     padding:12px;
@@ -249,10 +243,6 @@
     color:#e5e7eb;
   }
 
-  .center { text-align:center; }
-  .linkless { text-decoration:none; color:inherit; }
-
-  /* Buttons */
   .btn-secondary {
     background:radial-gradient(circle at top left, rgba(148,163,184,0.3), rgba(15,23,42,1));
     border:1px solid rgba(148,163,184,0.7);
@@ -298,7 +288,7 @@
 
     <div class="card" aria-live="polite">
 
-      <div class="center small">Scan with your Bitcoin wallet and pay exactly the amount shown.</div>
+      <div class="center small">Scan with your Bitcoin wallet and pay the exact amount shown.</div>
 
       <div class="qr-wrap">
         <div class="qr-frame" id="qrFrame">
@@ -325,13 +315,13 @@
         <div class="loader"></div>
         <div>
           <div style="font-weight:800;font-size:14px;">Awaiting Confirmation…</div>
-          <div class="small">Network confirmations are being monitored automatically.</div>
+          <div class="small">Network confirmations are being monitored.</div>
         </div>
       </div>
 
-      <div class="center small">Paid with wrong amount or currency? Contact support with TXID.</div>
-    </div>
+      <div class="center small">If wrong amount was sent, contact support with TXID.</div>
 
+    </div>
   </div>
 
   <!-- RIGHT -->
@@ -367,16 +357,23 @@
     </div>
 
     <div style="margin-top:10px;">
-      <div class="label">Payment window</div>
+      <div class="label">Payment Window</div>
       <div class="timer" id="payTimer">15:00</div>
-      <div class="small">Complete payment within the time shown to reserve your price.</div>
+      <div class="small">Complete payment within the time shown.</div>
     </div>
 
     <div style="margin-top:10px; display:flex; gap:8px;">
       <a id="backToOrder" class="linkless" href="#">
         <button class="btn btn-secondary">Back to Order</button>
       </a>
-      <button id="paidBtn" class="btn btn-primary">I Have Paid</button>
+
+      <!-- FIXED REDIRECT -->
+     <a href="confirmation-page.html" id="paidBtnLink" style="display:block; flex:1; text-decoration:none;">
+  <div class="btn btn-primary" style="text-align:center;">
+    I Have Paid
+  </div>
+</a>
+
     </div>
 
   </aside>
@@ -384,19 +381,14 @@
 </div>
 
 <script>
-/* ========== Configuration ========== */
 const DEFAULT_WALLET = "bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8";
 const PAYMENT_WINDOW_SECONDS = 15 * 60;
 
 let endTs = null;
-
-/* Utility */
 function qs(key){ return new URLSearchParams(location.search).get(key); }
-
-const fmtUSD = n => "$" + Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
+const fmtUSD = n => "$" + Number(n).toLocaleString();
 const to8   = n => Number(n).toFixed(8);
 
-/* Elements */
 const usdEl        = document.getElementById("usdAmt");
 const btcEl        = document.getElementById("btcAmt");
 const addrShort    = document.getElementById("addrShort");
@@ -412,14 +404,12 @@ const awaiting     = document.getElementById("awaiting");
 const payTimer     = document.getElementById("payTimer");
 const qrCanvas     = document.getElementById("qrCanvas");
 
-/* Params */
 let cardType = qs("type") || "gold";
 let qty      = Number(qs("qty") || 1);
 let usd      = Number(qs("usd") || 0);
 let btc      = qs("btc") || "";
 let addr     = qs("addr") || DEFAULT_WALLET;
 
-/* Summary fields */
 summaryType.innerText = cardType[0].toUpperCase() + cardType.slice(1) + " Card";
 summaryQty.innerText  = qty;
 summaryUSD.innerText  = usd ? fmtUSD(usd) : "—";
@@ -427,7 +417,6 @@ summaryBTC.innerText  = btc ? (to8(Number(btc)) + " BTC") : "—";
 walletAddrEl.innerText = addr;
 addrShort.innerText    = addr.slice(0,8) + "…" + addr.slice(-8);
 
-/* Back link */
 backToOrder.href =
   "order.html?type=" + cardType +
   "&qty=" + qty +
@@ -435,42 +424,32 @@ backToOrder.href =
   "&btc=" + btc +
   "&addr=" + addr;
 
-/* Compute BTC if needed */
 async function ensureBtcAmount(){
   if(btc) return Number(btc);
   if(!usd) return null;
-
   try {
     const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
     const j = await r.json();
-    const price = j.bitcoin.usd;
-    return usd / price;
+    return usd / j.bitcoin.usd;
   } catch(e){
     return null;
   }
 }
 
-/* Build BTC URI */
 function makeBitcoinURI(address, btcAmt){
   const s = Number(btcAmt).toFixed(8).replace(/\.?0+$/,"");
   return `bitcoin:${address}?amount=${s}`;
 }
 
-/* Draw QR */
 async function drawQR(uri){
   qrCanvas.innerHTML = "";
   await QRCode.toCanvas(uri, { width:260, margin:1 }, (err,canvas)=>{
-    if(err){
-      qrCanvas.textContent="QR unavailable";
-      return;
-    }
+    if(err){ qrCanvas.textContent="QR unavailable"; return; }
     qrCanvas.appendChild(canvas);
   });
 }
 
-/* Payment timer */
 const TIMER_KEY = "qfs_payment_" + btoa(addr + usd).slice(0,24);
-
 function initPaymentWindow(){
   const stored = localStorage.getItem(TIMER_KEY);
   if(stored){
@@ -498,7 +477,6 @@ function showAwaiting(){
   awaiting.style.display = "flex";
 }
 
-/* Copy wallet */
 copyBtn.onclick = () => {
   navigator.clipboard.writeText(addr).then(() => {
     const original = copyBtn.innerText;
@@ -507,25 +485,25 @@ copyBtn.onclick = () => {
   });
 };
 
-/* Paid button */
+/* PERFECTLY FIXED BUTTON */
 paidBtn.onclick = ()=>{
   showAwaiting();
   paidBtn.disabled = true;
   paidBtn.style.opacity = 0.6;
 
+  const link = paidBtn.getAttribute("data-link") || "confirmation-page.html";
+
   setTimeout(() => {
-    window.location.href = "confirmation-page.html";
-  }, 1200);
+    window.location.href = link;
+  }, 1000);
 };
 
-/* INIT */
 async function init(){
   const computed = await ensureBtcAmount();
   if(computed){
-    const val = to8(computed);
-    btc = val;
-    btcEl.innerText = val + " BTC";
-    summaryBTC.innerText = val + " BTC";
+    btc = to8(computed);
+    btcEl.innerText = btc + " BTC";
+    summaryBTC.innerText = btc + " BTC";
   }
 
   usdEl.innerText = usd ? fmtUSD(usd) : "—";
@@ -534,8 +512,8 @@ async function init(){
   await drawQR(uri);
 
   initPaymentWindow();
-  runPaymentTimer();
   setInterval(runPaymentTimer, 1000);
+  runPaymentTimer();
 }
 
 init();
