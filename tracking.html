@@ -164,7 +164,6 @@ input:focus {
 <body>
 
 <div class="particles">
-    <!-- generates 40 random particles -->
     <script>
         for (let i=0;i<40;i++){
             const p=document.createElement("div");
@@ -221,54 +220,75 @@ input:focus {
 
 </div>
 
-
 <script>
 
+/* --- 1. AUTO-FILL ORDER ID IF COMING FROM SUCCESS PAGE --- */
+const params = new URLSearchParams(window.location.search);
+let incomingOrderId = params.get("order");
+
+if (incomingOrderId) {
+    localStorage.setItem("latestOrderId", incomingOrderId);
+    document.getElementById("orderId").value = incomingOrderId;
+}
+
+/* If stored from earlier */
+if (!incomingOrderId && localStorage.getItem("latestOrderId")) {
+    document.getElementById("orderId").value = localStorage.getItem("latestOrderId");
+}
+
 /* VALID ID FORMAT */
-const validPattern = /^QFS-[A-Z0-9]{6}$/;
+const validPattern = /^QFS-[A-Z0-9]{7}$/;
 
 /* BUTTON CLICK */
 document.getElementById("trackBtn").onclick = function () {
     const id = document.getElementById("orderId").value.trim();
 
     if (!validPattern.test(id)) {
-        alert("Invalid Order ID. Use format: QFS-ABC123");
+        alert("Invalid Order ID. Use format: QFS-ABC1234");
         return;
     }
 
-    if (!localStorage.getItem("paymentTime")) {
-        localStorage.setItem("paymentTime", Date.now());
+    /* Save the order ID */
+    localStorage.setItem("latestOrderId", id);
+
+    /* If paymentTime isn't saved yet, save now */
+    if (!localStorage.getItem("paymentTime_" + id)) {
+        localStorage.setItem("paymentTime_" + id, Date.now());
     }
 
-    unlockStages();
+    unlockStages(id);
 };
 
-/* UNLOCK LOGIC */
-function unlockStages() {
+/* --- 2. MAIN UNLOCK LOGIC --- */
+function unlockStages(id) {
 
-    const start = Number(localStorage.getItem("paymentTime"));
+    const start = Number(localStorage.getItem("paymentTime_" + id));
+    if (!start) return;
+
     const now = Date.now();
     const diff = now - start;
 
     const mins = 60 * 1000;
     const hours = 60 * mins;
 
+    /* Stage rules */
     if (diff >= 0) activate(1);
     if (diff >= 15 * mins) activate(2);
     if (diff >= 24 * hours) activate(3);
     if (diff >= (24 * hours + 2 * hours)) activate(4);
     if (diff >= 48 * hours) activate(5);
 
+    /* Next Monday rule */
     const nextMonday = getNextMonday(start);
     if (now >= nextMonday) activate(6);
 }
 
-/* ACTIVATE VISUAL STAGE */
+/* Activate stage visually */
 function activate(n) {
     document.getElementById("stage" + n).classList.add("active");
 }
 
-/* NEXT MONDAY CALCULATOR */
+/* Get next Monday 9AM */
 function getNextMonday(timestamp) {
     const date = new Date(timestamp);
     const day = date.getDay();
@@ -281,9 +301,15 @@ function getNextMonday(timestamp) {
     return next.getTime();
 }
 
-/* AUTO UPDATE EVERY 15s */
-setInterval(unlockStages, 15000);
-unlockStages();
+/* Auto update every 15s */
+setInterval(() => {
+    const id = localStorage.getItem("latestOrderId");
+    if (id) unlockStages(id);
+}, 15000);
+
+/* Initial load */
+const savedId = localStorage.getItem("latestOrderId");
+if (savedId) unlockStages(savedId);
 
 </script>
 
