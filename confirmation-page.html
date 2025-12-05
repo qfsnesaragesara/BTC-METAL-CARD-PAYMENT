@@ -165,16 +165,22 @@
     <p>Upload your payment screenshot and TXID so we can verify your payment and ship your metal card.</p>
     <p class="order-note">A unique Order ID will be generated and shown on the next screen.</p>
 
-    <form id="confirmForm">
+    <form id="confirmForm"
+          action="https://script.google.com/macros/s/AKfycby6OnPd1vfO6IVCDD89zOR_vPrm1NNZubv63hGJcLCFnT9RPPWJTHjagTtnufhPk-Jidw/exec"
+          method="POST"
+          enctype="multipart/form-data">
+
+        <!-- Order ID (hidden, will be filled by JS) -->
+        <input type="hidden" name="orderId" id="orderIdHidden" value="">
 
         <label>Transaction Hash (TXID)</label>
-        <input type="text" id="txid" required placeholder="Enter your TXID">
+        <input type="text" name="txid" id="txidField" placeholder="Enter your TXID" required>
 
         <label>Your Email Address</label>
-        <input type="email" id="email" required placeholder="Enter your email">
+        <input type="email" name="email" id="emailField" placeholder="Enter your email" required>
 
         <label>Upload Payment Screenshot</label>
-        <input type="file" id="screenshot" accept="image/*" required>
+        <input type="file" name="paymentScreenshot" accept="image/*" required>
 
         <button type="submit" class="btn">Submit Confirmation</button>
     </form>
@@ -182,7 +188,6 @@
 </div>
 
 <script>
-// Generate Order ID
 function generateOrderId() {
   const prefix = "QFS-";
   const chars = "ABCDEF0123456789";
@@ -195,57 +200,11 @@ function generateOrderId() {
 
 (function initOrderId() {
   const orderId = generateOrderId();
+  const hiddenField = document.getElementById("orderIdHidden");
+
+  hiddenField.value = orderId;
   localStorage.setItem("qfsOrderId", orderId);
 })();
-
-
-// Submit handler
-document.getElementById("confirmForm").addEventListener("submit", async function(e){
-    e.preventDefault();
-
-    const orderId = localStorage.getItem("qfsOrderId");
-    const txid = document.getElementById("txid").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const fileInput = document.getElementById("screenshot");
-
-    if (!fileInput.files.length) {
-        alert("Please upload a screenshot.");
-        return;
-    }
-
-    const file = fileInput.files[0];
-
-    const base64String = await toBase64(file);
-
-    const payload = {
-        orderId,
-        txid,
-        email,
-        screenshotBase64: base64String.split(",")[1],
-        screenshotName: file.name,
-        screenshotType: file.type
-    };
-
-    fetch("https://script.google.com/macros/s/AKfycbyKkWctIa_lyDjqpqgvUtZ08xwwUOl3eJ_84JYHGeAxx4i3zGDm2PUqfJn1G3tZOvBEbA/exec", {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    });
-
-    setTimeout(() => {
-        window.location.href = "https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-payment.html?order=" + encodeURIComponent(orderId);
-    }, 1000);
-});
-
-function toBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = err => reject(err);
-    });
-}
 </script>
 
 </body>
