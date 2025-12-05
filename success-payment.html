@@ -234,20 +234,18 @@ setTimeout(() => {
     const params = new URLSearchParams(window.location.search);
     let orderId = params.get("order") || localStorage.getItem("qfsOrderId") || "";
 
-    if (orderId) {
-        document.getElementById("orderIdDisplay").textContent = orderId;
-        localStorage.setItem("qfsOrderId", orderId);
-        const trackBtn = document.getElementById("trackBtn");
-        trackBtn.href = "tracking.html?order=" + encodeURIComponent(orderId);
+    /* NEW FIX: Prevents blank display */
+    if (!orderId) {
+        orderId = "ORDER-NOT-FOUND";
     }
-})();
 
-/* Optional auto redirect back home */
-setTimeout(() => {
-    window.location.href = "index.html";
-}, 20000);
+    document.getElementById("orderIdDisplay").textContent = orderId;
+    localStorage.setItem("qfsOrderId", orderId);
+
+    const trackBtn = document.getElementById("trackBtn");
+    trackBtn.href = "tracking.html?order=" + encodeURIComponent(orderId);
+})();
 </script>
 
 </body>
 </html>
-
