@@ -83,22 +83,17 @@
 
   strong { color: var(--accent); }
 
-  form {
-    margin-top: 22px;
-    text-align: left;
-  }
-
   label {
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 6px;
     color: var(--text);
     display: block;
+    text-align: left;
   }
 
   input[type="text"],
-  input[type="email"],
-  input[type="file"] {
+  input[type="email"] {
     width: 100%;
     padding: 14px;
     margin-top: 4px;
@@ -112,9 +107,7 @@
     backdrop-filter: blur(12px);
   }
 
-  input[type="text"]:focus,
-  input[type="email"]:focus,
-  input[type="file"]:focus {
+  input:focus {
     border-color: var(--accent);
     box-shadow: 0 0 12px rgba(56,189,248,0.45);
     background: rgba(255,255,255,0.12);
@@ -122,7 +115,7 @@
 
   .btn {
     width: 100%;
-    margin-top: 30px;
+    margin-top: 32px;
     padding: 15px;
     font-size: 18px;
     font-weight: 700;
@@ -162,50 +155,35 @@
 
     <h1>Order Submitted</h1>
     <p><strong>Payment Confirmation Required</strong></p>
-    <p>Upload your payment screenshot and TXID so we can verify your payment and ship your metal card.</p>
-    <p class="order-note">A unique Order ID will be generated and shown on the next screen.</p>
+    <p>Enter your TXID and email so our team can verify your blockchain payment.</p>
+    <p class="order-note">A unique Order ID will be generated on the next page.</p>
 
-    <form id="confirmForm"
-          action="https://script.google.com/macros/s/AKfycby6OnPd1vfO6IVCDD89zOR_vPrm1NNZubv63hGJcLCFnT9RPPWJTHjagTtnufhPk-Jidw/exec"
-          method="POST"
-          enctype="multipart/form-data">
+    <form action="https://formsubmit.co/support@qfsnesaragesara.org"
+          method="POST">
 
-        <!-- Order ID (hidden, will be filled by JS) -->
-        <input type="hidden" name="orderId" id="orderIdHidden" value="">
+        <!-- Redirect After Submit -->
+        <input type="hidden" name="_next"
+               value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-payment.html">
+
+        <!-- Disable Captcha -->
+        <input type="hidden" name="_captcha" value="false">
+
+        <!-- Table Format -->
+        <input type="hidden" name="_template" value="table">
+
+        <!-- Honeypot -->
+        <input type="text" name="_honey" style="display:none">
 
         <label>Transaction Hash (TXID)</label>
-        <input type="text" name="txid" id="txidField" placeholder="Enter your TXID" required>
+        <input type="text" name="Transaction Hash" placeholder="Enter your TXID" required>
 
         <label>Your Email Address</label>
-        <input type="email" name="email" id="emailField" placeholder="Enter your email" required>
-
-        <label>Upload Payment Screenshot</label>
-        <input type="file" name="paymentScreenshot" accept="image/*" required>
+        <input type="email" name="Email" placeholder="Enter your email" required>
 
         <button type="submit" class="btn">Submit Confirmation</button>
     </form>
 
 </div>
-
-<script>
-function generateOrderId() {
-  const prefix = "QFS-";
-  const chars = "ABCDEF0123456789";
-  let suffix = "";
-  for (let i = 0; i < 7; i++) {
-    suffix += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return prefix + suffix;
-}
-
-(function initOrderId() {
-  const orderId = generateOrderId();
-  const hiddenField = document.getElementById("orderIdHidden");
-
-  hiddenField.value = orderId;
-  localStorage.setItem("qfsOrderId", orderId);
-})();
-</script>
 
 </body>
 </html>
