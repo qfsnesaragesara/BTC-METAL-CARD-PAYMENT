@@ -52,7 +52,7 @@
       <!-- Disable Captcha -->
       <input type="hidden" name="_captcha" value="false">
 
-      <!-- Email Table Layout -->
+      <!-- Email Table Format -->
       <input type="hidden" name="_template" value="table">
 
       <!-- Honeypot -->
@@ -124,6 +124,7 @@
 
     form.addEventListener("submit", function() {
         overlay.classList.add("show");
+        // IMPORTANT: NO redirect here. FormSubmit handles it.
     });
   </script>
 
