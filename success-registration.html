@@ -34,7 +34,6 @@
         overflow:hidden;
     }
 
-    /* Vision Pro Floating Card */
     .panel {
         width: 90%;
         max-width: 480px;
@@ -60,7 +59,6 @@
         }
     }
 
-    /* Success Checkmark — Vision Pro Style */
     .checkmark {
         width:110px;
         height:110px;
@@ -121,7 +119,6 @@
         line-height:1.6;
     }
 
-    /* Button */
     .btn {
         display:block;
         width:100%;
@@ -147,7 +144,6 @@
             0 0 0 1px rgba(255,255,255,0.18);
     }
 
-    /* Preloader */
     #loader {
         position:fixed;
         top:0;
@@ -174,36 +170,44 @@
     @keyframes spin {
         to { transform:rotate(360deg); }
     }
-
 </style>
 </head>
 <body>
 
-<!-- Loading Screen -->
 <div id="loader">
     <div class="spinner"></div>
 </div>
 
-<!-- Main Panel -->
 <div class="panel">
     <div class="checkmark"></div>
 
     <h1>Registration Successful</h1>
     <p>Your registration has been submitted successfully.</p>
-    <p>Please check your inbox or spam folder for confirmation.</p>
+    
+    <!-- ✅ ADDED NOTICE (ONLY ADDITION) -->
+    <p style="margin-top:14px;">
+        <strong>Important Notice After Registration</strong>
+    </p>
+    <p>
+        After completing your registration, please check your email inbox for our confirmation and next-step instructions.
+    </p>
+    <p>
+        If you do not see the email within a few minutes, check your Spam or Promotions folder, as automated messages may occasionally be filtered there.
+    </p>
+    <p>
+        If you still cannot locate the email, contact our support team and we will resend it promptly.
+    </p>
 
     <a href="index.html" class="btn">Return to Homepage</a>
 </div>
 
 <script>
-/* Loader fade-out */
 setTimeout(() => {
     const loader = document.getElementById("loader");
     loader.style.opacity = "0";
     setTimeout(() => loader.style.display = "none", 600);
 }, 1800);
 
-/* Optional Auto Redirect */
 setTimeout(() => {
     window.location.href = "index.html";
 }, 20000);
@@ -211,4 +215,3 @@ setTimeout(() => {
 
 </body>
 </html>
-
