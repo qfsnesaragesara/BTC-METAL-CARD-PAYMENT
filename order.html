@@ -308,6 +308,9 @@ cardPerksEl.style.display="none";
 titleEl.style.display="none";
 descEl.style.display="none";
 
+/* ✅ FIX #1: update totals when quantity changes (this is what was missing) */
+qtyEl.addEventListener("change", updateTotals);
+
 /* BTC Price */
 async function fetchBtcPrice(){
 try{
@@ -315,6 +318,10 @@ try{
   const j=await r.json();
   currentBtcPrice=j.bitcoin.usd;
   btcPriceLine.innerText="BTC Price: $"+currentBtcPrice.toLocaleString();
+
+  /* ✅ FIX #2: if a card is already selected, refresh totals once BTC price loads */
+  if(selectedCard) updateTotals();
+
 }catch{}
 }
 fetchBtcPrice();
@@ -445,5 +452,3 @@ view.addEventListener("click",()=>{
 
 </body>
 </html>
-
-
