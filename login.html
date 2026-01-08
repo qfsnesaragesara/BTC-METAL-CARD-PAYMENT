@@ -3,285 +3,193 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Member Login — QFS Portal</title>
-
+  <title>Member Login — QFS</title>
   <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
-
-  <!-- Supabase JS (v2) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root{
       --bg:#020617;
-      --glass:rgba(15,23,42,0.88);
-      --border:rgba(148,163,184,0.55);
-      --muted:#94a3b8;
+      --glass:rgba(15,23,42,0.86);
+      --border:rgba(148,163,184,0.45);
       --text:#e5e7eb;
+      --muted:#94a3b8;
       --accent:#38bdf8;
       --accent2:#a855f7;
-      --radius:22px;
-      --logo: 72px;
     }
     *{box-sizing:border-box}
     body{
       margin:0;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:
-        radial-gradient(circle at top, rgba(56,189,248,0.30), transparent 55%),
-        radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
-        var(--bg);
-      color:var(--text);
       min-height:100vh;
       display:flex;
       align-items:center;
       justify-content:center;
       padding:24px;
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,0.32), transparent 55%),
+        radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
+        var(--bg);
+      color:var(--text);
     }
-    .wrap{
+    .card{
       width:100%;
-      max-width:520px;
-      background:var(--glass);
+      max-width:460px;
+      padding:26px;
+      border-radius:26px;
+      background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.82));
       border:1px solid var(--border);
-      border-radius:28px;
-      padding:26px 22px 22px;
-      backdrop-filter: blur(24px);
-      box-shadow:0 30px 90px rgba(2,6,23,0.75);
-      text-align:center;
+      box-shadow:0 28px 90px rgba(0,0,0,0.55);
+      backdrop-filter: blur(22px);
     }
-    .logo{
-      width:var(--logo);
-      height:var(--logo);
-      border-radius:16px;
-      object-fit:cover;
-      box-shadow:0 12px 25px rgba(56,189,248,0.22);
-      border:1px solid rgba(255,255,255,0.14);
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:14px;
     }
-    h1{
-      margin:14px 0 6px;
-      font-size:22px;
-      font-weight:900;
-      letter-spacing:0.02em;
+    .brand img{
+      width:44px;height:44px;border-radius:12px;
+      border:1px solid rgba(255,255,255,0.18);
     }
-    .sub{
-      margin:0 0 18px;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.5;
-    }
-    .field{
-      text-align:left;
-      margin-top:12px;
-    }
-    label{
-      display:block;
-      font-size:12px;
-      letter-spacing:0.08em;
-      text-transform:uppercase;
-      color:var(--muted);
-      margin:0 0 6px;
-    }
+    h1{margin:0;font-size:20px;font-weight:850;letter-spacing:0.02em}
+    p{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+    label{display:block;margin-top:14px;margin-bottom:6px;color:var(--muted);font-size:12px}
     input{
       width:100%;
-      padding:13px 14px;
+      padding:12px 14px;
       border-radius:14px;
-      border:1px solid rgba(255,255,255,0.15);
+      border:1px solid rgba(255,255,255,0.16);
       background:rgba(255,255,255,0.06);
       color:var(--text);
       outline:none;
       font-size:14px;
     }
-    input:focus{
-      border-color:rgba(56,189,248,0.7);
-      box-shadow:0 0 0 4px rgba(56,189,248,0.18);
-    }
-    .row{
-      display:flex;
-      gap:10px;
-      margin-top:16px;
-    }
-    .btn{
+    .row{display:flex;gap:10px;margin-top:16px}
+    button{
       flex:1;
       padding:12px 14px;
       border-radius:999px;
       border:none;
       cursor:pointer;
       font-weight:800;
-      letter-spacing:0.08em;
+      letter-spacing:0.06em;
       text-transform:uppercase;
       font-size:12px;
     }
-    .btn-primary{
-      background:linear-gradient(135deg,var(--accent),var(--accent2));
-      color:#fff;
-    }
-    .btn-secondary{
-      background:rgba(255,255,255,0.08);
-      border:1px solid rgba(148,163,184,0.55);
-      color:var(--text);
-    }
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
+    .btn-secondary{background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.5);color:var(--text)}
     .msg{
       margin-top:14px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,0.35);
+      background:rgba(2,6,23,0.4);
+      color:var(--text);
       font-size:13px;
-      color:var(--muted);
-      min-height:18px;
+      display:none;
+      line-height:1.4;
+      white-space:pre-wrap;
     }
-    .msg.error{ color:#fca5a5; }
-    .msg.ok{ color:#86efac; }
-    .tiny{
-      margin-top:14px;
-      font-size:11px;
-      color:rgba(148,163,184,0.9);
-      line-height:1.5;
-    }
-    .hr{
-      height:1px;
-      background:rgba(148,163,184,0.25);
-      margin:16px 0;
-    }
+    .msg.show{display:block}
+    .msg.error{border-color:rgba(239,68,68,0.45)}
+    .msg.ok{border-color:rgba(34,197,94,0.45)}
+    .tiny{margin-top:10px;color:var(--muted);font-size:12px}
+    a{color:#7dd3fc;text-decoration:none}
   </style>
 </head>
-
 <body>
-  <div class="wrap">
-    <img class="logo" src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="QFS Logo">
-    <h1>Member Login</h1>
-    <p class="sub">Access your member dashboard. Your account will be routed automatically based on your card type.</p>
 
-    <div class="field">
-      <label>Email</label>
-      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+  <div class="card">
+    <div class="brand">
+      <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="Logo">
+      <div>
+        <h1>Member Login</h1>
+        <p>Sign in to view your portal balance and status.</p>
+      </div>
     </div>
 
-    <div class="field">
-      <label>Password</label>
-      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
-    </div>
+    <form id="loginForm">
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="you@example.com" required>
 
-    <div class="row">
-      <button id="loginBtn" class="btn btn-primary">Login</button>
-      <button id="logoutBtn" class="btn btn-secondary" type="button">Logout</button>
-    </div>
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Your password" required>
 
-    <div id="msg" class="msg"></div>
+      <div class="row">
+        <button id="loginBtn" type="submit" class="btn-primary">Login</button>
+        <button id="signupBtn" type="button" class="btn-secondary">Create Account</button>
+      </div>
 
-    <div class="hr"></div>
+      <div id="msg" class="msg"></div>
 
-    <div class="tiny">
-      If your account is not yet activated, you may still see a limited dashboard until confirmation is completed.
-    </div>
+      <div class="tiny">
+        Admin note: if you’ve never created an account in Supabase yet, click <b>Create Account</b> once (then confirm email).
+      </div>
+    </form>
   </div>
 
-<script>
-/** =========================
- *  ✅ PUT YOUR KEYS HERE
- *  ========================= */
-const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ✅ PASTE YOUR KEYS HERE (this is the correct place)
+    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-/** Routes */
-const ROUTE_SILVER_BLACK = "portal.html";       // your existing silver/black portal
-const ROUTE_GOLD = "portal-gold.html";          // create this page next (gold perks + payment buttons)
-
-/** Supabase client */
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-/** UI */
-const emailEl = document.getElementById("email");
-const passEl = document.getElementById("password");
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-const msgEl = document.getElementById("msg");
-
-function setMsg(text, type){
-  msgEl.textContent = text || "";
-  msgEl.classList.remove("error","ok");
-  if(type) msgEl.classList.add(type);
-}
-
-/**
- * Expected table:
- * public.member_profiles (user_id uuid pk references auth.users, card_type text, is_activated bool)
- * - card_type: 'silver' | 'black' | 'gold'
- */
-async function fetchCardType(userId){
-  const { data, error } = await supabase
-    .from("member_profiles")
-    .select("card_type, is_activated")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if(error) throw error;
-  if(!data || !data.card_type) return { card_type: "silver", is_activated: false }; // safe fallback
-  return data;
-}
-
-async function goToPortal(cardType){
-  localStorage.setItem("qfs_card_type", cardType);
-
-  if(cardType === "gold"){
-    window.location.href = ROUTE_GOLD;
-    return;
-  }
-  // silver or black
-  window.location.href = ROUTE_SILVER_BLACK;
-}
-
-loginBtn.addEventListener("click", async () => {
-  try{
-    setMsg("Signing in…");
-    loginBtn.disabled = true;
-
-    const email = (emailEl.value || "").trim();
-    const password = passEl.value || "";
-
-    if(!email || !password){
-      setMsg("Enter your email and password.", "error");
-      return;
+    const msgEl = document.getElementById("msg");
+    function showMsg(text, type){
+      msgEl.className = "msg show " + (type || "");
+      msgEl.textContent = text;
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if(error) throw error;
-
-    const user = data.user;
-    if(!user){
-      setMsg("Login failed. Try again.", "error");
-      return;
+    // Hard fail if keys are missing (so it never silently does nothing)
+    if(!SUPABASE_URL.includes("http") || SUPABASE_ANON_KEY.includes("PASTE_")){
+      showMsg("Supabase keys not set.\nPaste SUPABASE_URL and SUPABASE_ANON_KEY inside login.html.", "error");
     }
 
-    const profile = await fetchCardType(user.id);
-    setMsg("Login successful. Redirecting…", "ok");
-    await goToPortal(profile.card_type);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  }catch(err){
-    setMsg(err?.message || "Login error.", "error");
-  }finally{
-    loginBtn.disabled = false;
-  }
-});
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-logoutBtn.addEventListener("click", async () => {
-  try{
-    await supabase.auth.signOut();
-    localStorage.removeItem("qfs_card_type");
-    setMsg("Logged out.", "ok");
-  }catch(e){
-    setMsg("Could not logout.", "error");
-  }
-});
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
 
-/** Auto-redirect if already logged in */
-(async function(){
-  try{
-    const { data } = await supabase.auth.getSession();
-    const user = data?.session?.user;
-    if(!user) return;
+      showMsg("Signing in…", "");
 
-    const profile = await fetchCardType(user.id);
-    await goToPortal(profile.card_type);
-  }catch{
-    // ignore
-  }
-})();
-</script>
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if(error){
+        showMsg("Login failed:\n" + error.message, "error");
+        return;
+      }
+
+      showMsg("Login successful. Redirecting…", "ok");
+
+      // ✅ redirect to portal
+      setTimeout(() => {
+        window.location.href = "portal.html";
+      }, 600);
+    });
+
+    document.getElementById("signupBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if(!email || !password){
+        showMsg("Enter email + password first, then click Create Account.", "error");
+        return;
+      }
+
+      showMsg("Creating account… check your email for confirmation.", "");
+
+      const { data, error } = await supabase.auth.signUp({ email, password });
+
+      if(error){
+        showMsg("Sign up failed:\n" + error.message, "error");
+        return;
+      }
+
+      showMsg("Account created.\nNow open your email and click the confirmation link, then come back and Login.", "ok");
+    });
+  </script>
 </body>
 </html>
