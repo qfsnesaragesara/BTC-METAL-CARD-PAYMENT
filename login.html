@@ -36,6 +36,7 @@
         var(--bg);
       color:var(--text);
     }
+
     .card{
       width:100%;
       max-width:460px;
@@ -45,7 +46,10 @@
       border:1px solid var(--border);
       box-shadow:0 28px 90px rgba(0,0,0,0.55);
       backdrop-filter: blur(22px);
+      position:relative;
+      z-index:1;
     }
+
     .brand{
       display:flex;
       align-items:center;
@@ -69,7 +73,13 @@
       outline:none;
       font-size:14px;
     }
-    .row{display:flex;gap:10px;margin-top:16px}
+    .row{
+      display:flex;
+      gap:10px;
+      margin-top:16px;
+      position:relative;
+      z-index:10;
+    }
     button{
       flex:1;
       padding:12px 14px;
@@ -80,10 +90,14 @@
       letter-spacing:0.06em;
       text-transform:uppercase;
       font-size:12px;
+      position:relative;
+      z-index:10;
+      pointer-events:auto;
     }
     button:disabled{opacity:0.65;cursor:not-allowed}
     .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
     .btn-secondary{background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.5);color:var(--text)}
+
     .msg{
       margin-top:14px;
       padding:10px 12px;
@@ -95,12 +109,34 @@
       display:none;
       line-height:1.4;
       white-space:pre-wrap;
+      position:relative;
+      z-index:10;
     }
     .msg.show{display:block}
     .msg.error{border-color:rgba(239,68,68,0.45)}
     .msg.ok{border-color:rgba(34,197,94,0.45)}
     .tiny{margin-top:10px;color:var(--muted);font-size:12px}
+
+    /* debug badge */
+    .debug-badge{
+      position:fixed;
+      left:12px;
+      bottom:12px;
+      z-index:99999;
+      background:rgba(2,6,23,0.7);
+      border:1px solid rgba(148,163,184,0.35);
+      color:#cbd5e1;
+      padding:8px 10px;
+      border-radius:12px;
+      font-size:12px;
+      user-select:none;
+      pointer-events:none;
+    }
   </style>
+
+  <!-- ✅ important: load scripts AFTER DOM exists -->
+  <script src="/supabase.min.js" defer></script>
+  <script src="/login.js" defer></script>
 </head>
 
 <body>
@@ -115,10 +151,10 @@
     </div>
 
     <label for="email">Email</label>
-    <input id="email" type="email" placeholder="you@example.com" autocomplete="username" required>
+    <input id="email" type="email" placeholder="you@example.com" autocomplete="username">
 
     <label for="password">Password</label>
-    <input id="password" type="password" placeholder="Your password" autocomplete="current-password" required>
+    <input id="password" type="password" placeholder="Your password" autocomplete="current-password">
 
     <div class="row">
       <button id="loginBtn" type="button" class="btn-primary">Login</button>
@@ -127,14 +163,12 @@
 
     <div id="msg" class="msg"></div>
 
+    <div class="tiny">
+      Force refresh: <b>login.html?v=999</b>
+    </div>
   </div>
 
-  <!-- MUST be self-hosted on your site -->
-  <script src="/supabase.min.js"></script>
-
-  <!-- ✅ IMPORTANT: no inline JS (CSP-safe) -->
-  <script src="/login.js"></script>
+  <div class="debug-badge" id="dbg">dbg: loading…</div>
 
 </body>
 </html>
-
