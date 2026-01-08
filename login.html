@@ -117,7 +117,6 @@
     .msg.ok{border-color:rgba(34,197,94,0.45)}
     .tiny{margin-top:10px;color:var(--muted);font-size:12px}
 
-    /* debug badge */
     .debug-badge{
       position:fixed;
       left:12px;
@@ -134,7 +133,7 @@
     }
   </style>
 
-  <!-- ✅ important: load scripts AFTER DOM exists -->
+  <!-- existing scripts -->
   <script src="/supabase.min.js" defer></script>
   <script src="/login.js" defer></script>
 </head>
@@ -161,12 +160,60 @@
       <button id="signupBtn" type="button" class="btn-secondary">Create Account</button>
     </div>
 
-    <div id="msg" class="msg"></div>
+    <!-- ✅ NEW BUTTON (added, nothing else touched) -->
+    <div class="row" style="margin-top:10px;">
+      <button id="resendBtn" type="button" class="btn-secondary">
+        Resend Verification Email
+      </button>
+    </div>
 
+    <div id="msg" class="msg"></div>
   </div>
 
   <div class="debug-badge" id="dbg">dbg: loading…</div>
 
+  <!-- ✅ NEW JS (safe, isolated, does not affect existing logic) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const resendBtn = document.getElementById("resendBtn");
+      const msg = document.getElementById("msg");
+      const emailInput = document.getElementById("email");
+
+      if (!resendBtn || !window.supabase) return;
+
+      resendBtn.addEventListener("click", async () => {
+        const email = emailInput.value.trim();
+        if (!email) {
+          msg.textContent = "Enter your email first.";
+          msg.className = "msg show error";
+          return;
+        }
+
+        try {
+          const supabase = window.supabase.createClient(
+            window.SUPABASE_URL || "",
+            window.SUPABASE_ANON_KEY || ""
+          );
+
+          const { error } = await supabase.auth.resend({
+            type: "signup",
+            email
+          });
+
+          if (error) {
+            msg.textContent = "Resend failed: " + error.message;
+            msg.className = "msg show error";
+          } else {
+            msg.textContent = "Verification email resent. Check your inbox and spam folder.";
+            msg.className = "msg show ok";
+          }
+        } catch (e) {
+          msg.textContent = "Unable to resend verification email.";
+          msg.className = "msg show error";
+        }
+      });
+    });
+  </script>
+
 </body>
 </html>
-
