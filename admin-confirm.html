@@ -7,7 +7,7 @@
 
   <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
 
-  <!-- Supabase JS -->
+  <!-- If CDN is blocked for you, replace this line with: <script src="/supabase.min.js"></script> -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -217,10 +217,10 @@
 
   <script>
     // =========================
-    // ✅ PASTE YOUR SUPABASE HERE
+    // ✅ YOUR REAL SUPABASE KEYS
     // =========================
-    const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL";
-    const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY";
+    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -269,8 +269,41 @@
       return t.length > 18 ? (t.slice(0,10) + "…" + t.slice(-8)) : t;
     }
 
+    // ✅ Admin check using admin_users table
+    async function ensureAdminOrKick(){
+      const { data: u, error: ue } = await supabase.auth.getUser();
+      if(ue || !u?.user){
+        setSignedInUI(false);
+        return false;
+      }
+
+      const user = u.user;
+
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if(error || !data){
+        showToast(loginToast, "Not authorized (admin only).");
+        try { await supabase.auth.signOut(); } catch {}
+        setSignedInUI(false);
+        return false;
+      }
+
+      return true;
+    }
+
     async function loadPending(){
       rowsEl.innerHTML = `<tr><td colspan="7" class="muted">Loading…</td></tr>`;
+
+      const ok = await ensureAdminOrKick();
+      if(!ok){
+        rowsEl.innerHTML = `<tr><td colspan="7" class="muted">Not authorized.</td></tr>`;
+        return;
+      }
+
       const { data, error } = await supabase.rpc("list_pending_confirmations");
       if(error){
         rowsEl.innerHTML = `<tr><td colspan="7" class="muted">Error: ${error.message}</td></tr>`;
@@ -300,9 +333,11 @@
         rowsEl.appendChild(tr);
       });
 
-      // Attach approve handlers
       rowsEl.querySelectorAll("button[data-email]").forEach(btn => {
         btn.addEventListener("click", async () => {
+          const ok = await ensureAdminOrKick();
+          if(!ok) return;
+
           const email = decodeURIComponent(btn.dataset.email || "");
           const txid = decodeURIComponent(btn.dataset.txid || "");
           btn.disabled = true;
@@ -336,7 +371,6 @@
       });
     }
 
-    // Login
     loginBtn.addEventListener("click", async () => {
       const email = (emailEl.value || "").trim();
       const password = passEl.value || "";
@@ -358,25 +392,36 @@
         return;
       }
 
-      showToast(loginToast, "Signed in.");
+      const ok = await ensureAdminOrKick();
+      if(!ok) return;
+
+      showToast(loginToast, "Signed in (admin).");
       setSignedInUI(true);
       await loadPending();
     });
 
-    // Logout
     logoutBtn.addEventListener("click", async () => {
       await supabase.auth.signOut();
       setSignedInUI(false);
+      showToast(loginToast, "Signed out.");
     });
 
     refreshBtn.addEventListener("click", loadPending);
 
-    // Initial
     (async function boot(){
       const { data } = await supabase.auth.getSession();
       const hasSession = !!data?.session;
-      setSignedInUI(hasSession);
-      if(hasSession) await loadPending();
+
+      if(!hasSession){
+        setSignedInUI(false);
+        return;
+      }
+
+      const ok = await ensureAdminOrKick();
+      if(!ok) return;
+
+      setSignedInUI(true);
+      await loadPending();
     })();
   </script>
 </body>
