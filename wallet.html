@@ -312,8 +312,8 @@
         <button class="btn btn-secondary">Back to Order</button>
       </a>
 
-      <!-- DIRECT LINK BUTTON — ALWAYS WORKS -->
-      <a href="confirmation-page.html" style="flex:1; text-decoration:none;">
+      <!-- ONLY CHANGE: add id so JS can append params -->
+      <a id="paidLink" href="confirmation-page.html" style="flex:1; text-decoration:none;">
         <div class="btn btn-primary" style="text-align:center;">I Have Paid</div>
       </a>
     </div>
@@ -346,6 +346,7 @@ const copyBtn = document.getElementById("copyBtn");
 const backToOrder = document.getElementById("backToOrder");
 const payTimer = document.getElementById("payTimer");
 const qrCanvas = document.getElementById("qrCanvas");
+const paidLink = document.getElementById("paidLink");
 
 let cardType = qs("type") || "gold";
 let qty = Number(qs("qty") || 1);
@@ -365,6 +366,13 @@ addrShort.innerText = addr.slice(0,8) + "…" + addr.slice(-8);
 backToOrder.href =
   "order.html?" +
   new URLSearchParams({ type: cardType, qty, usd, btc, addr }).toString();
+
+/* ✅ NEW: pass params into confirmation-page.html (no behavior change) */
+if (paidLink) {
+  paidLink.href =
+    "confirmation-page.html?" +
+    new URLSearchParams({ type: cardType, qty, usd, btc, addr }).toString();
+}
 
 async function ensureBtcAmount(){
   if(btc) return Number(btc);
