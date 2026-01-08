@@ -219,7 +219,7 @@
 
     <div class="header-actions">
       <span id="statusBadge" class="badge pending">Pending</span>
-      <a class="pill" href="login.html">Logout</a>
+      <button id="logoutBtn" class="pill" type="button">Logout</button>
     </div>
   </header>
 
@@ -299,22 +299,17 @@
 
 <script>
   /*********************************************************
-   * CONFIG — paste your real Supabase credentials here
+   * CONFIG — your Supabase credentials
    *********************************************************/
   const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   /*********************************************************
    * Helpers
    *********************************************************/
   const $ = (id) => document.getElementById(id);
-
-  const email =
-    localStorage.getItem("qfsEmail") ||
-    localStorage.getItem("memberEmail") ||
-    "";
-
-  $("emailCell").textContent = email || "—";
 
   function fmtUSD(n){
     return "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -401,6 +396,40 @@
   }
 
   /*********************************************************
+   * ✅ AUTH GUARD + WELCOME EMAIL (Edge Function)
+   *********************************************************/
+  let CURRENT_EMAIL = "";
+
+  async function requireSessionOrRedirect(){
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      window.location.href = "login.html";
+      return null;
+    }
+    const session = data?.session || null;
+    if (!session) {
+      window.location.href = "login.html";
+      return null;
+    }
+    const userEmail = session.user?.email || "";
+    CURRENT_EMAIL = userEmail;
+    $("emailCell").textContent = userEmail || "—";
+    return session;
+  }
+
+  async function triggerWelcomeEmailOnce(){
+    // Server-side function already dedupes using welcome_emails, so we can safely call it.
+    try{
+      const { data, error } = await supabase.functions.invoke("send-welcome", { body: {} });
+      // Optional: debug
+      // console.log("send-welcome:", { data, error });
+    } catch (e) {
+      // Silent fail (portal still works even if email fails)
+      // console.warn("send-welcome invoke failed", e);
+    }
+  }
+
+  /*********************************************************
    * Main — auto-check admin confirmation
    * Looks up latest submission by email in payment_submissions
    *********************************************************/
@@ -424,20 +453,12 @@
     // Show allocation from fallback immediately (nice UX)
     setAllocationUI(fallbackTier, fallbackQty);
 
-    // If no email saved, we can't lookup
+    // Require email from session
+    const email = (CURRENT_EMAIL || "").trim();
     if(!email){
-      $("btcBalance").textContent = "Login email not found. Please login again.";
+      $("btcBalance").textContent = "Session email not found. Please login again.";
       return;
     }
-
-    // If keys not set, keep safe fallback (no crash)
-    if(!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes("PASTE_")){
-      $("btcBalance").textContent = "Supabase not connected yet (keys not set).";
-      return;
-    }
-
-    // Create client
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Query latest submission for this email
     try{
@@ -512,15 +533,26 @@
     alert("Receive is enabled for Active accounts. (Next step: build real Receive flow.)");
   });
 
-  // Initial load
-  checkStatusAndUpdateUI();
+  // Logout (real signout)
+  $("logoutBtn").addEventListener("click", async () => {
+    try { await supabase.auth.signOut(); } catch {}
+    window.location.href = "login.html";
+  });
 
-  // Auto refresh every 20 seconds (so it unlocks without reload)
-  setInterval(checkStatusAndUpdateUI, 20000);
+  // Boot
+  (async () => {
+    const session = await requireSessionOrRedirect();
+    if(!session) return;
+
+    // ✅ Send welcome email + admin alert once per user (deduped server-side)
+    await triggerWelcomeEmailOnce();
+
+    // Initial load
+    await checkStatusAndUpdateUI();
+
+    // Auto refresh every 20 seconds
+    setInterval(checkStatusAndUpdateUI, 20000);
+  })();
 </script>
 </body>
 </html>
-
-
-
-
