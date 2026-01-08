@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin • Order Confirmation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --card:rgba(255,255,255,.08); --border:rgba(255,255,255,.14);
+      --text:#eaf0ff; --muted:rgba(234,240,255,.72);
+      --gold:#f5c451; --blue:#0ea5e9; --danger:#ffb4b4; --ok:#bfffd6;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:Poppins,system-ui,Segoe UI,Roboto,Arial; color:var(--text);
+      background:
+        radial-gradient(900px 500px at 20% 10%, rgba(14,165,233,.18), transparent 60%),
+        radial-gradient(800px 500px at 80% 30%, rgba(245,196,81,.12), transparent 55%),
+        linear-gradient(180deg, #040617 0%, #070a1f 100%);
+      min-height:100vh;
+    }
+    .top{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:16px 18px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      position:sticky; top:0;
+      background:rgba(4,6,23,.78);
+      backdrop-filter:blur(10px);
+      z-index:20;
+    }
+    .brand{display:flex; gap:12px; align-items:center; min-width:0}
+    .logo{
+      width:42px; height:42px; border-radius:12px;
+      background:linear-gradient(135deg, rgba(245,196,81,.95), rgba(14,165,233,.85));
+      box-shadow:0 18px 45px rgba(0,0,0,.35);
+      flex:0 0 auto;
+    }
+    .title{font-weight:900; letter-spacing:.2px; line-height:1.1}
+    .sub{font-size:12px; color:rgba(234,240,255,.65)}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    button,a.btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:900;
+      text-decoration:none;
+    }
+    .primary{background:var(--blue); color:#00131f; border-color:rgba(14,165,233,.35)}
+    .gold{background:linear-gradient(135deg, rgba(245,196,81,.92), rgba(14,165,233,.75)); color:#00131f; border-color:rgba(245,196,81,.30)}
+    .danger{background:rgba(255,0,0,.12); border-color:rgba(255,0,0,.25)}
+    .wrap{max-width:1100px; margin:0 auto; padding:18px;}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:0 20px 70px rgba(0,0,0,.35);
+      padding:16px;
+      backdrop-filter: blur(10px);
+    }
+    .msg{font-size:13px; margin-top:10px; color:var(--muted)}
+    .msg.err{color:var(--danger)}
+    .msg.ok{color:var(--ok)}
+    table{width:100%; border-collapse:separate; border-spacing:0 10px;}
+    th{font-size:12px; color:rgba(234,240,255,.65); text-align:left; padding:0 10px;}
+    td{
+      padding:12px 10px;
+      background:rgba(0,0,0,.20);
+      border-top:1px solid rgba(255,255,255,.10);
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    td:first-child{border-left:1px solid rgba(255,255,255,.10); border-top-left-radius:14px; border-bottom-left-radius:14px;}
+    td:last-child{border-right:1px solid rgba(255,255,255,.10); border-top-right-radius:14px; border-bottom-right-radius:14px;}
+    .pill{
+      display:inline-flex; align-items:center;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      font-size:12px; font-weight:900;
+      background:rgba(0,0,0,.18);
+    }
+    .small{font-size:12px;color:rgba(234,240,255,.72)}
+    input{
+      width:100%;
+      padding:10px 11px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.25);
+      color:var(--text);
+      outline:none;
+    }
+    code{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div style="min-width:0">
+        <div class="title">Admin • Order Confirmation</div>
+        <div class="sub" id="subLine">Checking admin access…</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="pill" id="emailPill">—</span>
+      <button id="refreshBtn">Refresh</button>
+      <a class="btn" href="./portal.html">Portal</a>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+        <div>
+          <div style="font-weight:900">Pending Orders</div>
+          <div class="small">Confirming an order triggers automatic activation (tier + qty + unlocks transfers).</div>
+        </div>
+
+        <div style="min-width:260px; max-width:380px; width:100%;">
+          <div class="small">Search email</div>
+          <input id="searchEmail" placeholder="buyer@email.com" />
+        </div>
+      </div>
+
+      <div id="msg" class="msg"></div>
+
+      <div style="overflow:auto; margin-top:10px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Tier</th>
+              <th>Qty</th>
+              <th>Created</th>
+              <th>Note</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr><td colspan="6" class="small">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="msg small" style="margin-top:10px;">
+        If you get “not authorized”, add your admin user id to <code>public.admin_users</code>.
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // =========================
+    // PUT YOUR VALUES HERE
+    // =========================
+    const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const subLine = document.getElementById("subLine");
+    const emailPill = document.getElementById("emailPill");
+    const msgEl = document.getElementById("msg");
+    const rowsEl = document.getElementById("rows");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const searchEmail = document.getElementById("searchEmail");
+
+    function setMsg(text, type){
+      msgEl.textContent = text || "";
+      msgEl.className = "msg " + (type || "");
+    }
+
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    async function requireSession(){
+      const { data } = await supabase.auth.getSession();
+      if(!data?.session){
+        window.location.href = "./login.html";
+        return null;
+      }
+      return data.session;
+    }
+
+    async function requireAdmin(){
+      const { data, error } = await supabase.rpc("is_admin");
+      if(error) return { ok:false, reason:error.message };
+      if(data !== true) return { ok:false, reason:"Not an admin" };
+      return { ok:true };
+    }
+
+    function renderEmpty(text){
+      rowsEl.innerHTML = `<tr><td colspan="6" class="small">${esc(text)}</td></tr>`;
+    }
+
+    async function loadPending(){
+      setMsg("", "");
+      renderEmpty("Loading…");
+
+      const q = (searchEmail.value || "").trim().toLowerCase();
+
+      let query = supabase
+        .from("card_orders")
+        .select("id,user_id,purchaser_email,tier,qty,status,created_at,note")
+        .eq("status","pending")
+        .order("created_at", { ascending:false })
+        .limit(50);
+
+      if(q){
+        query = query.ilike("purchaser_email", `%${q}%`);
+      }
+
+      const { data, error } = await query;
+
+      if(error){
+        renderEmpty("Error loading orders.");
+        setMsg(error.message, "err");
+        return;
+      }
+
+      if(!data || data.length === 0){
+        renderEmpty("No pending orders.");
+        return;
+      }
+
+      rowsEl.innerHTML = "";
+      data.forEach(o => {
+        const tr = document.createElement("tr");
+        const created = new Date(o.created_at).toLocaleString();
+
+        tr.innerHTML = `
+          <td>
+            <div style="font-weight:900">${esc(o.purchaser_email || "—")}</div>
+            <div class="small">User: ${esc(String(o.user_id).slice(0,8))}…</div>
+          </td>
+          <td><span class="pill">${esc(String(o.tier).toUpperCase())}</span></td>
+          <td><span class="pill">${esc(String(o.qty))}</span></td>
+          <td class="small">${esc(created)}</td>
+          <td style="min-width:220px">
+            <input data-note="${esc(o.id)}" placeholder="Optional note…" value="${esc(o.note || "")}">
+          </td>
+          <td style="min-width:220px">
+            <div class="row">
+              <button class="gold" data-confirm="${esc(o.id)}">Confirm</button>
+              <button class="danger" data-reject="${esc(o.id)}">Reject</button>
+            </div>
+          </td>
+        `;
+        rowsEl.appendChild(tr);
+      });
+
+      // wire actions
+      rowsEl.querySelectorAll("button[data-confirm]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-confirm");
+          await updateOrderStatus(id, "confirmed", btn);
+        });
+      });
+
+      rowsEl.querySelectorAll("button[data-reject]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-reject");
+          await updateOrderStatus(id, "rejected", btn);
+        });
+      });
+    }
+
+    async function updateOrderStatus(orderId, status, btn){
+      setMsg("", "");
+      btn.disabled = true;
+      const oldText = btn.textContent;
+      btn.textContent = "Working…";
+
+      // read note input
+      const noteInput = rowsEl.querySelector(`input[data-note="${CSS.escape(orderId)}"]`);
+      const note = (noteInput?.value || "").trim() || null;
+
+      const { error } = await supabase
+        .from("card_orders")
+        .update({ status, note })
+        .eq("id", orderId)
+        .eq("status","pending"); // prevent double-click updates
+
+      btn.disabled = false;
+      btn.textContent = oldText;
+
+      if(error){
+        setMsg(error.message, "err");
+        return;
+      }
+
+      if(status === "confirmed"){
+        setMsg("Confirmed. Activation triggered automatically.", "ok");
+      } else {
+        setMsg("Rejected.", "ok");
+      }
+
+      await loadPending();
+    }
+
+    refreshBtn.addEventListener("click", loadPending);
+    searchEmail.addEventListener("input", () => {
+      // small debounce
+      clearTimeout(window.__t);
+      window.__t = setTimeout(loadPending, 250);
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "./login.html";
+    });
+
+    (async () => {
+      const session = await requireSession();
+      if(!session) return;
+
+      emailPill.textContent = session.user.email || "Admin";
+
+      const admin = await requireAdmin();
+      if(!admin.ok){
+        subLine.textContent = "Access denied";
+        renderEmpty("Not authorized.");
+        setMsg(admin.reason || "Not authorized.", "err");
+        return;
+      }
+
+      subLine.textContent = "Admin access verified";
+      await loadPending();
+    })();
+  </script>
+</body>
+</html>
