@@ -229,7 +229,7 @@
     <!-- BALANCE -->
     <div class="card">
       <h2>Available Balance</h2>
-      <div class="sub">Balance becomes active after you order card</div>
+      <div class="sub">Balance becomes active after you order your access card</div>
 
       <div class="balance" id="balance">$0.00</div>
       <div class="btc" id="btcBalance">—</div>
@@ -240,7 +240,7 @@
       </div>
 
       <div class="status" id="lockNote">
-        🔒 Send & Receive are locked until you order your access card.
+        🔒 Send & Receive are locked until you activate your access card.
       </div>
 
       <div class="mutedline" id="lastChecked">Checking confirmation…</div>
@@ -355,7 +355,7 @@
     $("receiveBtn").classList.add("btn-disabled");
     $("sendBtn").classList.remove("btn-primary");
     $("receiveBtn").classList.remove("btn-primary");
-    $("lockNote").textContent = "🔒 Send & Receive are locked until admin confirms your order.";
+    $("lockNote").textContent = "🔒 Send & Receive are locked until you activate your access card.";
   }
 
   function unlockActions(){
@@ -523,4 +523,5 @@
 </script>
 </body>
 </html>
+
 
