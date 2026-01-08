@@ -5,12 +5,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Member Login — QFS</title>
 
+  <!-- reduce caching issues on GitHub Pages -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <link rel="icon" type="image/png"
     href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
 
   <style>
     :root{
       --bg:#020617;
+      --glass:rgba(15,23,42,0.86);
       --border:rgba(148,163,184,0.45);
       --text:#e5e7eb;
       --muted:#94a3b8;
@@ -27,8 +33,8 @@
       padding:24px;
       font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
       background:
-        radial-gradient(circle at top, rgba(56,189,248,0.35), transparent 55%),
-        radial-gradient(circle at bottom, rgba(147,51,234,0.4), transparent 60%),
+        radial-gradient(circle at top, rgba(56,189,248,0.32), transparent 55%),
+        radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
         var(--bg);
       color:var(--text);
     }
@@ -36,192 +42,193 @@
       width:100%;
       max-width:460px;
       padding:26px;
-      border-radius:24px;
-      background:rgba(15,23,42,0.92);
+      border-radius:26px;
+      background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.82));
       border:1px solid var(--border);
-      box-shadow:0 25px 80px rgba(0,0,0,.55);
-      backdrop-filter: blur(20px);
+      box-shadow:0 28px 90px rgba(0,0,0,0.55);
+      backdrop-filter: blur(22px);
     }
     .brand{
       display:flex;
-      gap:12px;
       align-items:center;
+      gap:12px;
       margin-bottom:14px;
     }
     .brand img{
-      width:44px;height:44px;border-radius:10px;
-      border:1px solid rgba(255,255,255,.2);
+      width:44px;height:44px;border-radius:12px;
+      border:1px solid rgba(255,255,255,0.18);
     }
-    h1{margin:0;font-size:20px;font-weight:800}
-    p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    h1{margin:0;font-size:20px;font-weight:850;letter-spacing:0.02em}
+    p{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
     label{display:block;margin-top:14px;margin-bottom:6px;color:var(--muted);font-size:12px}
     input{
       width:100%;
       padding:12px 14px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.15);
-      background:rgba(255,255,255,.06);
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.16);
+      background:rgba(255,255,255,0.06);
       color:var(--text);
+      outline:none;
       font-size:14px;
     }
     .row{display:flex;gap:10px;margin-top:16px}
     button{
       flex:1;
-      padding:12px;
+      padding:12px 14px;
       border-radius:999px;
       border:none;
-      font-weight:800;
-      font-size:12px;
       cursor:pointer;
-      letter-spacing:.05em;
+      font-weight:800;
+      letter-spacing:0.06em;
       text-transform:uppercase;
+      font-size:12px;
     }
+    button:disabled{opacity:0.65;cursor:not-allowed}
     .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
-    .btn-secondary{
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(148,163,184,.45);
-      color:var(--text);
-    }
+    .btn-secondary{background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.5);color:var(--text)}
     .msg{
-      display:none;
       margin-top:14px;
       padding:10px 12px;
-      border-radius:12px;
-      border:1px solid rgba(148,163,184,.35);
-      background:rgba(2,6,23,.45);
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,0.35);
+      background:rgba(2,6,23,0.4);
+      color:var(--text);
       font-size:13px;
+      display:none;
+      line-height:1.4;
       white-space:pre-wrap;
     }
     .msg.show{display:block}
-    .msg.error{border-color:rgba(239,68,68,.45)}
-    .msg.ok{border-color:rgba(34,197,94,.45)}
-    .tiny{margin-top:10px;font-size:12px;color:var(--muted)}
+    .msg.error{border-color:rgba(239,68,68,0.45)}
+    .msg.ok{border-color:rgba(34,197,94,0.45)}
+    .tiny{margin-top:10px;color:var(--muted);font-size:12px}
   </style>
 </head>
 
 <body>
 
-<div class="card">
-  <div class="brand">
-    <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
-    <div>
-      <h1>Member Login</h1>
-      <p>Access your portal balance and membership status</p>
+  <div class="card">
+    <div class="brand">
+      <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="Logo">
+      <div>
+        <h1>Member Login</h1>
+        <p>Sign in to view your portal balance and status.</p>
+      </div>
+    </div>
+
+    <label for="email">Email</label>
+    <input id="email" type="email" placeholder="you@example.com" autocomplete="username" required>
+
+    <label for="password">Password</label>
+    <input id="password" type="password" placeholder="Your password" autocomplete="current-password" required>
+
+    <div class="row">
+      <button id="loginBtn" type="button" class="btn-primary">Login</button>
+      <button id="signupBtn" type="button" class="btn-secondary">Create Account</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <div class="tiny">
+      If you just updated files on GitHub Pages, open <b>login.html?v=1</b> to force refresh.
     </div>
   </div>
 
-  <label>Email</label>
-  <input id="email" type="email" placeholder="you@example.com">
+  <!-- IMPORTANT: self-hosted file on your domain (same folder as login.html) -->
+  <script src="/supabase.min.js"></script>
 
-  <label>Password</label>
-  <input id="password" type="password" placeholder="••••••••">
+  <script>
+    // ✅ Your Supabase credentials (already inserted)
+    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-  <div class="row">
-    <button id="loginBtn" class="btn-primary" type="button">Login</button>
-    <button id="signupBtn" class="btn-secondary" type="button">Create Account</button>
-  </div>
+    const msgEl = document.getElementById("msg");
+    const loginBtn = document.getElementById("loginBtn");
+    const signupBtn = document.getElementById("signupBtn");
 
-  <div id="msg" class="msg"></div>
+    function showMsg(text, type=""){
+      msgEl.className = "msg show " + (type || "");
+      msgEl.textContent = text;
+    }
 
-  <div class="tiny">
-    If login does nothing, hard refresh or add <b>?v=2</b> to the URL.
-  </div>
-</div>
+    function setBusy(b){
+      loginBtn.disabled = b;
+      signupBtn.disabled = b;
+    }
 
-<!-- ✅ FIX: use unpkg (NOT jsdelivr) -->
-<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    // Hard fail if supabase script isn't loading from your domain
+    if (!window.supabase || typeof window.supabase.createClient !== "function") {
+      showMsg("❌ Supabase library not found.\nMake sure /supabase.min.js exists on your GitHub Pages site.", "error");
+      throw new Error("Supabase library missing");
+    }
 
-<script>
-/* ================= CONFIG ================= */
-const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ================= ELEMENTS ================= */
-const msg = document.getElementById("msg");
-const loginBtn = document.getElementById("loginBtn");
-const signupBtn = document.getElementById("signupBtn");
+    showMsg("Auth ready ✅", "");
 
-/* ================= HELPERS ================= */
-function show(text, type=""){
-  msg.className = "msg show " + type;
-  msg.textContent = text;
-}
+    async function doLogin(){
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
 
-/* ================= INIT ================= */
-if (!window.supabase) {
-  show("❌ Supabase failed to load (CSP/CDN blocked)", "error");
-  throw new Error("Supabase not loaded");
-}
+      if (!email || !password){
+        showMsg("Please enter email and password.", "error");
+        return;
+      }
 
-if (
-  SUPABASE_URL.includes("PASTE") ||
-  SUPABASE_ANON_KEY.includes("PASTE")
-){
-  show("⚠️ Supabase keys not set", "error");
-} else {
-  show("Auth ready ✅");
-}
+      setBusy(true);
+      showMsg("Signing in…", "");
 
-const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+      try{
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error){
+          showMsg("Login failed: " + error.message, "error");
+          return;
+        }
 
-/* ================= ACTIONS ================= */
-async function doLogin(){
-  const email = emailInput();
-  const password = passwordInput();
+        showMsg("Login successful ✅ Redirecting…", "ok");
+        setTimeout(() => { window.location.href = "portal.html"; }, 700);
+      } catch (e){
+        showMsg("Login failed: " + (e?.message || "Unknown error"), "error");
+      } finally{
+        setBusy(false);
+      }
+    }
 
-  if (!email || !password) {
-    show("Email and password required", "error");
-    return;
-  }
+    async function doSignup(){
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
 
-  show("Signing in…");
+      if (!email || !password){
+        showMsg("Please enter email and password.", "error");
+        return;
+      }
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+      setBusy(true);
+      showMsg("Creating account…", "");
 
-  if (error) {
-    show("Login failed: " + error.message, "error");
-    return;
-  }
+      try{
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.origin + "/login.html" }
+        });
 
-  show("Login successful ✅ Redirecting…", "ok");
-  setTimeout(() => location.href = "portal.html", 800);
-}
+        if (error){
+          showMsg("Signup failed: " + error.message, "error");
+          return;
+        }
 
-async function doSignup(){
-  const email = emailInput();
-  const password = passwordInput();
+        showMsg("Account created ✅ Check your email to confirm, then login.", "ok");
+      } catch (e){
+        showMsg("Signup failed: " + (e?.message || "Unknown error"), "error");
+      } finally{
+        setBusy(false);
+      }
+    }
 
-  if (!email || !password) {
-    show("Email and password required", "error");
-    return;
-  }
-
-  show("Creating account…");
-
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { emailRedirectTo: location.origin + "/login.html" }
-  });
-
-  if (error) {
-    show("Signup failed: " + error.message, "error");
-    return;
-  }
-
-  show("Account created ✅ Check your email", "ok");
-}
-
-function emailInput(){ return document.getElementById("email").value.trim(); }
-function passwordInput(){ return document.getElementById("password").value; }
-
-/* ================= EVENTS ================= */
-loginBtn.onclick = doLogin;
-signupBtn.onclick = doSignup;
-</script>
+    loginBtn.addEventListener("click", (e) => { e.preventDefault(); doLogin(); });
+    signupBtn.addEventListener("click", (e) => { e.preventDefault(); doSignup(); });
+  </script>
 
 </body>
 </html>
