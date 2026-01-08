@@ -4,12 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Member Login — QFS</title>
-  <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
+
+  <link rel="icon" type="image/png"
+    href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
 
   <style>
     :root{
       --bg:#020617;
-      --glass:rgba(15,23,42,0.86);
       --border:rgba(148,163,184,0.45);
       --text:#e5e7eb;
       --muted:#94a3b8;
@@ -26,8 +27,8 @@
       padding:24px;
       font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
       background:
-        radial-gradient(circle at top, rgba(56,189,248,0.32), transparent 55%),
-        radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
+        radial-gradient(circle at top, rgba(56,189,248,0.35), transparent 55%),
+        radial-gradient(circle at bottom, rgba(147,51,234,0.4), transparent 60%),
         var(--bg);
       color:var(--text);
     }
@@ -35,227 +36,191 @@
       width:100%;
       max-width:460px;
       padding:26px;
-      border-radius:26px;
-      background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.82));
+      border-radius:24px;
+      background:rgba(15,23,42,0.92);
       border:1px solid var(--border);
-      box-shadow:0 28px 90px rgba(0,0,0,0.55);
-      backdrop-filter: blur(22px);
+      box-shadow:0 25px 80px rgba(0,0,0,.55);
+      backdrop-filter: blur(20px);
     }
     .brand{
       display:flex;
-      align-items:center;
       gap:12px;
+      align-items:center;
       margin-bottom:14px;
     }
     .brand img{
-      width:44px;height:44px;border-radius:12px;
-      border:1px solid rgba(255,255,255,0.18);
+      width:44px;height:44px;border-radius:10px;
+      border:1px solid rgba(255,255,255,.2);
     }
-    h1{margin:0;font-size:20px;font-weight:850;letter-spacing:0.02em}
-    p{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+    h1{margin:0;font-size:20px;font-weight:800}
+    p{margin:4px 0 0;color:var(--muted);font-size:13px}
     label{display:block;margin-top:14px;margin-bottom:6px;color:var(--muted);font-size:12px}
     input{
       width:100%;
       padding:12px 14px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,0.16);
-      background:rgba(255,255,255,0.06);
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.15);
+      background:rgba(255,255,255,.06);
       color:var(--text);
-      outline:none;
       font-size:14px;
     }
     .row{display:flex;gap:10px;margin-top:16px}
     button{
       flex:1;
-      padding:12px 14px;
+      padding:12px;
       border-radius:999px;
       border:none;
-      cursor:pointer;
       font-weight:800;
-      letter-spacing:0.06em;
-      text-transform:uppercase;
       font-size:12px;
+      cursor:pointer;
+      letter-spacing:.05em;
+      text-transform:uppercase;
     }
-    button:disabled{opacity:0.65;cursor:not-allowed}
     .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
-    .btn-secondary{background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.5);color:var(--text)}
+    .btn-secondary{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(148,163,184,.45);
+      color:var(--text);
+    }
     .msg{
+      display:none;
       margin-top:14px;
       padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(148,163,184,0.35);
-      background:rgba(2,6,23,0.4);
-      color:var(--text);
+      border-radius:12px;
+      border:1px solid rgba(148,163,184,.35);
+      background:rgba(2,6,23,.45);
       font-size:13px;
-      display:none;
-      line-height:1.4;
       white-space:pre-wrap;
     }
     .msg.show{display:block}
-    .msg.error{border-color:rgba(239,68,68,0.45)}
-    .msg.ok{border-color:rgba(34,197,94,0.45)}
-    .tiny{margin-top:10px;color:var(--muted);font-size:12px}
-    a{color:#7dd3fc;text-decoration:none}
+    .msg.error{border-color:rgba(239,68,68,.45)}
+    .msg.ok{border-color:rgba(34,197,94,.45)}
+    .tiny{margin-top:10px;font-size:12px;color:var(--muted)}
   </style>
 </head>
+
 <body>
 
-  <div class="card">
-    <div class="brand">
-      <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="Logo">
-      <div>
-        <h1>Member Login</h1>
-        <p>Sign in to view your portal balance and status.</p>
-      </div>
+<div class="card">
+  <div class="brand">
+    <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
+    <div>
+      <h1>Member Login</h1>
+      <p>Access your portal balance and membership status</p>
     </div>
-
-    <!-- IMPORTANT: onsubmit return false prevents page reload even if JS fails -->
-    <form id="loginForm" onsubmit="return false;">
-      <label for="email">Email</label>
-      <input id="email" type="email" placeholder="you@example.com" required>
-
-      <label for="password">Password</label>
-      <input id="password" type="password" placeholder="Your password" required>
-
-      <div class="row">
-        <!-- IMPORTANT: type="button" so it never triggers submit reload -->
-        <button id="loginBtn" type="button" class="btn-primary">Login</button>
-        <button id="signupBtn" type="button" class="btn-secondary">Create Account</button>
-      </div>
-
-      <div id="msg" class="msg"></div>
-
-      <div class="tiny" id="envNote"></div>
-      <div class="tiny">
-        Admin note: if you’ve never created an account in Supabase yet, click <b>Create Account</b> once (then confirm email).
-      </div>
-
-      <noscript>
-        <div class="msg show error">❌ JavaScript is disabled in your browser. Enable it to login.</div>
-      </noscript>
-    </form>
   </div>
 
+  <label>Email</label>
+  <input id="email" type="email" placeholder="you@example.com">
+
+  <label>Password</label>
+  <input id="password" type="password" placeholder="••••••••">
+
+  <div class="row">
+    <button id="loginBtn" class="btn-primary" type="button">Login</button>
+    <button id="signupBtn" class="btn-secondary" type="button">Create Account</button>
+  </div>
+
+  <div id="msg" class="msg"></div>
+
+  <div class="tiny">
+    If login does nothing, clear cache or add <b>?v=1</b> to the URL.
+  </div>
+</div>
+
+<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <script>
-  // ✅ PASTE YOUR REAL VALUES HERE
-  const SUPABASE_URL = "PASTE_SUPABASE_URL_HERE";
-  const SUPABASE_ANON_KEY = "PASTE_SUPABASE_ANON_KEY_HERE";
+/* ================= CONFIG ================= */
+const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-  function $(id){ return document.getElementById(id); }
+/* ================= ELEMENTS ================= */
+const msg = document.getElementById("msg");
+const loginBtn = document.getElementById("loginBtn");
+const signupBtn = document.getElementById("signupBtn");
 
-  function showMsg(text, type){
-    const msgEl = $("msg");
-    if(!msgEl) { alert(text); return; }
-    msgEl.className = "msg show " + (type || "");
-    msgEl.textContent = text;
+/* ================= HELPERS ================= */
+function show(text, type=""){
+  msg.className = "msg show " + type;
+  msg.textContent = text;
+}
+
+/* ================= INIT ================= */
+if (!window.supabase) {
+  show("❌ Supabase library failed to load", "error");
+  throw new Error("Supabase not loaded");
+}
+
+if (
+  SUPABASE_URL.includes("PASTE") ||
+  SUPABASE_ANON_KEY.includes("PASTE")
+){
+  show("⚠️ Supabase keys not set", "error");
+} else {
+  show("Auth ready ✅");
+}
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+/* ================= ACTIONS ================= */
+async function doLogin(){
+  const email = emailInput();
+  const password = passwordInput();
+
+  if (!email || !password) {
+    show("Email and password required", "error");
+    return;
   }
 
-  function setBusy(isBusy){
-    $("loginBtn").disabled = isBusy;
-    $("signupBtn").disabled = isBusy;
+  show("Signing in…");
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    show("Login failed: " + error.message, "error");
+    return;
   }
 
-  function isMissingConfig(){
-    return (
-      !SUPABASE_URL || !SUPABASE_ANON_KEY ||
-      SUPABASE_URL.includes("https://qagktukzxtwbjrdgiben.supabase.co") ||
-      SUPABASE_ANON_KEY.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk")
-    );
+  show("Login successful ✅ Redirecting…", "ok");
+  setTimeout(() => location.href = "portal.html", 800);
+}
+
+async function doSignup(){
+  const email = emailInput();
+  const password = passwordInput();
+
+  if (!email || !password) {
+    show("Email and password required", "error");
+    return;
   }
 
-  // Catch ANY JS errors and show them on screen (so you’re never blind)
-  window.onerror = function(message, source, lineno, colno){
-    showMsg(
-      "❌ JavaScript error:\n" +
-      message + "\n" +
-      "Source: " + (source || "") + " (" + lineno + ":" + colno + ")",
-      "error"
-    );
-    return true;
-  };
+  show("Creating account…");
 
-  window.addEventListener("load", () => {
-    // Prove JS is running
-    $("envNote").innerHTML = `Running from: <b>${location.protocol}//</b>`;
-
-    if (!window.supabase || typeof window.supabase.createClient !== "function"){
-      showMsg("❌ Supabase JS did not load (CDN blocked/offline).", "error");
-      return;
-    }
-
-    if (isMissingConfig()){
-      showMsg("⚠️ Supabase keys not set.\nPaste SUPABASE_URL and SUPABASE_ANON_KEY, then refresh.", "error");
-      return;
-    }
-
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    showMsg("Auth ready ✅ (JS is running)", "");
-
-    async function doLogin(){
-      const email = $("email").value.trim();
-      const password = $("password").value;
-
-      if (!email || !password){
-        showMsg("Please enter email and password.", "error");
-        return;
-      }
-
-      setBusy(true);
-      showMsg("Signing in…", "");
-
-      try{
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error){
-          showMsg("Login failed: " + error.message, "error");
-          return;
-        }
-        showMsg("Login successful ✅ Redirecting…", "ok");
-        setTimeout(() => { window.location.href = "portal.html"; }, 600);
-      } catch (e){
-        showMsg("Login failed: " + (e && e.message ? e.message : "Unknown error"), "error");
-      } finally{
-        setBusy(false);
-      }
-    }
-
-    async function doCreate(){
-      const email = $("email").value.trim();
-      const password = $("password").value;
-
-      if (!email || !password){
-        showMsg("Please enter email and password.", "error");
-        return;
-      }
-
-      setBusy(true);
-      showMsg("Creating account…", "");
-
-      try{
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin + "/login.html" }
-        });
-
-        if (error){
-          showMsg("Signup failed: " + error.message, "error");
-          return;
-        }
-
-        showMsg("Account created ✅ Check your email to confirm, then log in.", "ok");
-      } catch (e){
-        showMsg("Signup failed: " + (e && e.message ? e.message : "Unknown error"), "error");
-      } finally{
-        setBusy(false);
-      }
-    }
-
-    $("loginBtn").addEventListener("click", (e) => { e.preventDefault(); doLogin(); });
-    $("signupBtn").addEventListener("click", (e) => { e.preventDefault(); doCreate(); });
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: location.origin + "/login.html" }
   });
+
+  if (error) {
+    show("Signup failed: " + error.message, "error");
+    return;
+  }
+
+  show("Account created ✅ Check your email", "ok");
+}
+
+function emailInput(){ return document.getElementById("email").value.trim(); }
+function passwordInput(){ return document.getElementById("password").value; }
+
+/* ================= EVENTS ================= */
+loginBtn.onclick = doLogin;
+signupBtn.onclick = doSignup;
 </script>
 
 </body>
