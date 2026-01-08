@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Member Login — QFS</title>
 
-  <!-- reduce caching issues on GitHub Pages -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -16,7 +15,6 @@
   <style>
     :root{
       --bg:#020617;
-      --glass:rgba(15,23,42,0.86);
       --border:rgba(148,163,184,0.45);
       --text:#e5e7eb;
       --muted:#94a3b8;
@@ -130,105 +128,15 @@
     <div id="msg" class="msg"></div>
 
     <div class="tiny">
-      If you just updated files on GitHub Pages, open <b>login.html?v=1</b> to force refresh.
+      If you just updated GitHub Pages, open <b>login.html?v=99</b> to force refresh.
     </div>
   </div>
 
-  <!-- IMPORTANT: self-hosted file on your domain (same folder as login.html) -->
+  <!-- MUST be self-hosted on your site -->
   <script src="/supabase.min.js"></script>
 
-  <script>
-    // ✅ Your Supabase credentials (already inserted)
-    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-
-    const msgEl = document.getElementById("msg");
-    const loginBtn = document.getElementById("loginBtn");
-    const signupBtn = document.getElementById("signupBtn");
-
-    function showMsg(text, type=""){
-      msgEl.className = "msg show " + (type || "");
-      msgEl.textContent = text;
-    }
-
-    function setBusy(b){
-      loginBtn.disabled = b;
-      signupBtn.disabled = b;
-    }
-
-    // Hard fail if supabase script isn't loading from your domain
-    if (!window.supabase || typeof window.supabase.createClient !== "function") {
-      showMsg("❌ Supabase library not found.\nMake sure /supabase.min.js exists on your GitHub Pages site.", "error");
-      throw new Error("Supabase library missing");
-    }
-
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    showMsg("Auth ready ✅", "");
-
-    async function doLogin(){
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-
-      if (!email || !password){
-        showMsg("Please enter email and password.", "error");
-        return;
-      }
-
-      setBusy(true);
-      showMsg("Signing in…", "");
-
-      try{
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error){
-          showMsg("Login failed: " + error.message, "error");
-          return;
-        }
-
-        showMsg("Login successful ✅ Redirecting…", "ok");
-        setTimeout(() => { window.location.href = "portal.html"; }, 700);
-      } catch (e){
-        showMsg("Login failed: " + (e?.message || "Unknown error"), "error");
-      } finally{
-        setBusy(false);
-      }
-    }
-
-    async function doSignup(){
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-
-      if (!email || !password){
-        showMsg("Please enter email and password.", "error");
-        return;
-      }
-
-      setBusy(true);
-      showMsg("Creating account…", "");
-
-      try{
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin + "/login.html" }
-        });
-
-        if (error){
-          showMsg("Signup failed: " + error.message, "error");
-          return;
-        }
-
-        showMsg("Account created ✅ Check your email to confirm, then login.", "ok");
-      } catch (e){
-        showMsg("Signup failed: " + (e?.message || "Unknown error"), "error");
-      } finally{
-        setBusy(false);
-      }
-    }
-
-    loginBtn.addEventListener("click", (e) => { e.preventDefault(); doLogin(); });
-    signupBtn.addEventListener("click", (e) => { e.preventDefault(); doSignup(); });
-  </script>
+  <!-- ✅ IMPORTANT: no inline JS (CSP-safe) -->
+  <script src="/login.js"></script>
 
 </body>
 </html>
