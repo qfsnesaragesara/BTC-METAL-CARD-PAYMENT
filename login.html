@@ -1,277 +1,202 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Member Login — QFS Portal</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Member Login — QFS</title>
 
-  <!-- Official website logo -->
-  <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
+<link rel="icon" type="image/png"
+  href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
 
-  <style>
-    :root{
-      --bg:#020617;
-      --text:#e5e7eb;
-      --muted:#94a3b8;
-      --accent:#38bdf8;
-      --accent2:#a855f7;
-      --glass:rgba(15,23,42,0.88);
-      --border:rgba(148,163,184,0.45);
-      --shadow:rgba(2,6,23,0.88);
-      --radius:18px;
-      --maxw:520px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:24px;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(circle at top, rgba(56,189,248,0.32), transparent 55%),
-        radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
-        var(--bg);
-    }
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    .wrap{
-      width:100%;
-      max-width:var(--maxw);
-    }
+<style>
+  :root{
+    --bg:#020617;
+    --glass:rgba(15,23,42,0.88);
+    --border:rgba(148,163,184,0.45);
+    --text:#e5e7eb;
+    --muted:#9ca3af;
+    --accent:#38bdf8;
+    --accent2:#a855f7;
+  }
 
-    .card{
-      background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.84));
-      border:1px solid var(--border);
-      border-radius:28px;
-      box-shadow: 0 28px 110px var(--shadow), 0 0 0 1px rgba(2,6,23,0.55) inset;
-      padding:22px;
-      backdrop-filter: blur(26px);
-      position:relative;
-      overflow:hidden;
-    }
+  *{box-sizing:border-box}
 
-    .card:before{
-      content:"";
-      position:absolute;
-      inset:-120px -120px auto auto;
-      width:320px;
-      height:320px;
-      background: radial-gradient(circle at center, rgba(56,189,248,0.22), transparent 60%);
-      pointer-events:none;
-    }
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:24px;
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    background:
+      radial-gradient(circle at top, rgba(56,189,248,0.32), transparent 55%),
+      radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
+      var(--bg);
+    color:var(--text);
+  }
 
-    .brand{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      text-align:center;
-      gap:10px;
-      margin-bottom:14px;
-    }
+  .card{
+    width:100%;
+    max-width:420px;
+    padding:28px;
+    border-radius:28px;
+    background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.86));
+    border:1px solid var(--border);
+    box-shadow:0 30px 120px rgba(2,6,23,0.95);
+    backdrop-filter:blur(26px);
+    text-align:center;
+  }
 
-    .logo{
-      width:92px;
-      height:92px;
-      border-radius:22px;
-      object-fit:cover;
-      box-shadow:
-        0 18px 60px rgba(2,6,23,0.95),
-        0 0 0 1px rgba(148,163,184,0.35);
-      filter: drop-shadow(0 10px 18px rgba(56,189,248,0.18));
-      background: rgba(255,255,255,0.06);
-    }
+  .logo{
+    width:72px;
+    height:72px;
+    border-radius:18px;
+    object-fit:cover;
+    margin-bottom:12px;
+    box-shadow:
+      0 14px 40px rgba(2,6,23,0.95),
+      0 0 0 1px rgba(148,163,184,0.35);
+  }
 
-    h1{
-      margin:0;
-      font-size:20px;
-      font-weight:900;
-      letter-spacing:-0.02em;
-      background:linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
-    }
+  h1{
+    margin:8px 0 6px;
+    font-size:22px;
+    font-weight:900;
+  }
 
-    .sub{
-      margin:0;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.55;
-    }
+  .sub{
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:18px;
+  }
 
-    .divider{
-      height:1px;
-      background:rgba(148,163,184,0.18);
-      margin:14px 0 16px;
-    }
+  label{
+    display:block;
+    text-align:left;
+    font-size:12px;
+    font-weight:700;
+    color:#cbd5f5;
+    margin-top:14px;
+  }
 
-    label{
-      display:block;
-      font-size:12px;
-      color:var(--muted);
-      letter-spacing:0.08em;
-      text-transform:uppercase;
-      margin:10px 0 6px;
-    }
+  input{
+    width:100%;
+    padding:12px 14px;
+    margin-top:6px;
+    border-radius:14px;
+    border:1px solid rgba(148,163,184,0.45);
+    background:rgba(255,255,255,0.06);
+    color:var(--text);
+    font-size:14px;
+    outline:none;
+  }
 
-    input{
-      width:100%;
-      padding:14px 14px;
-      border-radius:14px;
-      border:1px solid rgba(148,163,184,0.28);
-      background: rgba(2,6,23,0.40);
-      color: var(--text);
-      outline:none;
-      font-size:15px;
-    }
-    input:focus{
-      border-color: rgba(56,189,248,0.55);
-      box-shadow: 0 0 0 3px rgba(56,189,248,0.14);
-    }
+  .btn{
+    width:100%;
+    margin-top:20px;
+    padding:14px;
+    border-radius:999px;
+    border:none;
+    cursor:pointer;
+    font-weight:900;
+    font-size:14px;
+    background:linear-gradient(135deg, var(--accent), var(--accent2));
+    color:#fff;
+  }
 
-    .row{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-top:10px;
-      flex-wrap:wrap;
-    }
+  .error{
+    margin-top:14px;
+    font-size:13px;
+    color:#fecaca;
+    display:none;
+  }
 
-    .link{
-      color:#cbd5f5;
-      text-decoration:none;
-      font-size:12px;
-      opacity:0.9;
-    }
-    .link:hover{ opacity:1; text-decoration:underline; }
-
-    .btn{
-      width:100%;
-      margin-top:14px;
-      padding:14px 14px;
-      border-radius:999px;
-      border:none;
-      cursor:pointer;
-      font-weight:850;
-      letter-spacing:0.04em;
-      font-size:14px;
-      color:#fff;
-      background:linear-gradient(135deg, var(--accent), var(--accent2));
-      box-shadow: 0 18px 60px rgba(56,189,248,0.15);
-    }
-
-    .btn:disabled{
-      opacity:0.55;
-      cursor:not-allowed;
-    }
-
-    .status{
-      margin-top:12px;
-      font-size:12px;
-      color:var(--muted);
-      min-height:18px;
-    }
-
-    .footer-actions{
-      margin-top:14px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .btn-secondary{
-      flex:1;
-      padding:12px 14px;
-      border-radius:999px;
-      border:1px solid rgba(148,163,184,0.35);
-      background: rgba(255,255,255,0.06);
-      color:var(--text);
-      text-decoration:none;
-      text-align:center;
-      font-weight:800;
-      font-size:13px;
-    }
-    .btn-secondary:hover{
-      border-color: rgba(56,189,248,0.45);
-    }
-
-    @media (max-width:520px){
-      .card{ padding:18px; }
-      .footer-actions a{ flex: 1 1 100%; }
-    }
-  </style>
+  .muted-link{
+    margin-top:16px;
+    font-size:12px;
+    color:var(--muted);
+  }
+</style>
 </head>
 
 <body>
-  <main class="wrap">
-    <section class="card" aria-label="Member Login">
-      <div class="brand">
-        <img class="logo"
-             src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true"
-             alt="QFS NESARA GESARA Logo" />
-        <h1>Member Portal Login</h1>
-        <p class="sub">Login to view your balance and account status.<br>Send/Receive unlocks after admin confirmation.</p>
-      </div>
 
-      <div class="divider"></div>
+<div class="card">
+  <img class="logo"
+    src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true"
+    alt="QFS NESARA GESARA">
 
-      <form id="loginForm" autocomplete="on">
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" placeholder="you@example.com" required />
+  <h1>Member Login</h1>
+  <div class="sub">Secure access to your QFS allocation</div>
 
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" placeholder="Enter your password" required />
+  <form id="loginForm">
+    <label>Email Address</label>
+    <input type="email" id="email" required placeholder="you@example.com">
 
-        <div class="row">
-          <a class="link" href="order.html">Order a Card</a>
-          <a class="link" href="index.html">Back to Home</a>
-        </div>
+    <label>Password</label>
+    <input type="password" id="password" required placeholder="••••••••">
 
-        <button id="loginBtn" class="btn" type="submit">Access Portal</button>
-        <div id="status" class="status"></div>
-      </form>
+    <button class="btn" type="submit">Sign In</button>
+  </form>
 
-      <div class="footer-actions">
-        <a class="btn-secondary" href="portal.html">Go to Portal</a>
-        <a class="btn-secondary" href="confirmation-page.html">Confirm Payment</a>
-      </div>
-    </section>
-  </main>
+  <div id="errorBox" class="error"></div>
 
-  <script>
-    // Lightweight front-end guard (no keys needed for GitHub Pages).
-    // Later, when you connect Supabase auth, you’ll replace this block.
+  <div class="muted-link">
+    Access is available after card order & confirmation.
+  </div>
+</div>
 
-    const form = document.getElementById("loginForm");
-    const btn = document.getElementById("loginBtn");
-    const statusEl = document.getElementById("status");
+<script>
+  /************************************************
+   * CONFIG — paste your real Supabase credentials
+   ************************************************/
+  const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      btn.disabled = true;
-      statusEl.textContent = "Signing in…";
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
 
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+  const form = document.getElementById("loginForm");
+  const errorBox = document.getElementById("errorBox");
 
-      // Basic validation
-      if (!email || !password || password.length < 4) {
-        btn.disabled = false;
-        statusEl.textContent = "Please enter a valid email and password.";
-        return;
-      }
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorBox.style.display = "none";
 
-      // Save email so other pages (like order-success) can display it
-      localStorage.setItem("qfsEmail", email);
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
 
-      // For now we redirect to portal. (Actual auth comes later.)
-      setTimeout(() => {
-        window.location.href = "portal.html";
-      }, 350);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
     });
-  </script>
+
+    if (error) {
+      errorBox.textContent = error.message;
+      errorBox.style.display = "block";
+      return;
+    }
+
+    // Save email for UI convenience
+    localStorage.setItem("qfsEmail", email);
+
+    // Redirect to portal
+    window.location.href = "portal.html";
+  });
+
+  // Auto-redirect if already logged in
+  supabase.auth.getSession().then(({ data }) => {
+    if (data.session) {
+      window.location.href = "portal.html";
+    }
+  });
+</script>
+
 </body>
 </html>
