@@ -1,673 +1,318 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Member Portal</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --card:rgba(255,255,255,.08);
-      --border:rgba(255,255,255,.14);
-      --text:#eaf0ff;
-      --muted:rgba(234,240,255,.7);
-      --blue:#0ea5e9;
-      --gold:#f5c451;
-      --danger:#ffb4b4;
-      --ok:#bfffd6;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Poppins,system-ui,Segoe UI,Roboto,Arial;
-      color:var(--text);
-      background:
-        radial-gradient(900px 500px at 20% 10%, rgba(14,165,233,.18), transparent 60%),
-        radial-gradient(800px 500px at 80% 30%, rgba(245,196,81,.12), transparent 55%),
-        linear-gradient(180deg, #040617 0%, #070a1f 100%);
-      min-height:100vh;
-    }
-    .top{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      padding:16px 18px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      position:sticky; top:0;
-      background:rgba(4,6,23,.78);
-      backdrop-filter:blur(10px);
-      z-index:20;
-    }
-    .brand{display:flex; gap:12px; align-items:center; min-width:0}
-    .logo{
-      width:42px; height:42px; border-radius:12px;
-      background:linear-gradient(135deg, rgba(245,196,81,.95), rgba(14,165,233,.85));
-      box-shadow:0 18px 45px rgba(0,0,0,.35);
-      flex:0 0 auto;
-    }
-    .title{font-weight:900; letter-spacing:.2px; line-height:1.1}
-    .sub{font-size:12px; color:rgba(234,240,255,.65)}
-    .row{display:flex; gap:10px; align-items:center}
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:7px 10px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.18);
-      font-size:12px; color:rgba(234,240,255,.85);
-      max-width:360px;
-      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    }
-    .tierDot{
-      width:9px;height:9px;border-radius:999px; background:rgba(255,255,255,.25);
-      box-shadow:0 0 0 4px rgba(255,255,255,.06);
-      flex:0 0 auto;
-    }
-    .grid{
-      max-width:1100px;
-      margin:0 auto;
-      padding:18px;
-      display:grid;
-      gap:14px;
-      grid-template-columns:repeat(12,1fr)
-    }
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:18px;
-      box-shadow:0 20px 70px rgba(0,0,0,.35);
-      padding:16px;
-      backdrop-filter: blur(10px);
-    }
-    .span4{grid-column:span 4}
-    .span6{grid-column:span 6}
-    .span8{grid-column:span 8}
-    .span12{grid-column:span 12}
-    @media (max-width:900px){
-      .span4,.span6,.span8{grid-column:span 12}
-      .pill{max-width:210px}
-    }
-    button{
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.08);
-      color:var(--text);
-      cursor:pointer;
-      font-weight:800;
-    }
-    button:disabled{opacity:.55; cursor:not-allowed;}
-    .primary{
-      background:var(--blue);
-      color:#00131f;
-      font-weight:900;
-      border-color:rgba(14,165,233,.4);
-    }
-    .gold{
-      background:linear-gradient(135deg, rgba(245,196,81,.92), rgba(14,165,233,.75));
-      color:#00131f;
-      border-color:rgba(245,196,81,.35);
-      font-weight:900;
-    }
-    input{
-      width:100%;
-      padding:11px 12px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(0,0,0,.25);
-      color:var(--text);
-      outline:none;
-    }
-    .muted{color:var(--muted); font-size:12px}
-    .big{font-size:30px; font-weight:900; letter-spacing:.2px; margin-top:4px}
-    .usdUnder{margin-top:4px; font-size:13px; color:rgba(234,240,255,.78)}
-    .list{margin-top:10px; display:grid; gap:8px}
-    .item{
-      display:flex; justify-content:space-between; gap:10px;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.18);
-    }
-    .msg{font-size:12px; margin-top:8px; color:var(--muted)}
-    .msg.err{color:var(--danger)}
-    .msg.ok{color:var(--ok)}
-    .sep{height:1px; background:rgba(255,255,255,.08); margin:10px 0}
-    .badge{
-      display:inline-flex; align-items:center;
-      padding:6px 10px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      font-size:12px; font-weight:900;
-      background:rgba(0,0,0,.18);
-    }
-    .badge.silver{border-color:rgba(255,255,255,.22)}
-    .badge.black{border-color:rgba(245,196,81,.28)}
-    .perks{display:grid; gap:8px; margin-top:10px;}
-    .perk{
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.18);
-    }
-    .perkTitle{font-weight:900}
-    .perkText{font-size:12px; color:rgba(234,240,255,.72); margin-top:2px; line-height:1.4}
-    .banner{
-      padding:12px 14px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.22);
-    }
-    .bannerTitle{font-weight:900}
-    .bannerText{font-size:12px;color:rgba(234,240,255,.72);margin-top:4px;line-height:1.4}
-    a.link{color:var(--gold); text-decoration:none}
-    a.link:hover{text-decoration:underline}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Member Portal — QFS</title>
+
+<!-- Official website logo -->
+<link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
+
+<style>
+  :root{
+    --bg:#020617;
+    --text:#e5e7eb;
+    --muted:#9ca3af;
+    --accent:#38bdf8;
+    --accent2:#a855f7;
+    --glass:rgba(15,23,42,0.88);
+    --border:rgba(148,163,184,0.45);
+    --shadow:rgba(2,6,23,0.9);
+    --radius:18px;
+    --maxw:1100px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    padding:24px;
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(circle at top, rgba(56,189,248,0.30), transparent 55%),
+      radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
+      var(--bg);
+  }
+
+  .wrap{
+    max-width:var(--maxw);
+    margin:0 auto;
+  }
+
+  /* HEADER */
+  .header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    margin-bottom:18px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .logo{
+    width:54px;
+    height:54px;
+    border-radius:14px;
+    object-fit:cover;
+    box-shadow:
+      0 14px 44px rgba(2,6,23,0.95),
+      0 0 0 1px rgba(148,163,184,0.35);
+  }
+  .brand h1{
+    margin:0;
+    font-size:18px;
+    font-weight:900;
+    letter-spacing:-0.02em;
+  }
+  .brand span{
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  .header-actions a{
+    padding:10px 14px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,0.35);
+    text-decoration:none;
+    color:var(--text);
+    font-weight:800;
+    font-size:12px;
+    background:rgba(255,255,255,0.06);
+  }
+
+  /* GRID */
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:18px;
+  }
+
+  @media (max-width:860px){
+    .grid{ grid-template-columns:1fr; }
+  }
+
+  /* CARD */
+  .card{
+    background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.84));
+    border:1px solid var(--border);
+    border-radius:28px;
+    padding:20px;
+    box-shadow: 0 28px 110px var(--shadow);
+    backdrop-filter: blur(26px);
+    position:relative;
+  }
+
+  .card h2{
+    margin:0 0 6px;
+    font-size:16px;
+    font-weight:900;
+  }
+  .sub{
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  /* BALANCE */
+  .balance{
+    font-size:34px;
+    font-weight:900;
+    margin:12px 0 4px;
+    background:linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .btc{
+    font-size:13px;
+    color:#cbd5f5;
+  }
+
+  /* ACTIONS */
+  .actions{
+    display:flex;
+    gap:12px;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    flex:1;
+    padding:12px 14px;
+    border-radius:999px;
+    border:none;
+    cursor:pointer;
+    font-weight:900;
+    font-size:13px;
+    letter-spacing:0.04em;
+  }
+  .btn-primary{
+    background:linear-gradient(135deg, var(--accent), var(--accent2));
+    color:#fff;
+  }
+  .btn-disabled{
+    background:rgba(255,255,255,0.06);
+    border:1px dashed rgba(148,163,184,0.45);
+    color:var(--muted);
+    cursor:not-allowed;
+  }
+
+  /* STATUS */
+  .status{
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:14px;
+    background:rgba(2,6,23,0.45);
+    border:1px solid rgba(148,163,184,0.35);
+    font-size:12px;
+  }
+
+  /* TABLE */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+    font-size:12px;
+  }
+  th, td{
+    padding:10px 8px;
+    border-bottom:1px solid rgba(148,163,184,0.2);
+    text-align:left;
+  }
+  th{
+    color:var(--muted);
+    font-weight:700;
+    text-transform:uppercase;
+    font-size:11px;
+  }
+</style>
 </head>
+
 <body>
-  <div class="top">
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header class="header">
     <div class="brand">
-      <div class="logo" aria-hidden="true"></div>
-      <div style="min-width:0">
-        <div class="title">Member Portal</div>
-        <div class="sub" id="tierLine">Loading…</div>
+      <img class="logo"
+        src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true"
+        alt="QFS NESARA GESARA" />
+      <div>
+        <h1>Member Portal</h1>
+        <span>QFS NESARA GESARA</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="login.html">Logout</a>
+    </div>
+  </header>
+
+  <!-- GRID -->
+  <section class="grid">
+
+    <!-- BALANCE -->
+    <div class="card">
+      <h2>Available Balance</h2>
+      <div class="sub">Allocated after card purchase</div>
+
+      <div class="balance" id="balance">$0.00</div>
+      <div class="btc" id="btcBalance">—</div>
+
+      <div class="actions">
+        <button class="btn btn-disabled">Send</button>
+        <button class="btn btn-disabled">Receive</button>
+      </div>
+
+      <div class="status">
+        🔒 Send & Receive are locked until admin confirms your order.
       </div>
     </div>
 
-    <div class="row">
-      <span class="pill"><span class="tierDot" id="tierDot"></span><span id="userEmailText">—</span></span>
-      <button id="refreshBtn">Refresh</button>
-      <button id="logoutBtn">Logout</button>
-    </div>
-  </div>
+    <!-- ACCOUNT INFO -->
+    <div class="card">
+      <h2>Account Details</h2>
+      <div class="sub">Your membership allocation</div>
 
-  <div class="grid">
-    <!-- Balance -->
-    <div class="card span4">
-      <div class="muted">Balance (BTC)</div>
-      <div class="big" id="allocBtc">—</div>
-      <div class="usdUnder" id="allocUsd">—</div>
-
-      <div class="sep"></div>
-
-      <div class="muted">Member Tier</div>
-      <div style="margin-top:8px">
-        <span class="badge silver" id="tierBadge">—</span>
-      </div>
-
-      <div class="sep"></div>
-
-      <div class="muted">Cards Purchased</div>
-      <div style="font-weight:900; font-size:18px; margin-top:4px" id="cardQty">—</div>
-      <div class="msg" id="qtyRule">—</div>
-
-      <div class="msg" id="rateLine"></div>
+      <table>
+        <tr>
+          <th>Email</th>
+          <td id="emailCell">—</td>
+        </tr>
+        <tr>
+          <th>Tier</th>
+          <td id="tierCell">—</td>
+        </tr>
+        <tr>
+          <th>Quantity</th>
+          <td id="qtyCell">—</td>
+        </tr>
+        <tr>
+          <th>Status</th>
+          <td>Pending Confirmation</td>
+        </tr>
+      </table>
     </div>
 
-    <!-- Status + Perks -->
-    <div class="card span8">
-      <div id="statusBanner" class="banner" style="display:none;"></div>
+    <!-- TRANSACTIONS -->
+    <div class="card" style="grid-column:1 / -1;">
+      <h2>Recent Activity</h2>
+      <div class="sub">Transactions will appear after activation</div>
 
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px; margin-top:12px;">
-        <div>
-          <div style="font-weight:900">Perks</div>
-          <div class="muted">Allocation view is always visible. Transfers unlock after activation.</div>
-        </div>
-        <button class="gold" id="supportBtn" type="button">Support</button>
-      </div>
-
-      <div class="perks" id="perksList"></div>
-
-      <div class="msg" id="limitsLine">Limits: —</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="4" style="color:var(--muted);">No activity yet</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- Send -->
-    <div class="card span6">
-      <div style="font-weight:900;margin-bottom:6px">Send</div>
-      <div class="muted" style="margin-bottom:10px">Internal portal transfers (locked until activation).</div>
-      <div class="row" style="flex-direction:column;align-items:stretch">
-        <input id="sendTo" placeholder="Recipient email" autocomplete="email" />
-        <input id="sendAmount" placeholder="Amount (USD)" inputmode="decimal" />
-        <input id="sendNote" placeholder="Note (optional)" />
-        <button class="primary" id="sendBtn">Send</button>
-        <div class="msg" id="sendMsg"></div>
-      </div>
-    </div>
-
-    <!-- Receive + Save -->
-    <div class="card span6">
-      <div style="font-weight:900;margin-bottom:6px">Receive</div>
-      <div class="muted">Your receive reference (copy locked until activation).</div>
-      <div class="sep"></div>
-
-      <div class="item">
-        <div>
-          <div style="font-weight:900" id="receiveRef">—</div>
-          <div class="muted">Receive reference</div>
-        </div>
-        <button id="copyRef" type="button">Copy</button>
-      </div>
-      <div class="msg" id="copyMsg"></div>
-
-      <div class="sep"></div>
-
-      <div style="font-weight:900;margin-bottom:6px">Saved Details</div>
-      <div class="muted" style="margin-bottom:10px">Optional address or note (always available).</div>
-      <div class="row" style="flex-direction:column;align-items:stretch">
-        <input id="savedAddress" placeholder="Saved address (optional)" />
-        <button id="saveBtn" class="primary" type="button">Save</button>
-        <div class="msg" id="saveMsg"></div>
-      </div>
-    </div>
-
-    <!-- History -->
-    <div class="card span12">
-      <div style="font-weight:900;margin-bottom:4px">History</div>
-      <div class="muted">Internal ledger (transfers unlock after activation).</div>
-      <div class="list" id="history"></div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    // =========================
-    // PUT YOUR VALUES HERE
-    // =========================
-    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // UI
-    const tierLine = document.getElementById("tierLine");
-    const tierBadge = document.getElementById("tierBadge");
-    const tierDot = document.getElementById("tierDot");
-    const userEmailText = document.getElementById("userEmailText");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const refreshBtn = document.getElementById("refreshBtn");
-
-    const allocBtc = document.getElementById("allocBtc");
-    const allocUsd = document.getElementById("allocUsd");
-    const rateLine = document.getElementById("rateLine");
-
-    const cardQtyEl = document.getElementById("cardQty");
-    const qtyRuleEl = document.getElementById("qtyRule");
-
-    const statusBanner = document.getElementById("statusBanner");
-
-    const perksList = document.getElementById("perksList");
-    const limitsLine = document.getElementById("limitsLine");
-    const supportBtn = document.getElementById("supportBtn");
-
-    const receiveRefEl = document.getElementById("receiveRef");
-    const copyRefBtn = document.getElementById("copyRef");
-    const copyMsg = document.getElementById("copyMsg");
-
-    const sendTo = document.getElementById("sendTo");
-    const sendAmount = document.getElementById("sendAmount");
-    const sendNote = document.getElementById("sendNote");
-    const sendBtn = document.getElementById("sendBtn");
-    const sendMsg = document.getElementById("sendMsg");
-
-    const savedAddress = document.getElementById("savedAddress");
-    const saveBtn = document.getElementById("saveBtn");
-    const saveMsg = document.getElementById("saveMsg");
-
-    const historyEl = document.getElementById("history");
-
-    // Rules
-    const SILVER_CARD_USD_VALUE = 25000; // "$25,000 in bitcoin value" per silver card (USD-based)
-    const BLACK_ALLOCATION_BTC = 25000;  // "25,000 BTC" allocation (fixed BTC units)
-
-    function setMsg(el, text, type){
-      el.textContent = text || "";
-      el.className = "msg " + (type || "");
-    }
-
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    function fmtUSD(n){
-      return Number(n || 0).toLocaleString(undefined, { style:"currency", currency:"USD" });
-    }
-
-    function fmtBTC(n){
-      const v = Number(n || 0);
-      return v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 8 }) + " BTC";
-    }
-
-    async function requireSession(){
-      const { data, error } = await supabase.auth.getSession();
-      if(error || !data.session){
-        window.location.href = "./login.html";
-        return null;
-      }
-      return data.session;
-    }
-
-    async function fetchBtcUsd(){
-      try{
-        const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd", { cache: "no-store" });
-        if(!r.ok) throw new Error("bad response");
-        const j = await r.json();
-        const p = j?.bitcoin?.usd;
-        if(!p || !Number.isFinite(Number(p))) throw new Error("no price");
-        return Number(p);
-      } catch {
-        return null;
-      }
-    }
-
-    function perksFor(tier){
-      if(tier === "black"){
-        return {
-          badgeText: "BLACK MEMBER",
-          badgeClass: "black",
-          dot: "rgba(245,196,81,.95)",
-          qtyRule: "Rule: Black card can purchase 1 only.",
-          limits: "Transfers unlock after activation. Black allocation: 25,000 BTC (view-only allocation).",
-          perks: [
-            { t:"Black Allocation", d:"Allocation: 25,000 BTC (view-only allocation shown on portal)." },
-            { t:"Priority Support", d:"Priority support access once activated." },
-            { t:"Portal Tools", d:"Send/Receive tools unlock after activation." }
-          ]
-        };
-      }
-      return {
-        badgeText: "SILVER MEMBER",
-        badgeClass: "silver",
-        dot: "rgba(255,255,255,.75)",
-        qtyRule: "Rule: Silver card can purchase up to 50.",
-        limits: "Transfers unlock after activation. Silver allocation is based on card quantity × $25,000 worth of BTC.",
-        perks: [
-          { t:"Silver Allocation", d:"Allocation is based on quantity × $25,000 worth of BTC (view-only allocation shown on portal)." },
-          { t:"Multiple Cards", d:"Silver members can purchase up to 50 cards." },
-          { t:"Portal Tools", d:"Send/Receive tools unlock after activation." }
-        ]
-      };
-    }
-
-    function renderPerks(tier){
-      const cfg = perksFor(tier);
-      tierBadge.textContent = cfg.badgeText;
-      tierBadge.className = "badge " + cfg.badgeClass;
-      tierDot.style.background = cfg.dot;
-      qtyRuleEl.textContent = cfg.qtyRule;
-      limitsLine.textContent = "Limits: " + cfg.limits;
-
-      perksList.innerHTML = "";
-      cfg.perks.forEach(p => {
-        const div = document.createElement("div");
-        div.className = "perk";
-        div.innerHTML = `
-          <div class="perkTitle">${escapeHtml(p.t)}</div>
-          <div class="perkText">${escapeHtml(p.d)}</div>
-        `;
-        perksList.appendChild(div);
-      });
-    }
-
-    function setActivationUI(isActivated){
-      if(isActivated){
-        statusBanner.style.display = "block";
-        statusBanner.innerHTML = `
-          <div class="bannerTitle">Status: Active</div>
-          <div class="bannerText">Transfers are unlocked for your account.</div>
-        `;
-        sendBtn.disabled = false;
-        copyRefBtn.disabled = false;
-      } else {
-        statusBanner.style.display = "block";
-        statusBanner.innerHTML = `
-          <div class="bannerTitle">Status: Pending Activation</div>
-          <div class="bannerText">
-            Your allocation is visible, but <b>Send/Receive</b> is locked until your card order is confirmed/activated.
-            <br/>If you have already ordered, please wait for activation or contact support.
-          </div>
-        `;
-        sendBtn.disabled = true;
-        copyRefBtn.disabled = true;
-      }
-    }
-
-    function setAllocationUI(tier, cardQty, btcUsd){
-      if(tier === "black"){
-        // Black: fixed BTC allocation
-        allocBtc.textContent = fmtBTC(BLACK_ALLOCATION_BTC);
-
-        if(btcUsd && btcUsd > 0){
-          allocUsd.textContent = fmtUSD(BLACK_ALLOCATION_BTC * btcUsd);
-          setMsg(rateLine, `BTC/USD rate: ${fmtUSD(btcUsd)} • Updated: ${new Date().toLocaleString()}`, "");
-        } else {
-          allocUsd.textContent = "USD equivalent unavailable (BTC price unavailable)";
-          setMsg(rateLine, "BTC/USD rate unavailable.", "err");
-        }
-        return;
-      }
-
-      // Silver: qty × $25,000 worth of BTC
-      const usdValue = cardQty * SILVER_CARD_USD_VALUE;
-      allocUsd.textContent = fmtUSD(usdValue);
-
-      if(btcUsd && btcUsd > 0){
-        const btcAmount = usdValue / btcUsd;
-        allocBtc.textContent = fmtBTC(btcAmount);
-        setMsg(rateLine, `BTC/USD rate: ${fmtUSD(btcUsd)} • Updated: ${new Date().toLocaleString()}`, "");
-      } else {
-        allocBtc.textContent = "BTC equivalent unavailable (BTC price unavailable)";
-        setMsg(rateLine, "BTC/USD rate unavailable.", "err");
-      }
-    }
-
-    async function loadPortal(){
-      const session = await requireSession();
-      if(!session) return;
-
-      const userId = session.user.id;
-      userEmailText.textContent = session.user.email || "Member";
-
-      // Profile (tier, qty, activation)
-      const prof = await supabase
-        .from("profiles")
-        .select("tier, card_qty, is_activated")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      const tier = prof?.data?.tier || "none";
-      let cardQty = Number(prof?.data?.card_qty || 0);
-      const isActivated = !!prof?.data?.is_activated;
-
-      if(tier !== "silver" && tier !== "black"){
-        await supabase.auth.signOut();
-        window.location.href = "./login.html";
-        return;
-      }
-
-      // enforce display rules
-      if(tier === "black") cardQty = 1;
-      if(tier === "silver"){
-        if(cardQty < 1) cardQty = 1;
-        if(cardQty > 50) cardQty = 50;
-      }
-
-      tierLine.textContent = `Access Tier: ${tier.toUpperCase()}`;
-      renderPerks(tier);
-      setActivationUI(isActivated);
-
-      cardQtyEl.textContent = String(cardQty);
-
-      // Account (receive ref + saved address)
-      const acct = await supabase
-        .from("accounts")
-        .select("receive_ref, saved_address")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      receiveRefEl.textContent = acct?.data?.receive_ref || ("NES-" + userId.slice(0, 12));
-      savedAddress.value = acct?.data?.saved_address || "";
-
-      // Balance (BTC + USD)
-      const btcUsd = await fetchBtcUsd();
-      setAllocationUI(tier, cardQty, btcUsd);
-
-      // History (always viewable)
-      const entries = await supabase
-        .from("ledger_entries")
-        .select("id, entry_type, amount_cents, note, created_at")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(12);
-
-      historyEl.innerHTML = "";
-      const rows = entries.data || [];
-
-      if(rows.length === 0){
-        historyEl.innerHTML = `<div class="muted" style="padding:10px 2px">No history yet.</div>`;
-      } else {
-        rows.forEach(e => {
-          const div = document.createElement("div");
-          div.className = "item";
-          const when = new Date(e.created_at).toLocaleString();
-          div.innerHTML = `
-            <div style="min-width:0">
-              <div style="font-weight:900">${escapeHtml(String(e.entry_type || "").replaceAll("_"," ").toUpperCase())}</div>
-              <div class="muted" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                ${escapeHtml(when)}${e.note ? " • " + escapeHtml(e.note) : ""}
-              </div>
-            </div>
-            <div style="font-weight:900">${fmtUSD((Number(e.amount_cents||0)/100))}</div>
-          `;
-          historyEl.appendChild(div);
-        });
-      }
-    }
-
-    // Support
-    supportBtn.addEventListener("click", () => {
-      window.location.href = "./contact.html";
-    });
-
-    // Logout
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "./login.html";
-    });
-
-    // Refresh
-    refreshBtn.addEventListener("click", async () => {
-      setMsg(sendMsg, "", "");
-      setMsg(saveMsg, "", "");
-      setMsg(copyMsg, "", "");
-      refreshBtn.disabled = true;
-      refreshBtn.textContent = "Refreshing...";
-      try{ await loadPortal(); }
-      finally {
-        refreshBtn.disabled = false;
-        refreshBtn.textContent = "Refresh";
-      }
-    });
-
-    // Copy receive ref (locked until activation)
-    copyRefBtn.addEventListener("click", async () => {
-      setMsg(copyMsg, "", "");
-      if(copyRefBtn.disabled){
-        setMsg(copyMsg, "Receive is locked until activation.", "err");
-        return;
-      }
-      try{
-        await navigator.clipboard.writeText(receiveRefEl.textContent || "");
-        setMsg(copyMsg, "Copied.", "ok");
-        copyRefBtn.textContent = "Copied";
-        setTimeout(()=> copyRefBtn.textContent = "Copy", 900);
-      } catch {
-        setMsg(copyMsg, "Copy failed. Please copy manually.", "err");
-      }
-    });
-
-    // Send (locked until activation)
-    sendBtn.addEventListener("click", async () => {
-      setMsg(sendMsg, "", "");
-      if(sendBtn.disabled){
-        setMsg(sendMsg, "Transfers are locked until activation.", "err");
-        return;
-      }
-
-      const session = await requireSession();
-      if(!session) return;
-
-      const toEmail = (sendTo.value || "").trim();
-      const amtUsd = (sendAmount.value || "").trim();
-      const note = (sendNote.value || "").trim();
-
-      const dollars = Number(amtUsd);
-      if(!toEmail || !Number.isFinite(dollars) || dollars <= 0){
-        setMsg(sendMsg, "Enter a valid recipient email and amount.", "err");
-        return;
-      }
-
-      const amountCents = Math.round(dollars * 100);
-
-      sendBtn.disabled = true;
-      sendBtn.textContent = "Sending...";
-
-      const { data, error } = await supabase.rpc("send_portal_balance", {
-        p_to_email: toEmail,
-        p_amount_cents: amountCents,
-        p_note: note || null
-      });
-
-      sendBtn.disabled = false;
-      sendBtn.textContent = "Send";
-
-      if(error){
-        setMsg(sendMsg, error.message, "err");
-        return;
-      }
-      if(!data || data.ok !== true){
-        setMsg(sendMsg, "Send failed. Please try again.", "err");
-        return;
-      }
-
-      setMsg(sendMsg, "Sent successfully.", "ok");
-      sendTo.value = "";
-      sendAmount.value = "";
-      sendNote.value = "";
-      await loadPortal();
-    });
-
-    // Save (always allowed)
-    saveBtn.addEventListener("click", async () => {
-      setMsg(saveMsg, "", "");
-      const session = await requireSession();
-      if(!session) return;
-
-      saveBtn.disabled = true;
-      saveBtn.textContent = "Saving...";
-
-      const { data, error } = await supabase.rpc("save_member_details", {
-        p_saved_address: (savedAddress.value || "").trim() || null
-      });
-
-      saveBtn.disabled = false;
-      saveBtn.textContent = "Save";
-
-      if(error){
-        setMsg(saveMsg, error.message, "err");
-        return;
-      }
-      if(!data || data.ok !== true){
-        setMsg(saveMsg, "Save failed. Please try again.", "err");
-        return;
-      }
-      setMsg(saveMsg, "Saved.", "ok");
-    });
-
-    // Initial load
-    loadPortal();
-  </script>
+  </section>
+</div>
+
+<script>
+  // Pull stored info from earlier steps
+  const email =
+    localStorage.getItem("qfsEmail") ||
+    "—";
+
+  const params = new URLSearchParams(location.search);
+  const tier = (params.get("tier") || params.get("type") || "").toUpperCase();
+  let qty = Number(params.get("qty") || 1);
+
+  if (tier === "BLACK") qty = 1;
+  if (tier === "SILVER" && qty > 50) qty = 50;
+
+  document.getElementById("emailCell").textContent = email;
+  document.getElementById("tierCell").textContent = tier || "—";
+  document.getElementById("qtyCell").textContent = qty || "—";
+
+  // Allocation logic
+  let usdBalance = 0;
+  let btcLabel = "—";
+
+  if (tier === "SILVER") {
+    usdBalance = 25000 * qty;
+    btcLabel = "≈ $25,000 per card allocation";
+  }
+
+  if (tier === "BLACK") {
+    btcLabel = "25,000 BTC allocation (locked)";
+    usdBalance = 0;
+  }
+
+  document.getElementById("balance").textContent =
+    usdBalance ? "$" + usdBalance.toLocaleString() : "$0.00";
+
+  document.getElementById("btcBalance").textContent = btcLabel;
+</script>
 </body>
 </html>
