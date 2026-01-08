@@ -76,10 +76,7 @@
       text-transform:uppercase;
       font-size:12px;
     }
-    button:disabled{
-      opacity:0.65;
-      cursor:not-allowed;
-    }
+    button:disabled{opacity:0.65;cursor:not-allowed}
     .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
     .btn-secondary{background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.5);color:var(--text)}
     .msg{
@@ -126,68 +123,111 @@
 
       <div id="msg" class="msg"></div>
 
+      <div class="tiny" id="envNote"></div>
       <div class="tiny">
         Admin note: if you’ve never created an account in Supabase yet, click <b>Create Account</b> once (then confirm email).
       </div>
     </form>
   </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- IMPORTANT: load supabase before our code -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
 <script>
+  // ✅ PASTE YOUR REAL VALUES HERE
   const SUPABASE_URL = "PASTE_SUPABASE_URL_HERE";
   const SUPABASE_ANON_KEY = "PASTE_SUPABASE_ANON_KEY_HERE";
 
-  function ready(fn){
-    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fn);
-    else fn();
+  function $(id){ return document.getElementById(id); }
+
+  function showMsg(text, type){
+    const msgEl = $("msg");
+    if(!msgEl) return alert(text);
+    msgEl.className = "msg show " + (type || "");
+    msgEl.textContent = text;
+    console.log("[AUTH MSG]", text);
   }
 
-  ready(() => {
-    const msgEl = document.getElementById("msg");
-    const form = document.getElementById("loginForm");
-    const loginBtn = document.getElementById("loginBtn");
-    const signupBtn = document.getElementById("signupBtn");
+  function setBusy(isBusy){
+    const loginBtn = $("loginBtn");
+    const signupBtn = $("signupBtn");
+    if (loginBtn) loginBtn.disabled = isBusy;
+    if (signupBtn) signupBtn.disabled = isBusy;
+  }
 
-    function showMsg(text, type){
-      if(!msgEl) return alert(text);
-      msgEl.className = "msg show " + (type || "");
-      msgEl.textContent = text;
-    }
-
-    function setBusy(isBusy){
-      if (loginBtn) loginBtn.disabled = isBusy;
-      if (signupBtn) signupBtn.disabled = isBusy;
-    }
-
-    // Basic config guard so you don't silently fail
-    const missingConfig =
+  function isMissingConfig(){
+    return (
       !SUPABASE_URL || !SUPABASE_ANON_KEY ||
       SUPABASE_URL.includes("https://qagktukzxtwbjrdgiben.supabase.co") ||
-      SUPABASE_ANON_KEY.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk");
+      SUPABASE_ANON_KEY.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk")
+    );
+  }
 
-    if (missingConfig){
+  (function boot(){
+    // show environment hint
+    const proto = window.location.protocol;
+    const envNote = $("envNote");
+    if (envNote){
+      envNote.innerHTML = `Running from: <b>${proto}//</b> (${window.location.href})`;
+    }
+
+    // 1) Check supabase library loaded
+    if (!window.supabase || typeof window.supabase.createClient !== "function"){
+      showMsg(
+        "❌ Supabase JS did not load.\n" +
+        "Fix: make sure you have internet, and the script tag URL is reachable.\n" +
+        "Open DevTools → Network and confirm supabase.min.js loads.",
+        "error"
+      );
+      return;
+    }
+
+    // 2) Check config
+    if (isMissingConfig()){
       showMsg("⚠️ Supabase keys not set.\nPaste SUPABASE_URL and SUPABASE_ANON_KEY in the script, then refresh.", "error");
       return;
+    }
+
+    // 3) Warn if file://
+    if (proto === "file:"){
+      showMsg(
+        "⚠️ You opened this as a local file (file://).\n" +
+        "Fix: run it from a real site like GitHub Pages / Netlify / localhost server.\n" +
+        "Then try again.",
+        "error"
+      );
+      // We still continue because sometimes it works, but user sees the warning.
+    } else {
+      showMsg("Auth ready ✅", "");
     }
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function doLogin(){
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+      const email = $("email").value.trim();
+      const password = $("password").value;
 
-      if (!email || !password) return showMsg("Please enter email and password.", "error");
+      if (!email || !password){
+        showMsg("Please enter email and password.", "error");
+        return;
+      }
 
       setBusy(true);
       showMsg("Signing in…", "");
 
       try{
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return showMsg("Login failed: " + error.message, "error");
+        console.log("signInWithPassword =>", { data, error });
+
+        if (error){
+          showMsg("Login failed: " + error.message, "error");
+          return;
+        }
 
         showMsg("Login successful ✅ Redirecting…", "ok");
         setTimeout(() => window.location.href = "portal.html", 600);
       } catch (e){
+        console.error(e);
         showMsg("Login failed: " + (e?.message || "Unknown error"), "error");
       } finally{
         setBusy(false);
@@ -195,10 +235,13 @@
     }
 
     async function doCreate(){
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+      const email = $("email").value.trim();
+      const password = $("password").value;
 
-      if (!email || !password) return showMsg("Please enter email and password.", "error");
+      if (!email || !password){
+        showMsg("Please enter email and password.", "error");
+        return;
+      }
 
       setBusy(true);
       showMsg("Creating account…", "");
@@ -208,30 +251,30 @@
           email,
           password,
           options: {
-            // optional: change to your live domain if needed
             emailRedirectTo: window.location.origin + "/login.html"
           }
         });
 
-        if (error) return showMsg("Signup failed: " + error.message, "error");
+        console.log("signUp =>", { data, error });
+
+        if (error){
+          showMsg("Signup failed: " + error.message, "error");
+          return;
+        }
 
         showMsg("Account created ✅ Check your email to confirm, then log in.", "ok");
       } catch (e){
+        console.error(e);
         showMsg("Signup failed: " + (e?.message || "Unknown error"), "error");
       } finally{
         setBusy(false);
       }
     }
 
-    // Button handlers
-    if (signupBtn) signupBtn.addEventListener("click", (e) => { e.preventDefault(); doCreate(); });
-
-    // Form submit (Login)
-    if (form) form.addEventListener("submit", (e) => { e.preventDefault(); doLogin(); });
-
-    // Optional: proof that JS loaded (kept subtle)
-    // showMsg("Auth ready ✅", "");
-  });
+    // Attach handlers
+    $("loginForm").addEventListener("submit", (e) => { e.preventDefault(); doLogin(); });
+    $("signupBtn").addEventListener("click", (e) => { e.preventDefault(); doCreate(); });
+  })();
 </script>
 
 </body>
