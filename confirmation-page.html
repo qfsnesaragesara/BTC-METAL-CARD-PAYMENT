@@ -6,6 +6,9 @@
 <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
 <title>Order Confirmation — QFS Metal Card</title>
 
+<!-- Supabase JS (v2) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
   :root {
     --bg:#020617;
@@ -28,7 +31,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
+    padding: 22px 0;
   }
 
   .container {
@@ -60,12 +64,20 @@
 
   p {
     color: var(--muted);
-    font-size: 16px;
-    line-height: 1.6;
-    margin-bottom: 12px;
+    font-size: 15px;
+    line-height: 1.55;
+    margin: 0 0 12px;
   }
 
-  strong { color: var(--accent); }
+  label{
+    display:block;
+    text-align:left;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    font-weight: 700;
+    color: rgba(226,232,240,0.95);
+    font-size: 14px;
+  }
 
   input[type="text"],
   input[type="email"] {
@@ -80,17 +92,67 @@
     outline: none;
   }
 
+  .file-wrap{
+    width:100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px dashed rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.05);
+    text-align:left;
+  }
+  input[type="file"]{
+    width:100%;
+    color: var(--text);
+  }
+  .hint{
+    margin-top:8px;
+    font-size: 12px;
+    color: rgba(148,163,184,0.95);
+    line-height:1.4;
+  }
+  .preview{
+    margin-top:12px;
+    display:none;
+    border-radius: 14px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.14);
+    background: rgba(0,0,0,0.18);
+  }
+  .preview img{
+    width:100%;
+    display:block;
+    max-height: 240px;
+    object-fit: cover;
+  }
+
   .btn {
     width: 100%;
-    margin-top: 30px;
+    margin-top: 18px;
     padding: 15px;
     font-size: 18px;
-    font-weight: 700;
+    font-weight: 800;
     border-radius: 14px;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     color: #fff;
     border: none;
     cursor: pointer;
+  }
+  .btn:disabled{
+    opacity: .6;
+    cursor: not-allowed;
+  }
+
+  .status {
+    margin-top: 14px;
+    font-size: 13px;
+    color: rgba(226,232,240,0.9);
+    line-height: 1.4;
+    text-align:left;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 12px 12px;
+    display:none;
   }
 </style>
 </head>
@@ -103,94 +165,185 @@
        alt="Brand Logo">
 
   <h1>Payment Confirmation</h1>
-  <p><strong>Final Step Required</strong></p>
-  <p>Enter your Transaction Hash (TXID) and email to complete your order confirmation.</p>
+  <p>Submit your <b>TXID</b>, <b>Email</b>, and a <b>payment screenshot</b>. Your request will show as <b>Pending</b> until admin approval.</p>
 
-  <form id="confirmForm"
-        action="https://formbold.com/s/oW1Ay"
-        method="POST">
-
-    <!-- ✅ Redirect is set dynamically by JS:
-         - silver/black -> order-success.html
-         - gold -> success-payment.html (unchanged) -->
-    <input type="hidden" id="redirectToField" name="redirectTo"
-      value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-payment.html">
-
-    <!-- Order ID -->
-    <input type="hidden" id="orderIdField" name="Order ID">
-
-    <!-- ✅ extra context for your admin (optional but helpful) -->
-    <input type="hidden" id="cardTypeField" name="Card Type">
-    <input type="hidden" id="qtyField" name="Quantity">
-    <input type="hidden" id="usdField" name="Total USD">
-    <input type="hidden" id="btcField" name="Total BTC">
-    <input type="hidden" id="addrField" name="Wallet Address">
+  <form id="confirmForm">
+    <input type="hidden" id="orderIdField">
+    <input type="hidden" id="cardTypeField">
+    <input type="hidden" id="qtyField">
+    <input type="hidden" id="usdField">
+    <input type="hidden" id="btcField">
+    <input type="hidden" id="addrField">
 
     <label>Transaction Hash (TXID)</label>
-    <input type="text" name="TXID" placeholder="Enter your TXID" required>
+    <input id="txid" type="text" placeholder="Enter your TXID" required>
 
     <label>Email Address</label>
-    <input type="email" name="Email" placeholder="Enter your email" required>
+    <input id="email" type="email" placeholder="Enter your email" required>
 
-    <button type="submit" class="btn">Submit Confirmation</button>
+    <label>Payment Screenshot</label>
+    <div class="file-wrap">
+      <input id="payShot" type="file" accept="image/*" required>
+      <div class="hint">Upload a clear screenshot showing transaction details (image only).</div>
+
+      <div class="preview" id="previewBox">
+        <img id="previewImg" alt="Screenshot preview">
+      </div>
+    </div>
+
+    <button id="submitBtn" type="submit" class="btn">Submit Confirmation</button>
+    <div id="statusBox" class="status"></div>
   </form>
 
 </div>
 
 <script>
-/* Retrieve Order ID + route after confirmation based on card type */
+/* =========================
+   1) PUT YOUR SUPABASE KEYS HERE
+   ========================= */
+const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL_HERE";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
 
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* =========================
+   Helpers
+   ========================= */
+function qs(key){ return new URLSearchParams(location.search).get(key); }
+
+function setStatus(msg){
+  const box = document.getElementById("statusBox");
+  box.style.display = "block";
+  box.textContent = msg;
+}
+
+function safeLower(s){ return (s || "").trim().toLowerCase(); }
+
+/* =========================
+   Prefill hidden context from URL (from wallet.html)
+   ========================= */
 (function(){
   const params = new URLSearchParams(window.location.search);
 
-  // These are passed from wallet.html already:
-  const type = (params.get("type") || "").toLowerCase();
-  const qtyRaw = params.get("qty");
+  const type = safeLower(params.get("type"));
+  const qtyRaw = params.get("qty") || "";
   const usd = params.get("usd") || "";
   const btc = params.get("btc") || "";
   const addr = params.get("addr") || "";
 
-  // Order ID from localStorage or URL (kept as you had)
   const fromUrl = params.get("order");
   const fromLocal = localStorage.getItem("qfsOrderId");
   const orderId = fromUrl || fromLocal || "";
 
-  // Fill hidden fields
   document.getElementById("orderIdField").value = orderId;
-  document.getElementById("cardTypeField").value = type || "";
-  document.getElementById("qtyField").value = qtyRaw || "";
+  document.getElementById("cardTypeField").value = type;
+  document.getElementById("qtyField").value = qtyRaw;
   document.getElementById("usdField").value = usd;
   document.getElementById("btcField").value = btc;
   document.getElementById("addrField").value = addr;
+})();
 
-  // Decide redirect after Formbold submission:
-  // - Gold stays your current success-payment.html
-  // - Silver/Black go to order-success.html (pending admin confirmation)
-  const base = "https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/";
+/* =========================
+   Screenshot preview
+   ========================= */
+(function(){
+  const input = document.getElementById("payShot");
+  const previewBox = document.getElementById("previewBox");
+  const previewImg = document.getElementById("previewImg");
 
-  if(type === "silver" || type === "black"){
-    // enforce black qty = 1
-    let q = Number(qtyRaw || 1);
-    if(type === "black") q = 1;
-    if(!Number.isFinite(q) || q < 1) q = 1;
-    if(type === "silver" && q > 50) q = 50;
+  input.addEventListener("change", () => {
+    const file = input.files && input.files[0];
+    if(!file){
+      previewBox.style.display = "none";
+      previewImg.src = "";
+      return;
+    }
+    if(!file.type.startsWith("image/")){
+      alert("Please upload an image file only.");
+      input.value = "";
+      previewBox.style.display = "none";
+      previewImg.src = "";
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    previewImg.src = url;
+    previewBox.style.display = "block";
+  });
+})();
 
+/* =========================
+   Submit -> Upload screenshot -> Insert row -> Redirect
+   ========================= */
+document.getElementById("confirmForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+
+  try {
+    const txid = document.getElementById("txid").value.trim();
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const fileInput = document.getElementById("payShot");
+    const file = fileInput.files && fileInput.files[0];
+
+    if(!txid || !email || !file){
+      btn.disabled = false;
+      return;
+    }
+
+    setStatus("Uploading screenshot…");
+
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
+    const safeExt = ext || "jpg";
+    const objectPath = `confirmations/${crypto.randomUUID()}.${safeExt}`;
+
+    // Upload to private bucket
+    const { error: upErr } = await supabase
+      .storage
+      .from("payment-screenshots")
+      .upload(objectPath, file, { upsert: false, contentType: file.type });
+
+    if(upErr) throw upErr;
+
+    setStatus("Submitting confirmation…");
+
+    const payload = {
+      card_type: document.getElementById("cardTypeField").value || null,
+      qty: document.getElementById("qtyField").value ? Number(document.getElementById("qtyField").value) : null,
+      usd: document.getElementById("usdField").value || null,
+      btc: document.getElementById("btcField").value || null,
+      wallet_addr: document.getElementById("addrField").value || null,
+      order_id: document.getElementById("orderIdField").value || null,
+      txid,
+      email,
+      screenshot_path: objectPath
+    };
+
+    const { error: insErr } = await supabase
+      .from("payment_confirmations")
+      .insert(payload);
+
+    if(insErr) throw insErr;
+
+    setStatus("Submitted ✅ Your confirmation is now pending admin review… Redirecting…");
+
+    const tier = (payload.card_type || "unknown");
     const redirectParams = new URLSearchParams({
-      tier: type,
-      qty: String(q),
-      usd: usd || "",
-      btc: btc || ""
+      tier,
+      status: "pending"
     });
 
-    document.getElementById("redirectToField").value =
-      base + "order-success.html?" + redirectParams.toString();
-  } else {
-    // default: gold (or unknown) -> keep exactly as you had
-    document.getElementById("redirectToField").value =
-      base + "success-payment.html";
-  }
+    setTimeout(() => {
+      window.location.href = "order-success.html?" + redirectParams.toString();
+    }, 900);
 
-})();
+  } catch (err) {
+    console.error(err);
+    const msg = (err && err.message) ? err.message : "Submission failed.";
+    setStatus("Error: " + msg);
+    btn.disabled = false;
+  }
+});
 </script>
 
 </body>
