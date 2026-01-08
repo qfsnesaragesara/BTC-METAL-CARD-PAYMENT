@@ -3,26 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registration Form</title>
+  <title>Registration Form — QFS NESARA GESARA</title>
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" 
-      href="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/photo%201.jpg">
+  <link rel="icon" type="image/png"
+        href="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/photo%201.jpg">
 
+  <style>
+    /* ===== GLOBAL SITE BACKGROUND (MATCHES OTHER PAGES) ===== */
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,0.35), transparent 55%),
+        radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
+        #020617;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+  </style>
 </head>
 
-<body class="bg-gray-100 p-6">
-  <div class="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
-    <h2 class="text-2xl font-bold text-center mb-6">Registration Form</h2>
+<body>
+
+  <!-- WHITE FORM CARD -->
+  <div class="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-2xl">
+
+    <h2 class="text-2xl font-bold text-center mb-6">
+      QFS Registration Form
+    </h2>
 
     <form action="https://formsubmit.co/support@qfsnesaragesara.org"
           method="POST"
           class="space-y-6">
 
       <!-- Redirect After Successful Submission -->
-      <input type="hidden" 
-             name="_next" 
+      <input type="hidden"
+             name="_next"
              value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-registration.html">
 
       <input type="hidden" name="_captcha" value="false">
@@ -84,13 +107,25 @@
         </div>
       </div>
 
-      <!-- PAYMENT OPTION (ADDED) -->
+      <!-- REGISTERING FOR -->
+      <div>
+         <label class="font-semibold">What are you registering for?</label>
+        <select name="registering_for" required class="w-full mt-1 p-3 border rounded-lg">
+          <option value="">Select one…</option>
+          <option value="Trump Gold Card Program">Trump Gold Card Program</option>
+          <option value="Physical Bitcoin Metal Card (Silver $25,000)">Physical Bitcoin Metal Card (Silver $25,000 )</option>
+          <option value="Physical Bitcoin Metal Card (Black 25,000 BTC)">Physical Bitcoin Metal Card (Black 25,000 BTC)</option>
+          <option value="MedBeds">MedBeds</option>
+        </select>
+      </div>
+
+      <!-- PAYMENT OPTION -->
       <div>
         <label class="font-semibold">Payment Option</label>
         <select name="payment_option" required class="w-full mt-1 p-3 border rounded-lg">
           <option value="">Select payment option…</option>
-          <option value="Full Payment">Full Payment</option>
-          <option value="Bridge Payment">Bridge Payment</option>
+          <option>Full Payment</option>
+          <option>Bridge Payment</option>
         </select>
       </div>
 
@@ -124,7 +159,7 @@
         <input type="text" name="citizenship_country" required class="w-full mt-1 p-3 border rounded-lg">
       </div>
 
-      <!-- ADDRESS SECTION -->
+      <!-- ADDRESS -->
       <h3 class="text-lg font-bold mt-4">Physical Address</h3>
 
       <div>
@@ -159,19 +194,23 @@
         <input type="text" name="country" required class="w-full mt-1 p-3 border rounded-lg">
       </div>
 
-      <!-- FAMILY MEMBERS -->
+      <!-- FAMILY -->
       <div>
-        <label class="font-semibold">Number of Family Members (Spouse or Children under 21)</label>
-        <input type="number" name="family_members" min="0" required class="w-full mt-1 p-3 border rounded-lg">
+        <label class="font-semibold">
+          Number of Family Members (Spouse or Children under 21)
+        </label>
+        <input type="number" name="family_members" min="0" required
+               class="w-full mt-1 p-3 border rounded-lg">
       </div>
 
       <!-- SUBMIT -->
-      <button type="submit" 
-              class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700">
+      <button type="submit"
+              class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition">
         Submit Registration
       </button>
 
     </form>
   </div>
+
 </body>
 </html>
