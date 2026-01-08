@@ -4,10 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Member Login — QFS</title>
-
-  <!-- Website favicon / logo (same one you already use) -->
-  <link rel="icon" type="image/png"
-    href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
+  <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
 
   <style>
     :root{
@@ -18,9 +15,6 @@
       --muted:#94a3b8;
       --accent:#38bdf8;
       --accent2:#a855f7;
-      --good:#22c55e;
-      --bad:#ef4444;
-      --warn:#fbbf24;
     }
     *{box-sizing:border-box}
     body{
@@ -37,9 +31,9 @@
         var(--bg);
       color:var(--text);
     }
-    .wrap{width:100%;max-width:520px}
     .card{
       width:100%;
+      max-width:460px;
       padding:26px;
       border-radius:26px;
       background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.82));
@@ -47,13 +41,17 @@
       box-shadow:0 28px 90px rgba(0,0,0,0.55);
       backdrop-filter: blur(22px);
     }
-    .brand{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-    .brand img{
-      width:52px;height:52px;border-radius:14px;
-      border:1px solid rgba(255,255,255,0.18);
-      box-shadow:0 10px 28px rgba(0,0,0,0.35);
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:14px;
     }
-    h1{margin:0;font-size:20px;font-weight:900;letter-spacing:0.02em}
+    .brand img{
+      width:44px;height:44px;border-radius:12px;
+      border:1px solid rgba(255,255,255,0.18);
+    }
+    h1{margin:0;font-size:20px;font-weight:850;letter-spacing:0.02em}
     p{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
     label{display:block;margin-top:14px;margin-bottom:6px;color:var(--muted);font-size:12px}
     input{
@@ -66,23 +64,21 @@
       outline:none;
       font-size:14px;
     }
-    .row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+    .row{display:flex;gap:10px;margin-top:16px}
     button{
       flex:1;
       padding:12px 14px;
       border-radius:999px;
       border:none;
       cursor:pointer;
-      font-weight:900;
+      font-weight:800;
       letter-spacing:0.06em;
       text-transform:uppercase;
       font-size:12px;
-      min-width: 160px;
     }
+    button:disabled{opacity:0.65;cursor:not-allowed}
     .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
     .btn-secondary{background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.5);color:var(--text)}
-    .btn-outline{background:transparent;border:1px solid rgba(56,189,248,0.55);color:#7dd3fc}
-    .btn-muted{background:rgba(255,255,255,0.05);border:1px solid rgba(148,163,184,0.35);color:var(--text)}
     .msg{
       margin-top:14px;
       padding:10px 12px;
@@ -91,184 +87,176 @@
       background:rgba(2,6,23,0.4);
       color:var(--text);
       font-size:13px;
+      display:none;
       line-height:1.4;
       white-space:pre-wrap;
     }
-    .msg.ok{border-color:rgba(34,197,94,0.45)}
+    .msg.show{display:block}
     .msg.error{border-color:rgba(239,68,68,0.45)}
-    .msg.warn{border-color:rgba(251,191,36,0.45)}
+    .msg.ok{border-color:rgba(34,197,94,0.45)}
     .tiny{margin-top:10px;color:var(--muted);font-size:12px}
-    .tiny a{color:#7dd3fc;text-decoration:none}
+    a{color:#7dd3fc;text-decoration:none}
   </style>
 </head>
-
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="brand">
-        <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="QFS Logo">
-        <div>
-          <h1>Member Login</h1>
-          <p>Sign in to access your portal balance and membership status.</p>
-        </div>
-      </div>
 
-      <label for="email">Email</label>
-      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
-
-      <label for="password">Password</label>
-      <input id="password" type="password" placeholder="Your password" autocomplete="current-password" />
-
-      <div class="row">
-        <button class="btn-primary" type="button" onclick="doLogin()">Login</button>
-        <button class="btn-secondary" type="button" onclick="goRegister()">Create Account</button>
-      </div>
-
-      <div class="row">
-        <button class="btn-outline" type="button" onclick="doSupabaseSignup()">Sign Up (Supabase)</button>
-        <button class="btn-muted" type="button" onclick="doLogout()">Logout</button>
-      </div>
-
-      <div id="msg" class="msg warn">Ready.</div>
-
-      <div class="tiny">
-        If login does nothing, it usually means your Supabase keys are missing or the page is cached.
-        Add <b>?v=1</b> to the URL to force refresh. Example: <b>login.html?v=1</b>
+  <div class="card">
+    <div class="brand">
+      <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="Logo">
+      <div>
+        <h1>Member Login</h1>
+        <p>Sign in to view your portal balance and status.</p>
       </div>
     </div>
+
+    <!-- IMPORTANT: onsubmit return false prevents page reload even if JS fails -->
+    <form id="loginForm" onsubmit="return false;">
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="you@example.com" required>
+
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Your password" required>
+
+      <div class="row">
+        <!-- IMPORTANT: type="button" so it never triggers submit reload -->
+        <button id="loginBtn" type="button" class="btn-primary">Login</button>
+        <button id="signupBtn" type="button" class="btn-secondary">Create Account</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+
+      <div class="tiny" id="envNote"></div>
+      <div class="tiny">
+        Admin note: if you’ve never created an account in Supabase yet, click <b>Create Account</b> once (then confirm email).
+      </div>
+
+      <noscript>
+        <div class="msg show error">❌ JavaScript is disabled in your browser. Enable it to login.</div>
+      </noscript>
+    </form>
   </div>
 
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
-  <script>
-    // =========================
-    // ✅ PASTE YOUR KEYS HERE
-    // =========================
-    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+<script>
+  // ✅ PASTE YOUR REAL VALUES HERE
+  const SUPABASE_URL = "PASTE_SUPABASE_URL_HERE";
+  const SUPABASE_ANON_KEY = "PASTE_SUPABASE_ANON_KEY_HERE";
 
-    // Where to go after login (change if you want)
-    // If you already have only portal.html, set this to "portal.html"
-    const AFTER_LOGIN_URL = "portal.html";
+  function $(id){ return document.getElementById(id); }
 
-    const msgEl = document.getElementById("msg");
-    const emailEl = document.getElementById("email");
-    const passEl = document.getElementById("password");
+  function showMsg(text, type){
+    const msgEl = $("msg");
+    if(!msgEl) { alert(text); return; }
+    msgEl.className = "msg show " + (type || "");
+    msgEl.textContent = text;
+  }
 
-    function showMsg(text, type){
-      msgEl.className = "msg " + (type || "");
-      msgEl.textContent = text;
+  function setBusy(isBusy){
+    $("loginBtn").disabled = isBusy;
+    $("signupBtn").disabled = isBusy;
+  }
+
+  function isMissingConfig(){
+    return (
+      !SUPABASE_URL || !SUPABASE_ANON_KEY ||
+      SUPABASE_URL.includes("https://qagktukzxtwbjrdgiben.supabase.co") ||
+      SUPABASE_ANON_KEY.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk")
+    );
+  }
+
+  // Catch ANY JS errors and show them on screen (so you’re never blind)
+  window.onerror = function(message, source, lineno, colno){
+    showMsg(
+      "❌ JavaScript error:\n" +
+      message + "\n" +
+      "Source: " + (source || "") + " (" + lineno + ":" + colno + ")",
+      "error"
+    );
+    return true;
+  };
+
+  window.addEventListener("load", () => {
+    // Prove JS is running
+    $("envNote").innerHTML = `Running from: <b>${location.protocol}//</b>`;
+
+    if (!window.supabase || typeof window.supabase.createClient !== "function"){
+      showMsg("❌ Supabase JS did not load (CDN blocked/offline).", "error");
+      return;
     }
 
-    // Hard checks so it NEVER silently "does nothing"
-    if (!window.supabase) {
-      showMsg("ERROR: Supabase library failed to load.\nCheck internet/CDN blocking.", "error");
+    if (isMissingConfig()){
+      showMsg("⚠️ Supabase keys not set.\nPaste SUPABASE_URL and SUPABASE_ANON_KEY, then refresh.", "error");
+      return;
     }
 
-    if (!SUPABASE_URL.includes("http") || SUPABASE_ANON_KEY.includes("PASTE_")) {
-      showMsg(
-        "ERROR: Supabase keys are not set.\n\nPaste SUPABASE_URL and SUPABASE_ANON_KEY inside login.html (bottom script).",
-        "error"
-      );
-    }
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const supabase = window.supabase
-      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-      : null;
+    showMsg("Auth ready ✅ (JS is running)", "");
 
-    // --------- Button handlers (no forms, no preventDefault needed) ----------
     async function doLogin(){
+      const email = $("email").value.trim();
+      const password = $("password").value;
+
+      if (!email || !password){
+        showMsg("Please enter email and password.", "error");
+        return;
+      }
+
+      setBusy(true);
+      showMsg("Signing in…", "");
+
       try{
-        if(!supabase) { showMsg("Supabase not initialized. Check keys.", "error"); return; }
-
-        const email = emailEl.value.trim();
-        const password = passEl.value;
-
-        if(!email || !password){
-          showMsg("Enter email + password, then click Login.", "warn");
-          return;
-        }
-
-        showMsg("Signing in…", "warn");
-
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-        if(error){
-          showMsg("Login failed:\n" + error.message, "error");
+        if (error){
+          showMsg("Login failed: " + error.message, "error");
           return;
         }
-
-        showMsg("Login successful. Redirecting…", "ok");
-        setTimeout(()=> window.location.href = AFTER_LOGIN_URL, 600);
-
-      } catch(err){
-        showMsg("Login error:\n" + (err?.message || String(err)), "error");
+        showMsg("Login successful ✅ Redirecting…", "ok");
+        setTimeout(() => { window.location.href = "portal.html"; }, 600);
+      } catch (e){
+        showMsg("Login failed: " + (e && e.message ? e.message : "Unknown error"), "error");
+      } finally{
+        setBusy(false);
       }
     }
 
-    function goRegister(){
-      window.location.href = "registration.html";
-    }
+    async function doCreate(){
+      const email = $("email").value.trim();
+      const password = $("password").value;
 
-    // Optional: Supabase signup (you said you want to try create account + sign in)
-    async function doSupabaseSignup(){
+      if (!email || !password){
+        showMsg("Please enter email and password.", "error");
+        return;
+      }
+
+      setBusy(true);
+      showMsg("Creating account…", "");
+
       try{
-        if(!supabase) { showMsg("Supabase not initialized. Check keys.", "error"); return; }
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.origin + "/login.html" }
+        });
 
-        const email = emailEl.value.trim();
-        const password = passEl.value;
-
-        if(!email || !password){
-          showMsg("Enter email + password first, then click Sign Up (Supabase).", "warn");
+        if (error){
+          showMsg("Signup failed: " + error.message, "error");
           return;
         }
 
-        showMsg("Creating Supabase account…", "warn");
-
-        const { data, error } = await supabase.auth.signUp({ email, password });
-
-        if(error){
-          showMsg("Sign up failed:\n" + error.message, "error");
-          return;
-        }
-
-        showMsg(
-          "Account created.\n\nIf 'Confirm email' is ON in Supabase, check your inbox and click the confirmation link.\nThen return here and Login.",
-          "ok"
-        );
-
-      } catch(err){
-        showMsg("Sign up error:\n" + (err?.message || String(err)), "error");
+        showMsg("Account created ✅ Check your email to confirm, then log in.", "ok");
+      } catch (e){
+        showMsg("Signup failed: " + (e && e.message ? e.message : "Unknown error"), "error");
+      } finally{
+        setBusy(false);
       }
     }
 
-    async function doLogout(){
-      try{
-        if(!supabase) { showMsg("Supabase not initialized. Check keys.", "error"); return; }
-        await supabase.auth.signOut();
-        showMsg("Logged out.", "ok");
-      } catch(err){
-        showMsg("Logout error:\n" + (err?.message || String(err)), "error");
-      }
-    }
+    $("loginBtn").addEventListener("click", (e) => { e.preventDefault(); doLogin(); });
+    $("signupBtn").addEventListener("click", (e) => { e.preventDefault(); doCreate(); });
+  });
+</script>
 
-    // expose to onclick
-    window.doLogin = doLogin;
-    window.goRegister = goRegister;
-    window.doSupabaseSignup = doSupabaseSignup;
-    window.doLogout = doLogout;
-
-    // On load: show whether a session exists
-    (async function(){
-      if(!supabase) return;
-      const { data } = await supabase.auth.getSession();
-      if(data?.session?.user?.email){
-        showMsg("You are already signed in as:\n" + data.session.user.email, "ok");
-      } else {
-        showMsg("Ready. Enter your email + password and click Login.", "warn");
-      }
-    })();
-  </script>
 </body>
 </html>
