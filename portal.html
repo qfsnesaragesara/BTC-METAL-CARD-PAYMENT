@@ -219,7 +219,7 @@
 
     <div class="header-actions">
       <span id="statusBadge" class="badge pending">Pending</span>
-      <button id="logoutBtn" class="pill" type="button">Logout</button>
+      <a class="pill" href="login.html" id="logoutLink">Logout</a>
     </div>
   </header>
 
@@ -299,17 +299,21 @@
 
 <script>
   /*********************************************************
-   * CONFIG — your Supabase credentials
+   * CONFIG — Supabase credentials
    *********************************************************/
   const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   /*********************************************************
    * Helpers
    *********************************************************/
   const $ = (id) => document.getElementById(id);
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let email =
+    localStorage.getItem("qfsEmail") ||
+    localStorage.getItem("memberEmail") ||
+    "";
 
   function fmtUSD(n){
     return "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -368,18 +372,15 @@
     $("tierCell").textContent = tier || "—";
     $("qtyCell").textContent = qty ? String(qty) : "—";
 
-    // Default
     $("balance").textContent = "$0.00";
     $("btcBalance").textContent = "—";
 
-    // Silver: $25,000 per card
     if(tier === "SILVER"){
       const usdBalance = 25000 * qty;
       $("balance").textContent = fmtUSD(usdBalance);
       $("btcBalance").textContent = "≈ $25,000 per card allocation";
     }
 
-    // Black: 25,000 BTC (show USD equivalent underneath)
     if(tier === "BLACK"){
       $("balance").textContent = "25,000 BTC";
       $("btcBalance").textContent = "USD equivalent loading…";
@@ -396,48 +397,51 @@
   }
 
   /*********************************************************
-   * ✅ AUTH GUARD + WELCOME EMAIL (Edge Function)
+   * ✅ HARD GATE — require login + verified email
    *********************************************************/
-  let CURRENT_EMAIL = "";
-
-  async function requireSessionOrRedirect(){
+  async function requireSessionAndVerified(){
     const { data, error } = await supabase.auth.getSession();
-    if (error) {
-      window.location.href = "login.html";
-      return null;
-    }
     const session = data?.session || null;
-    if (!session) {
-      window.location.href = "login.html";
+
+    if(error || !session){
+      // Not logged in → go to login
+      window.location.replace("login.html");
       return null;
     }
-    const userEmail = session.user?.email || "";
-    CURRENT_EMAIL = userEmail;
-    $("emailCell").textContent = userEmail || "—";
-    return session;
-  }
 
-  async function triggerWelcomeEmailOnce(){
-    // Server-side function already dedupes using welcome_emails, so we can safely call it.
-    try{
-      const { data, error } = await supabase.functions.invoke("send-welcome", { body: {} });
-      // Optional: debug
-      // console.log("send-welcome:", { data, error });
-    } catch (e) {
-      // Silent fail (portal still works even if email fails)
-      // console.warn("send-welcome invoke failed", e);
+    const user = session.user || {};
+    const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
+
+    // Use session email as source of truth
+    email = user.email || email || "";
+    if(email){
+      localStorage.setItem("qfsEmail", email);
+      localStorage.setItem("memberEmail", email);
+      $("emailCell").textContent = email;
+    } else {
+      $("emailCell").textContent = "—";
     }
+
+    if(!verifiedAt){
+      // Not verified → sign out + redirect
+      try{
+        $("btcBalance").textContent = "⚠️ Please verify your email before accessing the portal. Redirecting to login…";
+        await supabase.auth.signOut();
+      } catch {}
+      setTimeout(() => window.location.replace("login.html"), 900);
+      return null;
+    }
+
+    return session;
   }
 
   /*********************************************************
    * Main — auto-check admin confirmation
-   * Looks up latest submission by email in payment_submissions
    *********************************************************/
   async function checkStatusAndUpdateUI(){
     const now = new Date();
     $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
 
-    // Fallback tier/qty from URL if no DB record yet
     const params = new URLSearchParams(location.search);
     let fallbackTier = (params.get("tier") || params.get("type") || "").toUpperCase();
     let fallbackQty = Number(params.get("qty") || 1);
@@ -445,27 +449,22 @@
     if(fallbackTier === "SILVER" && fallbackQty > 50) fallbackQty = 50;
     if(!Number.isFinite(fallbackQty) || fallbackQty < 1) fallbackQty = 1;
 
-    // Start locked by default
     lockActions();
     setBadge("pending");
     $("statusCell").textContent = "Pending";
 
-    // Show allocation from fallback immediately (nice UX)
     setAllocationUI(fallbackTier, fallbackQty);
 
-    // Require email from session
-    const email = (CURRENT_EMAIL || "").trim();
     if(!email){
-      $("btcBalance").textContent = "Session email not found. Please login again.";
+      $("btcBalance").textContent = "Login email not found. Please login again.";
       return;
     }
 
-    // Query latest submission for this email
     try{
       const { data, error } = await supabase
         .from("payment_submissions")
         .select("status, card_type, qty, created_at")
-        .ilike("email", email)   // case-insensitive match
+        .ilike("email", email)
         .order("created_at", { ascending:false })
         .limit(1);
 
@@ -473,12 +472,10 @@
 
       const row = (data && data[0]) ? data[0] : null;
 
-      // If nothing found, keep pending
       if(!row){
         $("statusCell").textContent = "Pending";
         setBadge("pending");
         lockActions();
-        // keep fallback allocation
       } else {
         const status = (row.status || "pending").toLowerCase();
         const tier = (row.card_type || fallbackTier || "").toUpperCase();
@@ -501,7 +498,6 @@
         }
       }
 
-      // Handle black USD equivalent always (even if locked)
       const tierShown = ($("tierCell").textContent || "").toUpperCase();
       if(tierShown === "BLACK"){
         const btcUsd = await fetchBtcUsd();
@@ -517,15 +513,13 @@
       }
 
     } catch(e){
-      // Fail safe: keep pending & locked
       setBadge("pending");
       $("statusCell").textContent = "Pending";
       lockActions();
-      // keep fallback allocation
     }
   }
 
-  // Click handlers (only meaningful once unlocked)
+  // Click handlers
   $("sendBtn").addEventListener("click", () => {
     alert("Send is enabled for Active accounts. (Next step: build real Send flow.)");
   });
@@ -533,24 +527,21 @@
     alert("Receive is enabled for Active accounts. (Next step: build real Receive flow.)");
   });
 
-  // Logout (real signout)
-  $("logoutBtn").addEventListener("click", async () => {
-    try { await supabase.auth.signOut(); } catch {}
+  // ✅ Real logout (signs out session)
+  $("logoutLink").addEventListener("click", async (e) => {
+    e.preventDefault();
+    try{ await supabase.auth.signOut(); } catch {}
     window.location.href = "login.html";
   });
 
-  // Boot
+  // ✅ Boot with hard gate first
   (async () => {
-    const session = await requireSessionOrRedirect();
-    if(!session) return;
+    const ok = await requireSessionAndVerified();
+    if(!ok) return;
 
-    // ✅ Send welcome email + admin alert once per user (deduped server-side)
-    await triggerWelcomeEmailOnce();
-
-    // Initial load
+    // Once allowed in, run normal portal logic
+    $("emailCell").textContent = email || "—";
     await checkStatusAndUpdateUI();
-
-    // Auto refresh every 20 seconds
     setInterval(checkStatusAndUpdateUI, 20000);
   })();
 </script>
