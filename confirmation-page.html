@@ -110,11 +110,21 @@
         action="https://formbold.com/s/oW1Ay"
         method="POST">
 
-    <!-- Redirect after submit -->
-   <input type="hidden" name="redirectTo" value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-payment.html">
+    <!-- ✅ Redirect is set dynamically by JS:
+         - silver/black -> order-success.html
+         - gold -> success-payment.html (unchanged) -->
+    <input type="hidden" id="redirectToField" name="redirectTo"
+      value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-payment.html">
 
     <!-- Order ID -->
     <input type="hidden" id="orderIdField" name="Order ID">
+
+    <!-- ✅ extra context for your admin (optional but helpful) -->
+    <input type="hidden" id="cardTypeField" name="Card Type">
+    <input type="hidden" id="qtyField" name="Quantity">
+    <input type="hidden" id="usdField" name="Total USD">
+    <input type="hidden" id="btcField" name="Total BTC">
+    <input type="hidden" id="addrField" name="Wallet Address">
 
     <label>Transaction Hash (TXID)</label>
     <input type="text" name="TXID" placeholder="Enter your TXID" required>
@@ -128,14 +138,58 @@
 </div>
 
 <script>
-/* Retrieve Order ID from localStorage or URL */
-(function(){
-    const params = new URLSearchParams(window.location.search);
-    const fromUrl = params.get("order");
-    const fromLocal = localStorage.getItem("qfsOrderId");
+/* Retrieve Order ID + route after confirmation based on card type */
 
-    const orderId = fromUrl || fromLocal || "";
-    document.getElementById("orderIdField").value = orderId;
+(function(){
+  const params = new URLSearchParams(window.location.search);
+
+  // These are passed from wallet.html already:
+  const type = (params.get("type") || "").toLowerCase();
+  const qtyRaw = params.get("qty");
+  const usd = params.get("usd") || "";
+  const btc = params.get("btc") || "";
+  const addr = params.get("addr") || "";
+
+  // Order ID from localStorage or URL (kept as you had)
+  const fromUrl = params.get("order");
+  const fromLocal = localStorage.getItem("qfsOrderId");
+  const orderId = fromUrl || fromLocal || "";
+
+  // Fill hidden fields
+  document.getElementById("orderIdField").value = orderId;
+  document.getElementById("cardTypeField").value = type || "";
+  document.getElementById("qtyField").value = qtyRaw || "";
+  document.getElementById("usdField").value = usd;
+  document.getElementById("btcField").value = btc;
+  document.getElementById("addrField").value = addr;
+
+  // Decide redirect after Formbold submission:
+  // - Gold stays your current success-payment.html
+  // - Silver/Black go to order-success.html (pending admin confirmation)
+  const base = "https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/";
+
+  if(type === "silver" || type === "black"){
+    // enforce black qty = 1
+    let q = Number(qtyRaw || 1);
+    if(type === "black") q = 1;
+    if(!Number.isFinite(q) || q < 1) q = 1;
+    if(type === "silver" && q > 50) q = 50;
+
+    const redirectParams = new URLSearchParams({
+      tier: type,
+      qty: String(q),
+      usd: usd || "",
+      btc: btc || ""
+    });
+
+    document.getElementById("redirectToField").value =
+      base + "order-success.html?" + redirectParams.toString();
+  } else {
+    // default: gold (or unknown) -> keep exactly as you had
+    document.getElementById("redirectToField").value =
+      base + "success-payment.html";
+  }
+
 })();
 </script>
 
