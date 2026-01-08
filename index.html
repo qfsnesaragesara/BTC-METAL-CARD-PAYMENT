@@ -37,35 +37,31 @@
           font-weight: normal !important;
        }
         header nav a:hover { color: var(--gold); }
-        
-     
-
 
         .top-nav {
-    width: 100%;
-    background: #ffffff;
-    padding: 16px 0;
-    display: flex;
-    justify-content: center;
-    gap: 38px;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
-}
+            width: 100%;
+            background: #ffffff;
+            padding: 16px 0;
+            display: flex;
+            justify-content: center;
+            gap: 38px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
 
-.top-nav a {
-    text-decoration: none;
-    color: #1a1a1a;
-    font-size: 16px;
-    font-weight: 600;
-    font-family: "Segoe UI", Inter, sans-serif;
-    transition: 0.25s;
-    padding-bottom: 4px;
-}
+        .top-nav a {
+            text-decoration: none;
+            color: #1a1a1a;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: "Segoe UI", Inter, sans-serif;
+            transition: 0.25s;
+            padding-bottom: 4px;
+        }
 
-.top-nav a:hover {
-    color: #d4af37;
-    border-bottom: 2px solid #d4af37;
-}
-
+        .top-nav a:hover {
+            color: #d4af37;
+            border-bottom: 2px solid #d4af37;
+        }
 
         .hero {
             padding: 120px 20px;
@@ -78,10 +74,9 @@
         .hero h1 { font-size: 3rem; max-width: 800px; margin: auto; }
         .hero p { font-size: 1.2rem; max-width: 700px; margin: 20px auto; line-height: 1.6; }
         .hero .cta { margin-top: 30px; background: var(--gold); padding: 15px 35px; border-radius: 40px; color: var(--dark); font-size: 1.2rem; font-weight: 700; text-decoration: none; transition: 0.3s; display: inline-block; }
-        .hero .cta:hover { background: var(--light); 
-            
-        }
-       .btn-primary {
+        .hero .cta:hover { background: var(--light); }
+
+        .btn-primary {
          background: linear-gradient(90deg, #d4af37, #f7d774) !important;
          color: #000 !important;
          padding: 12px 24px;
@@ -95,14 +90,29 @@
          position: relative;
         }
 
-       .btn-primary:hover {
+        .btn-primary:hover {
          background: linear-gradient(90deg, #f7d774, #d4af37) !important;
          transform: scale(1.05);
         }
 
+        /* ✅ NEW: Secondary hero button (matches your theme, not flashy) */
+        .btn-secondary-hero {
+          background: rgba(255,255,255,0.12);
+          color: #fff !important;
+          padding: 12px 24px;
+          border-radius: 8px;
+          font-weight: 800;
+          text-decoration: none !important;
+          display: inline-block;
+          transition: 0.3s;
+          border: 1px solid rgba(255,255,255,0.22);
+          backdrop-filter: blur(8px);
+        }
+        .btn-secondary-hero:hover {
+          background: rgba(255,255,255,0.18);
+          transform: scale(1.03);
+        }
 
-
-        
         /* ABOUT */
         #about { padding: 70px 20px; text-align: center; background: var(--light); }
         #about h2 { font-size: 2.4rem; font-weight: 700; }
@@ -262,139 +272,136 @@
 
         /* RESET MENU LINKS */
         nav {
-    display: flex;
-    justify-content: flex-end;  /* moves menu to the right */
-    background: #1a1a1a;        /* optional — makes menu look cleaner */
-    padding: 15px 40px;
-}
-
-nav ul {
-    list-style: none;
-    display: flex;              /* put items in a row */
-    gap: 35px;                  /* spacing between menu items */
-    margin: 0;
-    padding: 0;
-}
-
-nav ul li a {
-    text-decoration: none;
-    font-weight: 600;           /* bolder, modern text */
-    font-size: 17px;
-    color: #fff;
-    font-family: "Poppins", sans-serif;
-    letter-spacing: 0.5px;
-    transition: 0.3s ease;
-}
-
-nav ul li a:hover {
-    color: #ffd700;             /* modern gold hover effect */
-}
-
-
-      /* ONLY BUTTONS LOOK LIKE BUTTONS */
-           .register-btn {
-           background: linear-gradient(90deg, #d4af37, #f7d774) !important;
-           color: black !important;
-           padding: 10px 20px !important;
-           border-radius: 6px !important;
-           font-weight: bold !important;
-        text-decoration: none !important;
-        display: inline-block !important;
+            display: flex;
+            justify-content: flex-end;  /* moves menu to the right */
+            background: #1a1a1a;        /* optional — makes menu look cleaner */
+            padding: 15px 40px;
         }
 
-      
-/* ===== FIXED TOP NAV (SAFE VERSION) ===== */
+        nav ul {
+            list-style: none;
+            display: flex;              /* put items in a row */
+            gap: 35px;                  /* spacing between menu items */
+            margin: 0;
+            padding: 0;
+        }
 
-.top-nav {
-    width: 100%;
-    background: #f7d700;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 9999;
-    padding: 12px 0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-}
+        nav ul li a {
+            text-decoration: none;
+            font-weight: 600;           /* bolder, modern text */
+            font-size: 17px;
+            color: #fff;
+            font-family: "Poppins", sans-serif;
+            letter-spacing: 0.5px;
+            transition: 0.3s ease;
+        }
 
-.nav-container {
-    width: 95%;
-    max-width: 1200px;
-    margin: auto;
-}
+        nav ul li a:hover {
+            color: #ffd700;             /* modern gold hover effect */
+        }
 
-.nav-menu {
-    list-style: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 0;
-    padding: 0;
-}
+        /* ONLY BUTTONS LOOK LIKE BUTTONS */
+        .register-btn {
+            background: linear-gradient(90deg, #d4af37, #f7d774) !important;
+            color: black !important;
+            padding: 10px 20px !important;
+            border-radius: 6px !important;
+            font-weight: bold !important;
+            text-decoration: none !important;
+            display: inline-block !important;
+        }
 
-.nav-menu li a {
-    color: #000;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 16px;
-    padding: 8px 12px;
-    transition: opacity 0.3s ease;
-}
+        /* ===== FIXED TOP NAV (SAFE VERSION) ===== */
+        .top-nav {
+            width: 100%;
+            background: #f7d700;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+            padding: 12px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
 
-.nav-menu li a:hover {
-    opacity: 0.6;
-}
+        .nav-container {
+            width: 95%;
+            max-width: 1200px;
+            margin: auto;
+        }
 
-body {
-    padding-top: 70px !important; /* Keeps content below the nav */
-}
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
 
+        .nav-menu li a {
+            color: #000;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            padding: 8px 12px;
+            transition: opacity 0.3s ease;
+        }
 
+        .nav-menu li a:hover {
+            opacity: 0.6;
+        }
+
+        body {
+            padding-top: 70px !important; /* Keeps content below the nav */
+        }
     </style>
 </head>
 <body>
 
 <header>
     <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="Brand Logo" />
- <nav class="top-nav">
-    <div class="nav-container">
-        <ul class="nav-menu">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/registration.html">Register Now</a></li>
+    <nav class="top-nav">
+        <div class="nav-container">
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/registration.html">Register Now</a></li>
 
-            <!-- ✅ REMOVED: Metal Card link on the homescreen -->
-            <!-- <li><a href="#metal-card">Metal Card</a></li> -->
+                <!-- ✅ REMOVED: Metal Card link on the homescreen -->
+                <!-- <li><a href="#metal-card">Metal Card</a></li> -->
 
-            <li><a href="order.html">Order Card</a></li>
+                <li><a href="order.html">Order Card</a></li>
 
-            <!-- ✅ ADDED: Member Login link -->
-            <li><a href="login.html">Member Login</a></li>
+                <!-- ✅ Member Login -->
+                <li><a href="login.html">Member Login</a></li>
 
-            <!-- 🔥 Only change: added Track Order link -->
-            <li><a href="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/tracking.html">Track Order</a></li>
-            <li><a href="contact.html">Contact</a></li>
-        </ul>
-    </div>
-</nav>
-
+                <li><a href="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/tracking.html">Track Order</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
 </header>
 
 <section class="hero">
     <h1>The Quantum Financial System Transition Has Already Begun</h1>
     <p>Secure your position early. Gain access to the operational phase of QFS NESARA GESARA a new era of structured national and global finance framework.</p>
 
-    <a href="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/registration.html" 
-       class="btn-primary">
-       Register Now
-    </a>
+    <!-- ✅ HERO BUTTONS (Register + Login) -->
+    <div style="margin-top:30px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+        <a href="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/registration.html" class="btn-primary">
+            Register Now
+        </a>
 
+        <a href="login.html" class="btn-secondary-hero">
+            Member Login
+        </a>
+    </div>
 </section>
 
 <section id="about">
     <h2>WHAT IS QFS NESARA GESARA</h2>
     <p>
          <strong>QFS?</strong> literally means <strong>Quantum</strong> <strong>Financial</strong> <strong>System</strong>. it is an evolutionary system that represents the future of financial technology, using the power of quantum computing to process vast amounts of data, run millions of scenarios simultaneously, and deliver sharper predictions, faster settlements, and stronger security than traditional systems. it enhances economic principles, making transactions more secure, market analysis more precise, and financial operations more efficient. In essence, quantum finance is a technological upgrade that transforms how financial systems think, calculate, and respond in real time. In simple terms QFS would be like upgrading from a calculator to a supercomputer that can run every possible scenario at once, helping people make better, more secure financial decisions. 
-       
     </p>
     <p>
        QFS has two legislative framework called <strong>NESARA</strong> and <strong>GESARA</strong>. <br> NESARA (National Economic Security and Reformation Act) <br> GESARA (Global Economic Security and Reformation Act) <br><br> Anyone stepping in early gains access to some of the benefits before public announcement and rollout occurs. Some of the benefits for early adopters are; <strong>Debt</strong> <strong>Relief</strong>, <strong>simplified</strong> <strong>taxation</strong> and access to <strong>Quantum Healing</strong> <strong>MedBeds</strong>.
@@ -427,8 +434,6 @@ Together, Patriots and Vanguards form the dual pillars of the transition one roo
     </p>
     </p>
 </section>
-
-
 
 <section id="metal-card">
     <h3>Trump Gold Card (Unlock Life in America)<br></h3>
@@ -561,8 +566,6 @@ for(let i=0;i<50;i++){
 
 /* Extra avatar pool for more variety (grayscale + different CDN) - optional */
 const extraAvatars = [
-  // avatar placeholders (not kids). Using dicebear for stylized fallback if needed:
-  // Example dicebear URL (avatars vary but are not kid-specific)
   "https://avatars.dicebear.com/api/identicon/extra1.svg",
   "https://avatars.dicebear.com/api/identicon/extra2.svg"
 ];
@@ -570,7 +573,6 @@ const extraAvatars = [
 /* ---------- Helpers ---------- */
 function randomFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function pickGenderedProfile(){
-  // randomly choose gender (slightly favor male/female 50/50)
   const gender = Math.random() < 0.5 ? "male" : "female";
   if(gender === "male"){
     const name = randomFrom(maleNames);
@@ -589,20 +591,14 @@ const avatarImgEl = document.getElementById("notif-avatar-img");
 const nameLineEl = document.getElementById("notif-name-line");
 const textLineEl = document.getElementById("notif-text-line");
 
-/* small sound (short, low filesize) — public domain/muted fallback */
 const beep = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_9da39afd1e.mp3?filename=notification-110698.mp3");
 beep.volume = 0.55;
 
-/* This ensures every profile shown has a gender-matching image and a country flag.
-   We also ensure names don't repeat too aggressively by rotating through arrays.
-*/
 let maleIndex = 0, femaleIndex = 0;
 function generateNotification(){
-    // choose profile (gender-aware)
     const genderRoll = Math.random();
     let profile;
     if(genderRoll < 0.5){
-        // male (rotate index to reduce repeats)
         const name = maleNames[maleIndex % maleNames.length] + " " + String.fromCharCode(65 + Math.floor(Math.random()*26)) + ".";
         const avatar = maleAvatars[maleIndex % maleAvatars.length];
         profile = { name, avatar, gender: "male" };
@@ -614,45 +610,36 @@ function generateNotification(){
         femaleIndex++;
     }
 
-    // choose country (tilt to US a bit higher)
     const country = (Math.random() < 0.6) ? countries[0] : randomFrom(countries.slice(1));
-    const qty = Math.floor(Math.random()*10) + 1; // 1-10
+    const qty = Math.floor(Math.random()*10) + 1;
 
-    // populate the notification DOM
     avatarImgEl.src = profile.avatar;
     avatarImgEl.alt = profile.name;
     nameLineEl.innerHTML = `${profile.name} <span class="notif-flag">${country.flag}</span>`;
     textLineEl.textContent = `just ordered ${qty} metal card${qty>1 ? "s" : ""} — ${country.name}`;
 
-    // show with sound
     try { beep.currentTime = 0; beep.play().catch(()=>{}); } catch(e){}
 
     notificationEl.classList.remove("hidden");
     notificationEl.classList.add("show");
 
-    // hide fully after 6s
     clearTimeout(notificationEl._hideTimeout);
     notificationEl._hideTimeout = setTimeout(()=>{
         notificationEl.classList.remove("show");
         notificationEl.classList.add("hidden");
-        // remove avatar src after animation finishes to free memory and avoid ghosting
         setTimeout(()=>{ avatarImgEl.src = ""; }, 650);
     }, 6000);
 }
 
-/* Start and interval: every 30 seconds (0.5 minutes) */
 const INTERVAL_MS = 30000;
 let intervalHandle = setInterval(generateNotification, INTERVAL_MS);
-/* initial trigger a few seconds after load */
 setTimeout(generateNotification, 5000);
 
-/* Accessibility: pause notifications if user focuses a form input or has reduced motion */
 (function accessibilityChecks(){
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(prefersReducedMotion){
     clearInterval(intervalHandle);
   }
-  // If the page is hidden (user switched tab) pause interval and resume on visibility
   document.addEventListener("visibilitychange", ()=>{
     if(document.hidden){
       clearInterval(intervalHandle);
