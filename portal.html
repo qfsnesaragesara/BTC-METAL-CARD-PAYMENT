@@ -8,6 +8,9 @@
 <!-- Official website logo -->
 <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
 
+<!-- Supabase JS (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
   :root{
     --bg:#020617;
@@ -34,10 +37,7 @@
       var(--bg);
   }
 
-  .wrap{
-    max-width:var(--maxw);
-    margin:0 auto;
-  }
+  .wrap{ max-width:var(--maxw); margin:0 auto; }
 
   /* HEADER */
   .header{
@@ -47,14 +47,9 @@
     gap:14px;
     margin-bottom:18px;
   }
-  .brand{
-    display:flex;
-    align-items:center;
-    gap:12px;
-  }
+  .brand{ display:flex; align-items:center; gap:12px; }
   .logo{
-    width:54px;
-    height:54px;
+    width:54px; height:54px;
     border-radius:14px;
     object-fit:cover;
     box-shadow:
@@ -67,21 +62,42 @@
     font-weight:900;
     letter-spacing:-0.02em;
   }
-  .brand span{
-    font-size:12px;
-    color:var(--muted);
-  }
+  .brand span{ font-size:12px; color:var(--muted); }
 
-  .header-actions a{
-    padding:10px 14px;
+  .header-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  .pill{
+    padding:8px 12px;
     border-radius:999px;
     border:1px solid rgba(148,163,184,0.35);
-    text-decoration:none;
-    color:var(--text);
-    font-weight:800;
-    font-size:12px;
     background:rgba(255,255,255,0.06);
+    color:var(--text);
+    font-weight:850;
+    font-size:12px;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
   }
+  .badge{
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    border:1px solid rgba(148,163,184,0.30);
+    background:rgba(2,6,23,0.40);
+    color:#e5e7eb;
+  }
+  .badge.pending{ border-color: rgba(251,191,36,0.35); color:#fde68a; }
+  .badge.active{ border-color: rgba(34,197,94,0.35); color:#bbf7d0; }
+  .badge.rejected{ border-color: rgba(244,63,94,0.35); color:#fecdd3; }
 
   /* GRID */
   .grid{
@@ -89,10 +105,7 @@
     grid-template-columns: 1fr 1fr;
     gap:18px;
   }
-
-  @media (max-width:860px){
-    .grid{ grid-template-columns:1fr; }
-  }
+  @media (max-width:860px){ .grid{ grid-template-columns:1fr; } }
 
   /* CARD */
   .card{
@@ -103,17 +116,20 @@
     box-shadow: 0 28px 110px var(--shadow);
     backdrop-filter: blur(26px);
     position:relative;
+    overflow:hidden;
+  }
+  .card:before{
+    content:"";
+    position:absolute;
+    inset:-120px -120px auto auto;
+    width:320px;
+    height:320px;
+    background: radial-gradient(circle at center, rgba(56,189,248,0.18), transparent 60%);
+    pointer-events:none;
   }
 
-  .card h2{
-    margin:0 0 6px;
-    font-size:16px;
-    font-weight:900;
-  }
-  .sub{
-    font-size:12px;
-    color:var(--muted);
-  }
+  .card h2{ margin:0 0 6px; font-size:16px; font-weight:900; }
+  .sub{ font-size:12px; color:var(--muted); }
 
   /* BALANCE */
   .balance{
@@ -127,15 +143,11 @@
   .btc{
     font-size:13px;
     color:#cbd5f5;
+    line-height:1.55;
   }
 
   /* ACTIONS */
-  .actions{
-    display:flex;
-    gap:12px;
-    margin-top:14px;
-    flex-wrap:wrap;
-  }
+  .actions{ display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; }
   .btn{
     flex:1;
     padding:12px 14px;
@@ -185,6 +197,8 @@
     text-transform:uppercase;
     font-size:11px;
   }
+
+  .mutedline{ color:var(--muted); font-size:12px; margin-top:8px; }
 </style>
 </head>
 
@@ -202,8 +216,10 @@
         <span>QFS NESARA GESARA</span>
       </div>
     </div>
+
     <div class="header-actions">
-      <a href="login.html">Logout</a>
+      <span id="statusBadge" class="badge pending">Pending</span>
+      <a class="pill" href="login.html">Logout</a>
     </div>
   </header>
 
@@ -213,19 +229,21 @@
     <!-- BALANCE -->
     <div class="card">
       <h2>Available Balance</h2>
-      <div class="sub">Allocated after card purchase</div>
+      <div class="sub">Allocation becomes active after admin confirmation</div>
 
       <div class="balance" id="balance">$0.00</div>
       <div class="btc" id="btcBalance">—</div>
 
       <div class="actions">
-        <button class="btn btn-disabled">Send</button>
-        <button class="btn btn-disabled">Receive</button>
+        <button id="sendBtn" class="btn btn-disabled" disabled>Send</button>
+        <button id="receiveBtn" class="btn btn-disabled" disabled>Receive</button>
       </div>
 
-      <div class="status">
+      <div class="status" id="lockNote">
         🔒 Send & Receive are locked until admin confirms your order.
       </div>
+
+      <div class="mutedline" id="lastChecked">Checking confirmation…</div>
     </div>
 
     <!-- ACCOUNT INFO -->
@@ -248,9 +266,13 @@
         </tr>
         <tr>
           <th>Status</th>
-          <td>Pending Confirmation</td>
+          <td id="statusCell">Pending</td>
         </tr>
       </table>
+
+      <div class="mutedline">
+        If you already submitted your TXID, wait for admin approval.
+      </div>
     </div>
 
     <!-- TRANSACTIONS -->
@@ -279,40 +301,225 @@
 </div>
 
 <script>
-  // Pull stored info from earlier steps
+  /*********************************************************
+   * CONFIG — paste your real Supabase credentials here
+   *********************************************************/
+  const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
+  /*********************************************************
+   * Helpers
+   *********************************************************/
+  const $ = (id) => document.getElementById(id);
+
   const email =
     localStorage.getItem("qfsEmail") ||
-    "—";
+    localStorage.getItem("memberEmail") ||
+    "";
 
-  const params = new URLSearchParams(location.search);
-  const tier = (params.get("tier") || params.get("type") || "").toUpperCase();
-  let qty = Number(params.get("qty") || 1);
+  $("emailCell").textContent = email || "—";
 
-  if (tier === "BLACK") qty = 1;
-  if (tier === "SILVER" && qty > 50) qty = 50;
-
-  document.getElementById("emailCell").textContent = email;
-  document.getElementById("tierCell").textContent = tier || "—";
-  document.getElementById("qtyCell").textContent = qty || "—";
-
-  // Allocation logic
-  let usdBalance = 0;
-  let btcLabel = "—";
-
-  if (tier === "SILVER") {
-    usdBalance = 25000 * qty;
-    btcLabel = "≈ $25,000 per card allocation";
+  function fmtUSD(n){
+    return "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
   }
 
-  if (tier === "BLACK") {
-    btcLabel = "25,000 BTC allocation (locked)";
-    usdBalance = 0;
+  async function fetchBtcUsd(){
+    try{
+      const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+      const j = await r.json();
+      return Number(j?.bitcoin?.usd || 0);
+    } catch {
+      return 0;
+    }
   }
 
-  document.getElementById("balance").textContent =
-    usdBalance ? "$" + usdBalance.toLocaleString() : "$0.00";
+  function setBadge(status){
+    const b = $("statusBadge");
+    b.classList.remove("pending","active","rejected");
+    if(status === "confirmed"){
+      b.textContent = "Active";
+      b.classList.add("active");
+    } else if(status === "rejected"){
+      b.textContent = "Rejected";
+      b.classList.add("rejected");
+    } else {
+      b.textContent = "Pending";
+      b.classList.add("pending");
+    }
+  }
 
-  document.getElementById("btcBalance").textContent = btcLabel;
+  function lockActions(){
+    $("sendBtn").disabled = true;
+    $("receiveBtn").disabled = true;
+    $("sendBtn").classList.add("btn-disabled");
+    $("receiveBtn").classList.add("btn-disabled");
+    $("sendBtn").classList.remove("btn-primary");
+    $("receiveBtn").classList.remove("btn-primary");
+    $("lockNote").textContent = "🔒 Send & Receive are locked until admin confirms your order.";
+  }
+
+  function unlockActions(){
+    $("sendBtn").disabled = false;
+    $("receiveBtn").disabled = false;
+
+    $("sendBtn").classList.remove("btn-disabled");
+    $("receiveBtn").classList.remove("btn-disabled");
+
+    $("sendBtn").classList.add("btn-primary");
+    $("receiveBtn").classList.add("btn-primary");
+
+    $("lockNote").textContent = "✅ Account Active — Send & Receive are unlocked.";
+  }
+
+  function setAllocationUI(tierUpper, qty){
+    const tier = (tierUpper || "").toUpperCase();
+    $("tierCell").textContent = tier || "—";
+    $("qtyCell").textContent = qty ? String(qty) : "—";
+
+    // Default
+    $("balance").textContent = "$0.00";
+    $("btcBalance").textContent = "—";
+
+    // Silver: $25,000 per card
+    if(tier === "SILVER"){
+      const usdBalance = 25000 * qty;
+      $("balance").textContent = fmtUSD(usdBalance);
+      $("btcBalance").textContent = "≈ $25,000 per card allocation";
+    }
+
+    // Black: 25,000 BTC (show USD equivalent underneath)
+    if(tier === "BLACK"){
+      $("balance").textContent = "25,000 BTC";
+      $("btcBalance").textContent = "USD equivalent loading…";
+    }
+  }
+
+  function setBlackUsdEquivalent(btcUsd){
+    if(!btcUsd) {
+      $("btcBalance").textContent = "USD equivalent unavailable";
+      return;
+    }
+    const usdEq = 25000 * btcUsd;
+    $("btcBalance").textContent = "≈ " + fmtUSD(usdEq) + " (live BTC price)";
+  }
+
+  /*********************************************************
+   * Main — auto-check admin confirmation
+   * Looks up latest submission by email in payment_submissions
+   *********************************************************/
+  async function checkStatusAndUpdateUI(){
+    const now = new Date();
+    $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
+
+    // Fallback tier/qty from URL if no DB record yet
+    const params = new URLSearchParams(location.search);
+    let fallbackTier = (params.get("tier") || params.get("type") || "").toUpperCase();
+    let fallbackQty = Number(params.get("qty") || 1);
+    if(fallbackTier === "BLACK") fallbackQty = 1;
+    if(fallbackTier === "SILVER" && fallbackQty > 50) fallbackQty = 50;
+    if(!Number.isFinite(fallbackQty) || fallbackQty < 1) fallbackQty = 1;
+
+    // Start locked by default
+    lockActions();
+    setBadge("pending");
+    $("statusCell").textContent = "Pending";
+
+    // Show allocation from fallback immediately (nice UX)
+    setAllocationUI(fallbackTier, fallbackQty);
+
+    // If no email saved, we can't lookup
+    if(!email){
+      $("btcBalance").textContent = "Login email not found. Please login again.";
+      return;
+    }
+
+    // If keys not set, keep safe fallback (no crash)
+    if(!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes("PASTE_")){
+      $("btcBalance").textContent = "Supabase not connected yet (keys not set).";
+      return;
+    }
+
+    // Create client
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Query latest submission for this email
+    try{
+      const { data, error } = await supabase
+        .from("payment_submissions")
+        .select("status, card_type, qty, created_at")
+        .ilike("email", email)   // case-insensitive match
+        .order("created_at", { ascending:false })
+        .limit(1);
+
+      if(error) throw error;
+
+      const row = (data && data[0]) ? data[0] : null;
+
+      // If nothing found, keep pending
+      if(!row){
+        $("statusCell").textContent = "Pending";
+        setBadge("pending");
+        lockActions();
+        // keep fallback allocation
+      } else {
+        const status = (row.status || "pending").toLowerCase();
+        const tier = (row.card_type || fallbackTier || "").toUpperCase();
+        let qty = Number(row.qty || fallbackQty || 1);
+
+        if(tier === "BLACK") qty = 1;
+        if(tier === "SILVER" && qty > 50) qty = 50;
+        if(!Number.isFinite(qty) || qty < 1) qty = 1;
+
+        $("statusCell").textContent =
+          status === "confirmed" ? "Active" : (status === "rejected" ? "Rejected" : "Pending");
+
+        setBadge(status);
+        setAllocationUI(tier, qty);
+
+        if(status === "confirmed"){
+          unlockActions();
+        } else {
+          lockActions();
+        }
+      }
+
+      // Handle black USD equivalent always (even if locked)
+      const tierShown = ($("tierCell").textContent || "").toUpperCase();
+      if(tierShown === "BLACK"){
+        const btcUsd = await fetchBtcUsd();
+        setBlackUsdEquivalent(btcUsd);
+      } else if(tierShown === "SILVER"){
+        const btcUsd = await fetchBtcUsd();
+        if(btcUsd){
+          const qtyShown = Number($("qtyCell").textContent || 1);
+          const usdBal = 25000 * (Number.isFinite(qtyShown) ? qtyShown : 1);
+          const btcEq = usdBal / btcUsd;
+          $("btcBalance").textContent = `≈ ${btcEq.toFixed(8)} BTC (live BTC price)`;
+        }
+      }
+
+    } catch(e){
+      // Fail safe: keep pending & locked
+      setBadge("pending");
+      $("statusCell").textContent = "Pending";
+      lockActions();
+      // keep fallback allocation
+    }
+  }
+
+  // Click handlers (only meaningful once unlocked)
+  $("sendBtn").addEventListener("click", () => {
+    alert("Send is enabled for Active accounts. (Next step: build real Send flow.)");
+  });
+  $("receiveBtn").addEventListener("click", () => {
+    alert("Receive is enabled for Active accounts. (Next step: build real Receive flow.)");
+  });
+
+  // Initial load
+  checkStatusAndUpdateUI();
+
+  // Auto refresh every 20 seconds (so it unlocks without reload)
+  setInterval(checkStatusAndUpdateUI, 20000);
 </script>
 </body>
 </html>
