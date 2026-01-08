@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Confirm — QFS</title>
+
+  <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg:#020617;
+      --glass1:rgba(15,23,42,0.78);
+      --glass2:rgba(15,23,42,0.92);
+      --border:rgba(148,163,184,0.42);
+      --muted:#94a3b8;
+      --text:#e5e7eb;
+      --accent:#38bdf8;
+      --accent2:#a855f7;
+      --gold:#fbbf24;
+      --emerald:#22c55e;
+      --rose:#fb7185;
+      --shadow: 0 28px 90px rgba(2,6,23,0.70);
+      --radius:26px;
+      --maxw:1120px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 480px at 15% 8%, rgba(56,189,248,0.22), transparent 55%),
+        radial-gradient(900px 480px at 85% 85%, rgba(168,85,247,0.22), transparent 55%),
+        radial-gradient(700px 360px at 75% 10%, rgba(251,191,36,0.10), transparent 55%),
+        var(--bg);
+      padding:22px;
+      display:flex;
+      justify-content:center;
+      overflow-x:hidden;
+    }
+    .page{ width:100%; max-width:var(--maxw); display:flex; flex-direction:column; gap:14px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:14px 14px;
+      border:1px solid var(--border);
+      border-radius:22px;
+      background: linear-gradient(145deg, rgba(15,23,42,0.90), rgba(15,23,42,0.72));
+      backdrop-filter: blur(26px);
+      box-shadow: var(--shadow);
+    }
+    .brand{ display:flex; gap:12px; align-items:center; }
+    .brand img{
+      width:46px; height:46px; border-radius:14px; object-fit:cover;
+      border:1px solid rgba(255,255,255,0.16);
+      box-shadow:0 18px 38px rgba(56,189,248,0.18);
+    }
+    .brand .t1{ font-weight:950; letter-spacing:0.08em; font-size:12px; text-transform:uppercase; color: rgba(226,232,240,0.92); }
+    .brand .t2{ margin-top:2px; color:rgba(148,163,184,0.95); font-size:12px; }
+
+    .btn{
+      padding:10px 14px; border-radius:999px; border:none; cursor:pointer;
+      font-weight:900; letter-spacing:0.10em; text-transform:uppercase;
+      font-size:11px; display:inline-flex; gap:8px; align-items:center; justify-content:center;
+      text-decoration:none; white-space:nowrap; user-select:none;
+      transition: transform .15s ease, filter .15s ease, opacity .15s ease;
+    }
+    .btn:active{ transform: translateY(1px) scale(0.99); }
+    .btn-secondary{ background:rgba(255,255,255,0.07); border:1px solid rgba(148,163,184,0.40); color:var(--text); }
+    .btn-secondary:hover{ filter: brightness(1.10); }
+    .btn-primary{ background: linear-gradient(135deg, var(--accent), var(--accent2)); color:#fff; }
+    .btn-danger{ background: rgba(251,113,133,0.16); border:1px solid rgba(251,113,133,0.30); color:#ffdbe4; }
+
+    .grid{ display:grid; grid-template-columns: 1fr; gap:14px; }
+    .card{
+      border:1px solid rgba(148,163,184,0.35);
+      border-radius:var(--radius);
+      background: linear-gradient(145deg, var(--glass2), var(--glass1));
+      backdrop-filter: blur(28px);
+      box-shadow: var(--shadow);
+      padding:16px;
+    }
+    .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .muted{ color:rgba(148,163,184,0.95); font-size:12px; }
+    .input{
+      width: min(420px, 100%);
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,0.40);
+      background: rgba(0,0,0,0.18);
+      color: var(--text);
+      outline:none;
+      font-weight:700;
+    }
+
+    table{ width:100%; border-collapse:separate; border-spacing:0 10px; }
+    th{
+      text-align:left;
+      font-size:11px;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+      color:rgba(148,163,184,0.95);
+      padding:0 10px;
+    }
+    td{
+      padding:12px 10px;
+      background: rgba(255,255,255,0.04);
+      border-top:1px solid rgba(148,163,184,0.22);
+      border-bottom:1px solid rgba(148,163,184,0.22);
+    }
+    td:first-child{
+      border-left:1px solid rgba(148,163,184,0.22);
+      border-radius:16px 0 0 16px;
+    }
+    td:last-child{
+      border-right:1px solid rgba(148,163,184,0.22);
+      border-radius:0 16px 16px 0;
+    }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 11px; border-radius:999px;
+      border:1px solid rgba(148,163,184,0.35);
+      background: rgba(0,0,0,0.18);
+      font-weight:900; font-size:10px; letter-spacing:0.10em; text-transform:uppercase;
+      color: rgba(226,232,240,0.92);
+      white-space:nowrap;
+    }
+    .dot{ width:8px; height:8px; border-radius:50%; background:var(--muted); }
+    .dot.ok{ background: var(--emerald); box-shadow:0 0 0 4px rgba(34,197,94,0.14); }
+    .dot.warn{ background: var(--gold); box-shadow:0 0 0 4px rgba(251,191,36,0.12); }
+    .toast{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,0.25);
+      background: rgba(0,0,0,0.18);
+      display:none;
+    }
+    .toast.show{ display:block; }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <div class="topbar">
+      <div class="brand">
+        <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="QFS Logo">
+        <div>
+          <div class="t1">Admin Confirm</div>
+          <div class="t2">Approve TXID + email in 1 click</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <span id="sessionPill" class="pill"><span class="dot warn"></span> Not signed in</span>
+        <button id="logoutBtn" class="btn btn-secondary" style="display:none;">Logout</button>
+        <a class="btn btn-secondary" href="index.html">Home</a>
+      </div>
+    </div>
+
+    <!-- LOGIN CARD -->
+    <div id="loginCard" class="card">
+      <div class="row" style="justify-content:space-between;">
+        <div>
+          <div class="pill"><span class="dot warn"></span> Admin Login</div>
+          <div class="muted" style="margin-top:6px;">Only admin emails should sign in here.</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <input id="email" class="input" type="email" placeholder="Admin email" autocomplete="email">
+        <input id="password" class="input" type="password" placeholder="Password" autocomplete="current-password">
+        <button id="loginBtn" class="btn btn-primary">Sign In</button>
+      </div>
+
+      <div id="loginToast" class="toast"></div>
+    </div>
+
+    <!-- PENDING LIST -->
+    <div id="pendingCard" class="card" style="display:none;">
+      <div class="row" style="justify-content:space-between;">
+        <div>
+          <div class="pill"><span class="dot ok"></span> Pending Confirmations</div>
+          <div class="muted" style="margin-top:6px;">Approve matches by TXID + email.</div>
+        </div>
+        <div class="row">
+          <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
+        </div>
+      </div>
+
+      <div id="pendingToast" class="toast"></div>
+
+      <div style="overflow:auto; margin-top:10px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Email</th>
+              <th>TXID</th>
+              <th>Card</th>
+              <th>Qty</th>
+              <th>USD</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // =========================
+    // ✅ PASTE YOUR SUPABASE HERE
+    // =========================
+    const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL";
+    const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY";
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Elements
+    const loginCard = document.getElementById("loginCard");
+    const pendingCard = document.getElementById("pendingCard");
+    const sessionPill = document.getElementById("sessionPill");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    const emailEl = document.getElementById("email");
+    const passEl = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+
+    const rowsEl = document.getElementById("rows");
+    const loginToast = document.getElementById("loginToast");
+    const pendingToast = document.getElementById("pendingToast");
+
+    function showToast(el, msg){
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(()=> el.classList.remove("show"), 2600);
+    }
+
+    function setSignedInUI(isSignedIn){
+      if(isSignedIn){
+        sessionPill.innerHTML = `<span class="dot ok"></span> Signed in`;
+        loginCard.style.display = "none";
+        pendingCard.style.display = "block";
+        logoutBtn.style.display = "inline-flex";
+      } else {
+        sessionPill.innerHTML = `<span class="dot warn"></span> Not signed in`;
+        loginCard.style.display = "block";
+        pendingCard.style.display = "none";
+        logoutBtn.style.display = "none";
+      }
+    }
+
+    function fmtDate(ts){
+      try { return new Date(ts).toLocaleString(); } catch { return ts; }
+    }
+
+    function shortTxid(txid){
+      if(!txid) return "";
+      const t = String(txid);
+      return t.length > 18 ? (t.slice(0,10) + "…" + t.slice(-8)) : t;
+    }
+
+    async function loadPending(){
+      rowsEl.innerHTML = `<tr><td colspan="7" class="muted">Loading…</td></tr>`;
+      const { data, error } = await supabase.rpc("list_pending_confirmations");
+      if(error){
+        rowsEl.innerHTML = `<tr><td colspan="7" class="muted">Error: ${error.message}</td></tr>`;
+        return;
+      }
+      if(!data || data.length === 0){
+        rowsEl.innerHTML = `<tr><td colspan="7" class="muted">No pending confirmations.</td></tr>`;
+        return;
+      }
+
+      rowsEl.innerHTML = "";
+      data.forEach((r) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="muted">${fmtDate(r.created_at)}</td>
+          <td class="mono">${r.email}</td>
+          <td class="mono" title="${r.txid}">${shortTxid(r.txid)}</td>
+          <td><span class="pill">${String(r.card_type).toUpperCase()}</span></td>
+          <td>${r.qty}</td>
+          <td>$${Number(r.amount_usd || 0).toLocaleString()}</td>
+          <td>
+            <button class="btn btn-primary" data-email="${encodeURIComponent(r.email)}" data-txid="${encodeURIComponent(r.txid)}">
+              Approve
+            </button>
+          </td>
+        `;
+        rowsEl.appendChild(tr);
+      });
+
+      // Attach approve handlers
+      rowsEl.querySelectorAll("button[data-email]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const email = decodeURIComponent(btn.dataset.email || "");
+          const txid = decodeURIComponent(btn.dataset.txid || "");
+          btn.disabled = true;
+          btn.style.opacity = "0.7";
+          btn.textContent = "Approving…";
+
+          const { data, error } = await supabase.rpc("approve_payment_confirmation", {
+            p_email: email,
+            p_txid: txid
+          });
+
+          if(error){
+            showToast(pendingToast, "Approve failed: " + error.message);
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.textContent = "Approve";
+            return;
+          }
+
+          if(!data?.ok){
+            showToast(pendingToast, data?.error || "Not approved.");
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.textContent = "Approve";
+            return;
+          }
+
+          showToast(pendingToast, `Approved: ${data.member_email} (${data.card_type})`);
+          await loadPending();
+        });
+      });
+    }
+
+    // Login
+    loginBtn.addEventListener("click", async () => {
+      const email = (emailEl.value || "").trim();
+      const password = passEl.value || "";
+      if(!email || !password){
+        showToast(loginToast, "Enter email + password.");
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.style.opacity = "0.7";
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      loginBtn.disabled = false;
+      loginBtn.style.opacity = "1";
+
+      if(error){
+        showToast(loginToast, "Login failed: " + error.message);
+        return;
+      }
+
+      showToast(loginToast, "Signed in.");
+      setSignedInUI(true);
+      await loadPending();
+    });
+
+    // Logout
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      setSignedInUI(false);
+    });
+
+    refreshBtn.addEventListener("click", loadPending);
+
+    // Initial
+    (async function boot(){
+      const { data } = await supabase.auth.getSession();
+      const hasSession = !!data?.session;
+      setSignedInUI(hasSession);
+      if(hasSession) await loadPending();
+    })();
+  </script>
+</body>
+</html>
