@@ -155,16 +155,13 @@
     </div>
   </div>
 
-  <!-- If CDN is blocked for you, replace this line with: <script src="/supabase.min.js"></script> -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <script>
     // =========================
-    // ✅ YOUR REAL SUPABASE KEYS
+    // ✅ YOUR SUPABASE VALUES
     // =========================
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const subLine = document.getElementById("subLine");
@@ -190,11 +187,7 @@
     }
 
     async function requireSession(){
-      const { data, error } = await supabase.auth.getSession();
-      if(error){
-        window.location.href = "./login.html";
-        return null;
-      }
+      const { data } = await supabase.auth.getSession();
       if(!data?.session){
         window.location.href = "./login.html";
         return null;
@@ -202,19 +195,10 @@
       return data.session;
     }
 
-    // ✅ Admin check using admin_users table (NO RPC NEEDED)
-    async function requireAdmin(session){
-      const user = session?.user;
-      if(!user) return { ok:false, reason:"No user session" };
-
-      const { data, error } = await supabase
-        .from("admin_users")
-        .select("user_id,email")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
+    async function requireAdmin(){
+      const { data, error } = await supabase.rpc("is_admin");
       if(error) return { ok:false, reason:error.message };
-      if(!data) return { ok:false, reason:"Not an admin" };
+      if(data !== true) return { ok:false, reason:"Not an admin" };
       return { ok:true };
     }
 
@@ -270,7 +254,14 @@
           </td>
           <td style="min-width:220px">
             <div class="row">
-              <button class="gold" data-confirm="${esc(o.id)}">Confirm</button>
+              <!-- ✅ store email/tier/qty on the button so we can send activation email -->
+              <button class="gold"
+                data-confirm="${esc(o.id)}"
+                data-email="${esc(o.purchaser_email || "")}"
+                data-tier="${esc(String(o.tier || ""))}"
+                data-qty="${esc(String(o.qty || 1))}"
+              >Confirm</button>
+
               <button class="danger" data-reject="${esc(o.id)}">Reject</button>
             </div>
           </td>
@@ -278,10 +269,15 @@
         rowsEl.appendChild(tr);
       });
 
+      // wire actions
       rowsEl.querySelectorAll("button[data-confirm]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-confirm");
-          await updateOrderStatus(id, "confirmed", btn);
+          const email = btn.getAttribute("data-email") || "";
+          const tier = btn.getAttribute("data-tier") || "";
+          const qty = Number(btn.getAttribute("data-qty") || "1") || 1;
+
+          await updateOrderStatus(id, "confirmed", btn, { email, tier, qty });
         });
       });
 
@@ -293,12 +289,13 @@
       });
     }
 
-    async function updateOrderStatus(orderId, status, btn){
+    async function updateOrderStatus(orderId, status, btn, meta){
       setMsg("", "");
       btn.disabled = true;
       const oldText = btn.textContent;
       btn.textContent = "Working…";
 
+      // read note input
       const noteInput = rowsEl.querySelector(`input[data-note="${CSS.escape(orderId)}"]`);
       const note = (noteInput?.value || "").trim() || null;
 
@@ -306,7 +303,7 @@
         .from("card_orders")
         .update({ status, note })
         .eq("id", orderId)
-        .eq("status","pending");
+        .eq("status","pending"); // prevent double-click updates
 
       btn.disabled = false;
       btn.textContent = oldText;
@@ -316,18 +313,42 @@
         return;
       }
 
-      setMsg(
-        status === "confirmed"
-          ? "Confirmed. Activation triggered automatically."
-          : "Rejected.",
-        "ok"
-      );
+      if(status === "confirmed"){
+        setMsg("Confirmed. Sending activation email…", "ok");
+
+        // ✅ Send activation email immediately (do not block confirmation if email fails)
+        try{
+          const email = (meta?.email || "").trim();
+          const tier = (meta?.tier || "").trim();
+          const qty = Number(meta?.qty || 1) || 1;
+
+          if(email){
+            const { data, error: fnErr } = await supabase.functions.invoke("send-activation", {
+              body: { email, tier, qty }
+            });
+
+            if(fnErr){
+              setMsg("Confirmed ✅ (Activation email failed: " + fnErr.message + ")", "ok");
+            } else if(data?.ok === false){
+              setMsg("Confirmed ✅ (Activation email error: " + (data?.error || "unknown") + ")", "ok");
+            } else {
+              setMsg("Confirmed ✅ Activation email sent.", "ok");
+            }
+          } else {
+            setMsg("Confirmed ✅ (No purchaser email found to send activation email).", "ok");
+          }
+        } catch(e){
+          setMsg("Confirmed ✅ (Activation email failed).", "ok");
+        }
+
+      } else {
+        setMsg("Rejected.", "ok");
+      }
 
       await loadPending();
     }
 
     refreshBtn.addEventListener("click", loadPending);
-
     searchEmail.addEventListener("input", () => {
       clearTimeout(window.__t);
       window.__t = setTimeout(loadPending, 250);
@@ -344,13 +365,11 @@
 
       emailPill.textContent = session.user.email || "Admin";
 
-      const admin = await requireAdmin(session);
+      const admin = await requireAdmin();
       if(!admin.ok){
         subLine.textContent = "Access denied";
         renderEmpty("Not authorized.");
         setMsg(admin.reason || "Not authorized.", "err");
-        try { await supabase.auth.signOut(); } catch {}
-        setTimeout(() => window.location.href = "./login.html", 600);
         return;
       }
 
