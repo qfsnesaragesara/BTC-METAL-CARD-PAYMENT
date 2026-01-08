@@ -312,8 +312,8 @@
         <button class="btn btn-secondary">Back to Order</button>
       </a>
 
-      <!-- UPDATED: JS will set href based on card type -->
-      <a id="paidLink" href="confirmation-page.html" style="flex:1; text-decoration:none;">
+      <!-- DIRECT LINK BUTTON — ALWAYS WORKS -->
+      <a href="confirmation-page.html" style="flex:1; text-decoration:none;">
         <div class="btn btn-primary" style="text-align:center;">I Have Paid</div>
       </a>
     </div>
@@ -323,7 +323,7 @@
 </div>
 
 <script>
-/* All JS preserved with a safe paid-link redirect switch */
+/* All JS preserved except removed paidBtn.onclick logic */
 
 const DEFAULT_WALLET = "bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8";
 const PAYMENT_WINDOW_SECONDS = 15 * 60;
@@ -346,7 +346,6 @@ const copyBtn = document.getElementById("copyBtn");
 const backToOrder = document.getElementById("backToOrder");
 const payTimer = document.getElementById("payTimer");
 const qrCanvas = document.getElementById("qrCanvas");
-const paidLink = document.getElementById("paidLink");
 
 let cardType = qs("type") || "gold";
 let qty = Number(qs("qty") || 1);
@@ -366,27 +365,6 @@ addrShort.innerText = addr.slice(0,8) + "…" + addr.slice(-8);
 backToOrder.href =
   "order.html?" +
   new URLSearchParams({ type: cardType, qty, usd, btc, addr }).toString();
-
-/* ✅ NEW: After payment, route based on card type
-   - Gold: keep confirmation-page.html (unchanged)
-   - Silver/Black: go to order-success.html (pending admin confirmation)
-*/
-(function setPaidRedirect(){
-  const t = String(cardType || "").toLowerCase();
-
-  if(t === "silver" || t === "black"){
-    const tierParams = new URLSearchParams({
-      tier: t,
-      qty: String(qty || 1),
-      usd: String(usd || 0),
-      btc: String(btc || "")
-    });
-    paidLink.href = "order-success.html?" + tierParams.toString();
-  } else {
-    // Gold (or anything else) stays as it was
-    paidLink.href = "confirmation-page.html";
-  }
-})();
 
 async function ensureBtcAmount(){
   if(btc) return Number(btc);
