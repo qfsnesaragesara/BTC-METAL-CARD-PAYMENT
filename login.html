@@ -124,12 +124,12 @@
   <div id="msg" class="msg"></div>
 
   <div class="tiny">
-    If login does nothing, clear cache or add <b>?v=1</b> to the URL.
+    If login does nothing, hard refresh or add <b>?v=2</b> to the URL.
   </div>
 </div>
 
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- ✅ FIX: use unpkg (NOT jsdelivr) -->
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <script>
 /* ================= CONFIG ================= */
@@ -149,7 +149,7 @@ function show(text, type=""){
 
 /* ================= INIT ================= */
 if (!window.supabase) {
-  show("❌ Supabase library failed to load", "error");
+  show("❌ Supabase failed to load (CSP/CDN blocked)", "error");
   throw new Error("Supabase not loaded");
 }
 
