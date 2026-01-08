@@ -110,9 +110,6 @@
         <a class="btn" href="./login.html">Back to Login</a>
       </div>
 
-      <div class="msg" style="margin-top:14px">
-        Tip: You can pass tier/qty via URL: <code>?tier=silver&qty=5</code> or <code>?tier=black</code>
-      </div>
     </div>
   </div>
 
@@ -121,8 +118,8 @@
     // =========================
     // PUT YOUR VALUES HERE
     // =========================
-    const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const headline = document.getElementById("headline");
@@ -210,3 +207,4 @@
   </script>
 </body>
 </html>
+
