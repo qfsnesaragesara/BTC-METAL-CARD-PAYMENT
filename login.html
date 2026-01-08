@@ -2,183 +2,275 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Member Login • Silver/Black Portal</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Member Login — QFS Portal</title>
+
+  <!-- Official website logo -->
+  <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
+
   <style>
     :root{
-      --card:rgba(255,255,255,.08); --border:rgba(255,255,255,.14);
-      --text:#eaf0ff; --muted:rgba(234,240,255,.72);
-      --gold:#f5c451; --blue:#0ea5e9; --danger:#ffb4b4; --ok:#bfffd6;
+      --bg:#020617;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --accent:#38bdf8;
+      --accent2:#a855f7;
+      --glass:rgba(15,23,42,0.88);
+      --border:rgba(148,163,184,0.45);
+      --shadow:rgba(2,6,23,0.88);
+      --radius:18px;
+      --maxw:520px;
     }
     *{box-sizing:border-box}
     body{
-      margin:0; font-family:Poppins,system-ui,Segoe UI,Roboto,Arial; color:var(--text);
-      background:
-        radial-gradient(900px 500px at 20% 10%, rgba(14,165,233,.18), transparent 60%),
-        radial-gradient(800px 500px at 80% 30%, rgba(245,196,81,.12), transparent 55%),
-        linear-gradient(180deg, #040617 0%, #070a1f 100%);
-      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:22px;
-    }
-    .wrap{width:100%; max-width:440px;}
-    .brand{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px;}
-    .logo{
-      width:44px; height:44px; border-radius:12px;
-      background:linear-gradient(135deg, rgba(245,196,81,.95), rgba(14,165,233,.85));
-      box-shadow:0 18px 45px rgba(0,0,0,.35);
-    }
-    .title{font-weight:900; letter-spacing:.4px;}
-    .subtitle{font-size:12px;color:rgba(234,240,255,.6)}
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:18px;
-      box-shadow:0 20px 70px rgba(0,0,0,.45);
-      padding:22px;
-      backdrop-filter: blur(10px);
-    }
-    h1{margin:6px 0 6px; font-size:18px;}
-    p{margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.5;}
-    label{display:block; font-size:12px; color:var(--muted); margin:10px 0 6px;}
-    input{
-      width:100%; padding:12px 12px; border-radius:12px;
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(0,0,0,.25); color:var(--text);
-      outline:none;
-    }
-    input:focus{border-color:rgba(14,165,233,.7); box-shadow:0 0 0 3px rgba(14,165,233,.18);}
-    .row{display:flex; gap:10px; margin-top:14px;}
-    button{
-      width:100%;
-      padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.14);
-      background:var(--blue); color:#00131f; font-weight:900; cursor:pointer;
-    }
-    button:disabled{opacity:.6; cursor:not-allowed;}
-    .secondary{
-      background:rgba(255,255,255,.08);
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:var(--text);
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,0.32), transparent 55%),
+        radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
+        var(--bg);
     }
-    .msg{margin-top:12px; font-size:13px; color:var(--muted);}
-    .err{color:var(--danger);}
-    .ok{color:var(--ok);}
-    .foot{margin-top:12px; text-align:center; font-size:12px; color:rgba(234,240,255,.55);}
-    a{color:var(--gold); text-decoration:none;}
-    a:hover{text-decoration:underline;}
+
+    .wrap{
+      width:100%;
+      max-width:var(--maxw);
+    }
+
+    .card{
+      background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.84));
+      border:1px solid var(--border);
+      border-radius:28px;
+      box-shadow: 0 28px 110px var(--shadow), 0 0 0 1px rgba(2,6,23,0.55) inset;
+      padding:22px;
+      backdrop-filter: blur(26px);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .card:before{
+      content:"";
+      position:absolute;
+      inset:-120px -120px auto auto;
+      width:320px;
+      height:320px;
+      background: radial-gradient(circle at center, rgba(56,189,248,0.22), transparent 60%);
+      pointer-events:none;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      text-align:center;
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    .logo{
+      width:92px;
+      height:92px;
+      border-radius:22px;
+      object-fit:cover;
+      box-shadow:
+        0 18px 60px rgba(2,6,23,0.95),
+        0 0 0 1px rgba(148,163,184,0.35);
+      filter: drop-shadow(0 10px 18px rgba(56,189,248,0.18));
+      background: rgba(255,255,255,0.06);
+    }
+
+    h1{
+      margin:0;
+      font-size:20px;
+      font-weight:900;
+      letter-spacing:-0.02em;
+      background:linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.55;
+    }
+
+    .divider{
+      height:1px;
+      background:rgba(148,163,184,0.18);
+      margin:14px 0 16px;
+    }
+
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      margin:10px 0 6px;
+    }
+
+    input{
+      width:100%;
+      padding:14px 14px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,0.28);
+      background: rgba(2,6,23,0.40);
+      color: var(--text);
+      outline:none;
+      font-size:15px;
+    }
+    input:focus{
+      border-color: rgba(56,189,248,0.55);
+      box-shadow: 0 0 0 3px rgba(56,189,248,0.14);
+    }
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-top:10px;
+      flex-wrap:wrap;
+    }
+
+    .link{
+      color:#cbd5f5;
+      text-decoration:none;
+      font-size:12px;
+      opacity:0.9;
+    }
+    .link:hover{ opacity:1; text-decoration:underline; }
+
+    .btn{
+      width:100%;
+      margin-top:14px;
+      padding:14px 14px;
+      border-radius:999px;
+      border:none;
+      cursor:pointer;
+      font-weight:850;
+      letter-spacing:0.04em;
+      font-size:14px;
+      color:#fff;
+      background:linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 18px 60px rgba(56,189,248,0.15);
+    }
+
+    .btn:disabled{
+      opacity:0.55;
+      cursor:not-allowed;
+    }
+
+    .status{
+      margin-top:12px;
+      font-size:12px;
+      color:var(--muted);
+      min-height:18px;
+    }
+
+    .footer-actions{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .btn-secondary{
+      flex:1;
+      padding:12px 14px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,0.35);
+      background: rgba(255,255,255,0.06);
+      color:var(--text);
+      text-decoration:none;
+      text-align:center;
+      font-weight:800;
+      font-size:13px;
+    }
+    .btn-secondary:hover{
+      border-color: rgba(56,189,248,0.45);
+    }
+
+    @media (max-width:520px){
+      .card{ padding:18px; }
+      .footer-actions a{ flex: 1 1 100%; }
+    }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="brand">
-      <div class="logo" aria-hidden="true"></div>
-      <div>
-        <div class="title">NESARA Member Portal</div>
-        <div class="subtitle">Silver & Black access</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h1>Login</h1>
-      <p>Sign in to view your <b>Balance</b>, membership status, and portal tools. Access is limited to Silver/Black members.</p>
-
-      <label>Email</label>
-      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
-
-      <label>Password</label>
-      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
-
-      <div class="row">
-        <button id="loginBtn">Sign in</button>
-        <button id="resetBtn" class="secondary" type="button">Forgot?</button>
+  <main class="wrap">
+    <section class="card" aria-label="Member Login">
+      <div class="brand">
+        <img class="logo"
+             src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true"
+             alt="QFS NESARA GESARA Logo" />
+        <h1>Member Portal Login</h1>
+        <p class="sub">Login to view your balance and account status.<br>Send/Receive unlocks after admin confirmation.</p>
       </div>
 
-      <div id="msg" class="msg"></div>
+      <div class="divider"></div>
 
-      <div class="foot">
-        New buyer? <a href="./order.html">Purchase Silver/Black</a>
+      <form id="loginForm" autocomplete="on">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" required />
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="Enter your password" required />
+
+        <div class="row">
+          <a class="link" href="order.html">Order a Card</a>
+          <a class="link" href="index.html">Back to Home</a>
+        </div>
+
+        <button id="loginBtn" class="btn" type="submit">Access Portal</button>
+        <div id="status" class="status"></div>
+      </form>
+
+      <div class="footer-actions">
+        <a class="btn-secondary" href="portal.html">Go to Portal</a>
+        <a class="btn-secondary" href="confirmation-page.html">Confirm Payment</a>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // =========================
-    // PUT YOUR VALUES HERE
-    // =========================
-    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+    // Lightweight front-end guard (no keys needed for GitHub Pages).
+    // Later, when you connect Supabase auth, you’ll replace this block.
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const form = document.getElementById("loginForm");
+    const btn = document.getElementById("loginBtn");
+    const statusEl = document.getElementById("status");
 
-    const emailEl = document.getElementById("email");
-    const passEl = document.getElementById("password");
-    const msgEl = document.getElementById("msg");
-    const loginBtn = document.getElementById("loginBtn");
-    const resetBtn = document.getElementById("resetBtn");
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      statusEl.textContent = "Signing in…";
 
-    function setMsg(text, type){
-      msgEl.textContent = text || "";
-      msgEl.className = "msg " + (type || "");
-    }
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
 
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data?.session) window.location.href = "./portal.html";
-    })();
-
-    loginBtn.addEventListener("click", async () => {
-      setMsg("", "");
-      loginBtn.disabled = true;
-
-      const email = (emailEl.value || "").trim();
-      const password = passEl.value || "";
-
-      if(!email || !password){
-        setMsg("Enter your email and password.", "err");
-        loginBtn.disabled = false;
+      // Basic validation
+      if (!email || !password || password.length < 4) {
+        btn.disabled = false;
+        statusEl.textContent = "Please enter a valid email and password.";
         return;
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      // Save email so other pages (like order-success) can display it
+      localStorage.setItem("qfsEmail", email);
 
-      if(error){
-        setMsg(error.message, "err");
-        loginBtn.disabled = false;
-        return;
-      }
-
-      // Tier gate (Silver/Black only)
-      const userId = data.user.id;
-      const prof = await supabase
-        .from("profiles")
-        .select("tier")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      const tier = prof?.data?.tier || "none";
-      if(tier !== "silver" && tier !== "black"){
-        await supabase.auth.signOut();
-        setMsg("Access denied. Silver/Black members only.", "err");
-        loginBtn.disabled = false;
-        return;
-      }
-
-      window.location.href = "./portal.html";
-    });
-
-    resetBtn.addEventListener("click", async () => {
-      setMsg("", "");
-      const email = (emailEl.value || "").trim();
-      if(!email){
-        setMsg("Enter your email first, then click Forgot.", "err");
-        return;
-      }
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + "/reset.html"
-      });
-      if(error) setMsg(error.message, "err");
-      else setMsg("Password reset link sent. Check inbox/spam.", "ok");
+      // For now we redirect to portal. (Actual auth comes later.)
+      setTimeout(() => {
+        window.location.href = "portal.html";
+      }, 350);
     });
   </script>
 </body>
