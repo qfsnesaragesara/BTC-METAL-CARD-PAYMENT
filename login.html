@@ -128,51 +128,79 @@
     </form>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+  const SUPABASE_URL = "PASTE_SUPABASE_URL_HERE";
+  const SUPABASE_ANON_KEY = "PASTE_SUPABASE_ANON_KEY_HERE";
 
-  const msgEl = document.getElementById("msg");
-  function showMsg(text, type){
-    msgEl.className = "msg show " + (type || "");
-    msgEl.textContent = text;
+  function ready(fn){
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fn);
+    else fn();
   }
 
-  // ✅ instant proof JS is running
-  showMsg("Login script loaded ✅", "");
+  ready(() => {
+    const msgEl = document.getElementById("msg");
+    const form = document.getElementById("loginForm");
+    const loginBtn = document.getElementById("loginBtn");
+    const createBtn = document.getElementById("createBtn");
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  const form = document.getElementById("loginForm");
-  const loginBtn = document.getElementById("loginBtn");
-
-  // ✅ force click to submit + show immediate status
-  loginBtn.addEventListener("click", () => {
-    showMsg("Login button clicked…", "");
-  });
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-
-    showMsg("Signing in…", "");
-
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      showMsg("Login failed:\n" + error.message, "error");
-      return;
+    function showMsg(text, type){
+      if(!msgEl) return alert(text);
+      msgEl.className = "msg show " + (type || "");
+      msgEl.textContent = text;
     }
 
-    showMsg("Login successful ✅ Redirecting…", "ok");
-    setTimeout(() => window.location.href = "portal.html", 600);
+    // Proof JS is attached
+    showMsg("Auth ready ✅", "");
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function doLogin(){
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      showMsg("Signing in…", "");
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) return showMsg("Login failed: " + error.message, "error");
+
+      showMsg("Login successful ✅ Redirecting…", "ok");
+      setTimeout(() => window.location.href = "portal.html", 600);
+    }
+
+    async function doCreate(){
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      showMsg("Creating account…", "");
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          // optional: change to your live domain if needed
+          emailRedirectTo: window.location.origin + "/login.html"
+        }
+      });
+
+      if (error) return showMsg("Signup failed: " + error.message, "error");
+
+      // If "Confirm email" is ON in Supabase, user must verify first.
+      showMsg("Account created ✅ Check your email to confirm, then log in.", "ok");
+    }
+
+    // Force buttons to work even if not submit buttons
+    if (loginBtn) loginBtn.addEventListener("click", (e) => { e.preventDefault(); doLogin(); });
+    if (createBtn) createBtn.addEventListener("click", (e) => { e.preventDefault(); doCreate(); });
+
+    // Also handle Enter key submit
+    if (form) form.addEventListener("submit", (e) => { e.preventDefault(); doLogin(); });
   });
 </script>
 
 </body>
 </html>
+
 
 
