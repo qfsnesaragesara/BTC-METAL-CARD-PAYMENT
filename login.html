@@ -1,202 +1,287 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Member Login — QFS</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Member Login — QFS Portal</title>
 
-<link rel="icon" type="image/png"
-  href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
+  <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
 
-<!-- Supabase JS -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase JS (v2) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<style>
-  :root{
-    --bg:#020617;
-    --glass:rgba(15,23,42,0.88);
-    --border:rgba(148,163,184,0.45);
-    --text:#e5e7eb;
-    --muted:#9ca3af;
-    --accent:#38bdf8;
-    --accent2:#a855f7;
-  }
-
-  *{box-sizing:border-box}
-
-  body{
-    margin:0;
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:24px;
-    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-    background:
-      radial-gradient(circle at top, rgba(56,189,248,0.32), transparent 55%),
-      radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
-      var(--bg);
-    color:var(--text);
-  }
-
-  .card{
-    width:100%;
-    max-width:420px;
-    padding:28px;
-    border-radius:28px;
-    background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.86));
-    border:1px solid var(--border);
-    box-shadow:0 30px 120px rgba(2,6,23,0.95);
-    backdrop-filter:blur(26px);
-    text-align:center;
-  }
-
-  .logo{
-    width:72px;
-    height:72px;
-    border-radius:18px;
-    object-fit:cover;
-    margin-bottom:12px;
-    box-shadow:
-      0 14px 40px rgba(2,6,23,0.95),
-      0 0 0 1px rgba(148,163,184,0.35);
-  }
-
-  h1{
-    margin:8px 0 6px;
-    font-size:22px;
-    font-weight:900;
-  }
-
-  .sub{
-    font-size:13px;
-    color:var(--muted);
-    margin-bottom:18px;
-  }
-
-  label{
-    display:block;
-    text-align:left;
-    font-size:12px;
-    font-weight:700;
-    color:#cbd5f5;
-    margin-top:14px;
-  }
-
-  input{
-    width:100%;
-    padding:12px 14px;
-    margin-top:6px;
-    border-radius:14px;
-    border:1px solid rgba(148,163,184,0.45);
-    background:rgba(255,255,255,0.06);
-    color:var(--text);
-    font-size:14px;
-    outline:none;
-  }
-
-  .btn{
-    width:100%;
-    margin-top:20px;
-    padding:14px;
-    border-radius:999px;
-    border:none;
-    cursor:pointer;
-    font-weight:900;
-    font-size:14px;
-    background:linear-gradient(135deg, var(--accent), var(--accent2));
-    color:#fff;
-  }
-
-  .error{
-    margin-top:14px;
-    font-size:13px;
-    color:#fecaca;
-    display:none;
-  }
-
-  .muted-link{
-    margin-top:16px;
-    font-size:12px;
-    color:var(--muted);
-  }
-</style>
+  <style>
+    :root{
+      --bg:#020617;
+      --glass:rgba(15,23,42,0.88);
+      --border:rgba(148,163,184,0.55);
+      --muted:#94a3b8;
+      --text:#e5e7eb;
+      --accent:#38bdf8;
+      --accent2:#a855f7;
+      --radius:22px;
+      --logo: 72px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,0.30), transparent 55%),
+        radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .wrap{
+      width:100%;
+      max-width:520px;
+      background:var(--glass);
+      border:1px solid var(--border);
+      border-radius:28px;
+      padding:26px 22px 22px;
+      backdrop-filter: blur(24px);
+      box-shadow:0 30px 90px rgba(2,6,23,0.75);
+      text-align:center;
+    }
+    .logo{
+      width:var(--logo);
+      height:var(--logo);
+      border-radius:16px;
+      object-fit:cover;
+      box-shadow:0 12px 25px rgba(56,189,248,0.22);
+      border:1px solid rgba(255,255,255,0.14);
+    }
+    h1{
+      margin:14px 0 6px;
+      font-size:22px;
+      font-weight:900;
+      letter-spacing:0.02em;
+    }
+    .sub{
+      margin:0 0 18px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.5;
+    }
+    .field{
+      text-align:left;
+      margin-top:12px;
+    }
+    label{
+      display:block;
+      font-size:12px;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0 0 6px;
+    }
+    input{
+      width:100%;
+      padding:13px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.15);
+      background:rgba(255,255,255,0.06);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    input:focus{
+      border-color:rgba(56,189,248,0.7);
+      box-shadow:0 0 0 4px rgba(56,189,248,0.18);
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      margin-top:16px;
+    }
+    .btn{
+      flex:1;
+      padding:12px 14px;
+      border-radius:999px;
+      border:none;
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      font-size:12px;
+    }
+    .btn-primary{
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#fff;
+    }
+    .btn-secondary{
+      background:rgba(255,255,255,0.08);
+      border:1px solid rgba(148,163,184,0.55);
+      color:var(--text);
+    }
+    .msg{
+      margin-top:14px;
+      font-size:13px;
+      color:var(--muted);
+      min-height:18px;
+    }
+    .msg.error{ color:#fca5a5; }
+    .msg.ok{ color:#86efac; }
+    .tiny{
+      margin-top:14px;
+      font-size:11px;
+      color:rgba(148,163,184,0.9);
+      line-height:1.5;
+    }
+    .hr{
+      height:1px;
+      background:rgba(148,163,184,0.25);
+      margin:16px 0;
+    }
+  </style>
 </head>
 
 <body>
+  <div class="wrap">
+    <img class="logo" src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="QFS Logo">
+    <h1>Member Login</h1>
+    <p class="sub">Access your member dashboard. Your account will be routed automatically based on your card type.</p>
 
-<div class="card">
-  <img class="logo"
-    src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true"
-    alt="QFS NESARA GESARA">
+    <div class="field">
+      <label>Email</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+    </div>
 
-  <h1>Member Login</h1>
-  <div class="sub">Secure access to your QFS allocation</div>
+    <div class="field">
+      <label>Password</label>
+      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
 
-  <form id="loginForm">
-    <label>Email Address</label>
-    <input type="email" id="email" required placeholder="you@example.com">
+    <div class="row">
+      <button id="loginBtn" class="btn btn-primary">Login</button>
+      <button id="logoutBtn" class="btn btn-secondary" type="button">Logout</button>
+    </div>
 
-    <label>Password</label>
-    <input type="password" id="password" required placeholder="••••••••">
+    <div id="msg" class="msg"></div>
 
-    <button class="btn" type="submit">Sign In</button>
-  </form>
+    <div class="hr"></div>
 
-  <div id="errorBox" class="error"></div>
-
-  <div class="muted-link">
-    Access is available after card order & confirmation.
+    <div class="tiny">
+      If your account is not yet activated, you may still see a limited dashboard until confirmation is completed.
+    </div>
   </div>
-</div>
 
 <script>
-  /************************************************
-   * CONFIG — paste your real Supabase credentials
-   ************************************************/
-  const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+/** =========================
+ *  ✅ PUT YOUR KEYS HERE
+ *  ========================= */
+const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-  const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
+/** Routes */
+const ROUTE_SILVER_BLACK = "portal.html";       // your existing silver/black portal
+const ROUTE_GOLD = "portal-gold.html";          // create this page next (gold perks + payment buttons)
 
-  const form = document.getElementById("loginForm");
-  const errorBox = document.getElementById("errorBox");
+/** Supabase client */
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    errorBox.style.display = "none";
+/** UI */
+const emailEl = document.getElementById("email");
+const passEl = document.getElementById("password");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const msgEl = document.getElementById("msg");
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+function setMsg(text, type){
+  msgEl.textContent = text || "";
+  msgEl.classList.remove("error","ok");
+  if(type) msgEl.classList.add(type);
+}
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+/**
+ * Expected table:
+ * public.member_profiles (user_id uuid pk references auth.users, card_type text, is_activated bool)
+ * - card_type: 'silver' | 'black' | 'gold'
+ */
+async function fetchCardType(userId){
+  const { data, error } = await supabase
+    .from("member_profiles")
+    .select("card_type, is_activated")
+    .eq("user_id", userId)
+    .maybeSingle();
 
-    if (error) {
-      errorBox.textContent = error.message;
-      errorBox.style.display = "block";
+  if(error) throw error;
+  if(!data || !data.card_type) return { card_type: "silver", is_activated: false }; // safe fallback
+  return data;
+}
+
+async function goToPortal(cardType){
+  localStorage.setItem("qfs_card_type", cardType);
+
+  if(cardType === "gold"){
+    window.location.href = ROUTE_GOLD;
+    return;
+  }
+  // silver or black
+  window.location.href = ROUTE_SILVER_BLACK;
+}
+
+loginBtn.addEventListener("click", async () => {
+  try{
+    setMsg("Signing in…");
+    loginBtn.disabled = true;
+
+    const email = (emailEl.value || "").trim();
+    const password = passEl.value || "";
+
+    if(!email || !password){
+      setMsg("Enter your email and password.", "error");
       return;
     }
 
-    // Save email for UI convenience
-    localStorage.setItem("qfsEmail", email);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if(error) throw error;
 
-    // Redirect to portal
-    window.location.href = "portal.html";
-  });
-
-  // Auto-redirect if already logged in
-  supabase.auth.getSession().then(({ data }) => {
-    if (data.session) {
-      window.location.href = "portal.html";
+    const user = data.user;
+    if(!user){
+      setMsg("Login failed. Try again.", "error");
+      return;
     }
-  });
-</script>
 
+    const profile = await fetchCardType(user.id);
+    setMsg("Login successful. Redirecting…", "ok");
+    await goToPortal(profile.card_type);
+
+  }catch(err){
+    setMsg(err?.message || "Login error.", "error");
+  }finally{
+    loginBtn.disabled = false;
+  }
+});
+
+logoutBtn.addEventListener("click", async () => {
+  try{
+    await supabase.auth.signOut();
+    localStorage.removeItem("qfs_card_type");
+    setMsg("Logged out.", "ok");
+  }catch(e){
+    setMsg("Could not logout.", "error");
+  }
+});
+
+/** Auto-redirect if already logged in */
+(async function(){
+  try{
+    const { data } = await supabase.auth.getSession();
+    const user = data?.session?.user;
+    if(!user) return;
+
+    const profile = await fetchCardType(user.id);
+    await goToPortal(profile.card_type);
+  }catch{
+    // ignore
+  }
+})();
+</script>
 </body>
 </html>
