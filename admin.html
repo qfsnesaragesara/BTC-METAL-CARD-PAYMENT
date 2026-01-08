@@ -155,13 +155,16 @@
     </div>
   </div>
 
+  <!-- If CDN is blocked for you, replace this line with: <script src="/supabase.min.js"></script> -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
     // =========================
-    // PUT YOUR VALUES HERE
+    // ✅ YOUR REAL SUPABASE KEYS
     // =========================
-    const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const subLine = document.getElementById("subLine");
@@ -187,7 +190,11 @@
     }
 
     async function requireSession(){
-      const { data } = await supabase.auth.getSession();
+      const { data, error } = await supabase.auth.getSession();
+      if(error){
+        window.location.href = "./login.html";
+        return null;
+      }
       if(!data?.session){
         window.location.href = "./login.html";
         return null;
@@ -195,10 +202,19 @@
       return data.session;
     }
 
-    async function requireAdmin(){
-      const { data, error } = await supabase.rpc("is_admin");
+    // ✅ Admin check using admin_users table (NO RPC NEEDED)
+    async function requireAdmin(session){
+      const user = session?.user;
+      if(!user) return { ok:false, reason:"No user session" };
+
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("user_id,email")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
       if(error) return { ok:false, reason:error.message };
-      if(data !== true) return { ok:false, reason:"Not an admin" };
+      if(!data) return { ok:false, reason:"Not an admin" };
       return { ok:true };
     }
 
@@ -262,7 +278,6 @@
         rowsEl.appendChild(tr);
       });
 
-      // wire actions
       rowsEl.querySelectorAll("button[data-confirm]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-confirm");
@@ -284,7 +299,6 @@
       const oldText = btn.textContent;
       btn.textContent = "Working…";
 
-      // read note input
       const noteInput = rowsEl.querySelector(`input[data-note="${CSS.escape(orderId)}"]`);
       const note = (noteInput?.value || "").trim() || null;
 
@@ -292,7 +306,7 @@
         .from("card_orders")
         .update({ status, note })
         .eq("id", orderId)
-        .eq("status","pending"); // prevent double-click updates
+        .eq("status","pending");
 
       btn.disabled = false;
       btn.textContent = oldText;
@@ -302,18 +316,19 @@
         return;
       }
 
-      if(status === "confirmed"){
-        setMsg("Confirmed. Activation triggered automatically.", "ok");
-      } else {
-        setMsg("Rejected.", "ok");
-      }
+      setMsg(
+        status === "confirmed"
+          ? "Confirmed. Activation triggered automatically."
+          : "Rejected.",
+        "ok"
+      );
 
       await loadPending();
     }
 
     refreshBtn.addEventListener("click", loadPending);
+
     searchEmail.addEventListener("input", () => {
-      // small debounce
       clearTimeout(window.__t);
       window.__t = setTimeout(loadPending, 250);
     });
@@ -329,11 +344,13 @@
 
       emailPill.textContent = session.user.email || "Admin";
 
-      const admin = await requireAdmin();
+      const admin = await requireAdmin(session);
       if(!admin.ok){
         subLine.textContent = "Access denied";
         renderEmpty("Not authorized.");
         setMsg(admin.reason || "Not authorized.", "err");
+        try { await supabase.auth.signOut(); } catch {}
+        setTimeout(() => window.location.href = "./login.html", 600);
         return;
       }
 
