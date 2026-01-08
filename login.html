@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Member Login • Silver/Black Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --card:rgba(255,255,255,.08); --border:rgba(255,255,255,.14);
+      --text:#eaf0ff; --muted:rgba(234,240,255,.72);
+      --gold:#f5c451; --blue:#0ea5e9; --danger:#ffb4b4; --ok:#bfffd6;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:Poppins,system-ui,Segoe UI,Roboto,Arial; color:var(--text);
+      background:
+        radial-gradient(900px 500px at 20% 10%, rgba(14,165,233,.18), transparent 60%),
+        radial-gradient(800px 500px at 80% 30%, rgba(245,196,81,.12), transparent 55%),
+        linear-gradient(180deg, #040617 0%, #070a1f 100%);
+      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:22px;
+    }
+    .wrap{width:100%; max-width:440px;}
+    .brand{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px;}
+    .logo{
+      width:44px; height:44px; border-radius:12px;
+      background:linear-gradient(135deg, rgba(245,196,81,.95), rgba(14,165,233,.85));
+      box-shadow:0 18px 45px rgba(0,0,0,.35);
+    }
+    .title{font-weight:900; letter-spacing:.4px;}
+    .subtitle{font-size:12px;color:rgba(234,240,255,.6)}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:0 20px 70px rgba(0,0,0,.45);
+      padding:22px;
+      backdrop-filter: blur(10px);
+    }
+    h1{margin:6px 0 6px; font-size:18px;}
+    p{margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.5;}
+    label{display:block; font-size:12px; color:var(--muted); margin:10px 0 6px;}
+    input{
+      width:100%; padding:12px 12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.25); color:var(--text);
+      outline:none;
+    }
+    input:focus{border-color:rgba(14,165,233,.7); box-shadow:0 0 0 3px rgba(14,165,233,.18);}
+    .row{display:flex; gap:10px; margin-top:14px;}
+    button{
+      width:100%;
+      padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.14);
+      background:var(--blue); color:#00131f; font-weight:900; cursor:pointer;
+    }
+    button:disabled{opacity:.6; cursor:not-allowed;}
+    .secondary{
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+    }
+    .msg{margin-top:12px; font-size:13px; color:var(--muted);}
+    .err{color:var(--danger);}
+    .ok{color:var(--ok);}
+    .foot{margin-top:12px; text-align:center; font-size:12px; color:rgba(234,240,255,.55);}
+    a{color:var(--gold); text-decoration:none;}
+    a:hover{text-decoration:underline;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <div class="title">NESARA Member Portal</div>
+        <div class="subtitle">Silver & Black access</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h1>Login</h1>
+      <p>Sign in to view your <b>Balance</b>, membership status, and portal tools. Access is limited to Silver/Black members.</p>
+
+      <label>Email</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+
+      <label>Password</label>
+      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+
+      <div class="row">
+        <button id="loginBtn">Sign in</button>
+        <button id="resetBtn" class="secondary" type="button">Forgot?</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+
+      <div class="foot">
+        New buyer? <a href="./order.html">Purchase Silver/Black</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // =========================
+    // PUT YOUR VALUES HERE
+    // =========================
+    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const emailEl = document.getElementById("email");
+    const passEl = document.getElementById("password");
+    const msgEl = document.getElementById("msg");
+    const loginBtn = document.getElementById("loginBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    function setMsg(text, type){
+      msgEl.textContent = text || "";
+      msgEl.className = "msg " + (type || "");
+    }
+
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) window.location.href = "./portal.html";
+    })();
+
+    loginBtn.addEventListener("click", async () => {
+      setMsg("", "");
+      loginBtn.disabled = true;
+
+      const email = (emailEl.value || "").trim();
+      const password = passEl.value || "";
+
+      if(!email || !password){
+        setMsg("Enter your email and password.", "err");
+        loginBtn.disabled = false;
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if(error){
+        setMsg(error.message, "err");
+        loginBtn.disabled = false;
+        return;
+      }
+
+      // Tier gate (Silver/Black only)
+      const userId = data.user.id;
+      const prof = await supabase
+        .from("profiles")
+        .select("tier")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      const tier = prof?.data?.tier || "none";
+      if(tier !== "silver" && tier !== "black"){
+        await supabase.auth.signOut();
+        setMsg("Access denied. Silver/Black members only.", "err");
+        loginBtn.disabled = false;
+        return;
+      }
+
+      window.location.href = "./portal.html";
+    });
+
+    resetBtn.addEventListener("click", async () => {
+      setMsg("", "");
+      const email = (emailEl.value || "").trim();
+      if(!email){
+        setMsg("Enter your email first, then click Forgot.", "err");
+        return;
+      }
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/reset.html"
+      });
+      if(error) setMsg(error.message, "err");
+      else setMsg("Password reset link sent. Check inbox/spam.", "ok");
+    });
+  </script>
+</body>
+</html>
