@@ -76,6 +76,10 @@
       text-transform:uppercase;
       font-size:12px;
     }
+    button:disabled{
+      opacity:0.65;
+      cursor:not-allowed;
+    }
     .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
     .btn-secondary{background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.5);color:var(--text)}
     .msg{
@@ -142,7 +146,7 @@
     const msgEl = document.getElementById("msg");
     const form = document.getElementById("loginForm");
     const loginBtn = document.getElementById("loginBtn");
-    const createBtn = document.getElementById("createBtn");
+    const signupBtn = document.getElementById("signupBtn");
 
     function showMsg(text, type){
       if(!msgEl) return alert(text);
@@ -150,8 +154,21 @@
       msgEl.textContent = text;
     }
 
-    // Proof JS is attached
-    showMsg("Auth ready ✅", "");
+    function setBusy(isBusy){
+      if (loginBtn) loginBtn.disabled = isBusy;
+      if (signupBtn) signupBtn.disabled = isBusy;
+    }
+
+    // Basic config guard so you don't silently fail
+    const missingConfig =
+      !SUPABASE_URL || !SUPABASE_ANON_KEY ||
+      SUPABASE_URL.includes("https://qagktukzxtwbjrdgiben.supabase.co") ||
+      SUPABASE_ANON_KEY.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk");
+
+    if (missingConfig){
+      showMsg("⚠️ Supabase keys not set.\nPaste SUPABASE_URL and SUPABASE_ANON_KEY in the script, then refresh.", "error");
+      return;
+    }
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -159,48 +176,63 @@
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
+      if (!email || !password) return showMsg("Please enter email and password.", "error");
+
+      setBusy(true);
       showMsg("Signing in…", "");
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      try{
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return showMsg("Login failed: " + error.message, "error");
 
-      if (error) return showMsg("Login failed: " + error.message, "error");
-
-      showMsg("Login successful ✅ Redirecting…", "ok");
-      setTimeout(() => window.location.href = "portal.html", 600);
+        showMsg("Login successful ✅ Redirecting…", "ok");
+        setTimeout(() => window.location.href = "portal.html", 600);
+      } catch (e){
+        showMsg("Login failed: " + (e?.message || "Unknown error"), "error");
+      } finally{
+        setBusy(false);
+      }
     }
 
     async function doCreate(){
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
+      if (!email || !password) return showMsg("Please enter email and password.", "error");
+
+      setBusy(true);
       showMsg("Creating account…", "");
 
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          // optional: change to your live domain if needed
-          emailRedirectTo: window.location.origin + "/login.html"
-        }
-      });
+      try{
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            // optional: change to your live domain if needed
+            emailRedirectTo: window.location.origin + "/login.html"
+          }
+        });
 
-      if (error) return showMsg("Signup failed: " + error.message, "error");
+        if (error) return showMsg("Signup failed: " + error.message, "error");
 
-      // If "Confirm email" is ON in Supabase, user must verify first.
-      showMsg("Account created ✅ Check your email to confirm, then log in.", "ok");
+        showMsg("Account created ✅ Check your email to confirm, then log in.", "ok");
+      } catch (e){
+        showMsg("Signup failed: " + (e?.message || "Unknown error"), "error");
+      } finally{
+        setBusy(false);
+      }
     }
 
-    // Force buttons to work even if not submit buttons
-    if (loginBtn) loginBtn.addEventListener("click", (e) => { e.preventDefault(); doLogin(); });
-    if (createBtn) createBtn.addEventListener("click", (e) => { e.preventDefault(); doCreate(); });
+    // Button handlers
+    if (signupBtn) signupBtn.addEventListener("click", (e) => { e.preventDefault(); doCreate(); });
 
-    // Also handle Enter key submit
+    // Form submit (Login)
     if (form) form.addEventListener("submit", (e) => { e.preventDefault(); doLogin(); });
+
+    // Optional: proof that JS loaded (kept subtle)
+    // showMsg("Auth ready ✅", "");
   });
 </script>
 
 </body>
 </html>
-
-
-
