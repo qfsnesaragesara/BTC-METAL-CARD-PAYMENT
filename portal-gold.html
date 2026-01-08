@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Gold Portal — QFS</title>
 
-  <!-- Website logo (same as site) -->
+  <!-- Website logo -->
   <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
-
-  <!-- Supabase JS (v2) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root{
@@ -19,20 +16,16 @@
       --border:rgba(148,163,184,0.42);
       --muted:#94a3b8;
       --text:#e5e7eb;
-
       --accent:#38bdf8;
       --accent2:#a855f7;
       --gold:#fbbf24;
       --emerald:#22c55e;
       --rose:#fb7185;
-
       --shadow: 0 28px 90px rgba(2,6,23,0.70);
       --radius:26px;
       --maxw:1120px;
     }
-
     *{box-sizing:border-box}
-    html,body{height:100%}
     body{
       margin:0;
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -47,175 +40,88 @@
       justify-content:center;
       overflow-x:hidden;
     }
-
-    /* Soft blobs */
     .blob{
       position:fixed;
-      inset:auto;
       width:560px; height:560px;
       filter: blur(42px);
       opacity:.35;
       z-index:-1;
       border-radius:999px;
       pointer-events:none;
-      transform: translateZ(0);
       animation: floaty 9s ease-in-out infinite;
     }
     .blob.b1{ left:-240px; top:-260px; background: radial-gradient(circle at 30% 30%, rgba(56,189,248,.95), transparent 60%); }
     .blob.b2{ right:-260px; bottom:-280px; background: radial-gradient(circle at 30% 30%, rgba(168,85,247,.95), transparent 60%); animation-delay: -2s; }
     .blob.b3{ right:10%; top:-260px; width:420px; height:420px; opacity:.22; background: radial-gradient(circle at 30% 30%, rgba(251,191,36,.95), transparent 60%); animation-delay: -4s; }
-
     @keyframes floaty{
       0%,100%{ transform: translate(0,0) scale(1); }
       50%{ transform: translate(10px,18px) scale(1.02); }
     }
 
-    .page{
-      width:100%;
-      max-width:var(--maxw);
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-    }
-
-    /* Topbar */
+    .page{ width:100%; max-width:var(--maxw); display:flex; flex-direction:column; gap:14px; }
     .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
       padding:14px 14px;
       border:1px solid var(--border);
       border-radius:22px;
       background: linear-gradient(145deg, rgba(15,23,42,0.90), rgba(15,23,42,0.72));
       backdrop-filter: blur(26px);
       box-shadow: var(--shadow);
-      overflow:hidden;
       position:relative;
+      overflow:hidden;
     }
     .topbar:before{
-      content:"";
-      position:absolute;
-      inset:-2px;
+      content:""; position:absolute; inset:-2px;
       background: linear-gradient(90deg, rgba(56,189,248,0.0), rgba(56,189,248,0.18), rgba(168,85,247,0.18), rgba(251,191,36,0.10), rgba(56,189,248,0.0));
       filter: blur(14px);
       opacity:.9;
       pointer-events:none;
     }
-
-    .brand{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      min-width: 240px;
-      position:relative;
-      z-index:1;
-    }
+    .brand{ display:flex; gap:12px; align-items:center; min-width: 240px; position:relative; z-index:1; }
     .brand img{
-      width:46px; height:46px;
-      border-radius:14px;
-      object-fit:cover;
+      width:46px; height:46px; border-radius:14px; object-fit:cover;
       border:1px solid rgba(255,255,255,0.16);
       box-shadow:0 18px 38px rgba(56,189,248,0.18);
     }
-    .brand .t1{
-      font-weight:950;
-      letter-spacing:0.08em;
-      font-size:12px;
-      text-transform:uppercase;
-      color: rgba(226,232,240,0.92);
-    }
-    .brand .t2{
-      margin-top:2px;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      color:rgba(148,163,184,0.95);
-      font-size:12px;
-    }
-
+    .brand .t1{ font-weight:950; letter-spacing:0.08em; font-size:12px; text-transform:uppercase; color: rgba(226,232,240,0.92); }
+    .brand .t2{ margin-top:2px; display:flex; gap:8px; align-items:center; color:rgba(148,163,184,0.95); font-size:12px; }
     .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:7px 11px;
-      border-radius:999px;
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 11px; border-radius:999px;
       border:1px solid rgba(148,163,184,0.42);
       background: rgba(255,255,255,0.06);
-      font-weight:900;
-      font-size:11px;
-      letter-spacing:0.10em;
-      text-transform:uppercase;
+      font-weight:900; font-size:11px; letter-spacing:0.10em; text-transform:uppercase;
       color: rgba(226,232,240,0.92);
       white-space:nowrap;
     }
     .dot{ width:8px; height:8px; border-radius:50%; background:var(--muted); }
     .dot.ok{ background: var(--emerald); box-shadow:0 0 0 4px rgba(34,197,94,0.14); }
     .dot.lock{ background: var(--gold); box-shadow:0 0 0 4px rgba(251,191,36,0.12); }
-    .dot.err{ background: var(--rose); box-shadow:0 0 0 4px rgba(251,113,133,0.12); }
 
-    .actions{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-      position:relative;
-      z-index:1;
-    }
-
+    .actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; position:relative; z-index:1; }
     .btn{
-      padding:10px 14px;
-      border-radius:999px;
-      border:none;
-      cursor:pointer;
-      font-weight:900;
-      letter-spacing:0.10em;
-      text-transform:uppercase;
-      font-size:11px;
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      justify-content:center;
-      text-decoration:none;
-      white-space:nowrap;
-      user-select:none;
+      padding:10px 14px; border-radius:999px; border:none; cursor:pointer;
+      font-weight:900; letter-spacing:0.10em; text-transform:uppercase;
+      font-size:11px; display:inline-flex; gap:8px; align-items:center; justify-content:center;
+      text-decoration:none; white-space:nowrap; user-select:none;
       transition: transform .15s ease, filter .15s ease, opacity .15s ease;
     }
     .btn:active{ transform: translateY(1px) scale(0.99); }
-    .btn-secondary{
-      background:rgba(255,255,255,0.07);
-      border:1px solid rgba(148,163,184,0.40);
-      color:var(--text);
-    }
+    .btn-secondary{ background:rgba(255,255,255,0.07); border:1px solid rgba(148,163,184,0.40); color:var(--text); }
     .btn-secondary:hover{ filter: brightness(1.10); }
-    .btn-primary{
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color:#fff;
-      box-shadow: 0 18px 40px rgba(56,189,248,0.16);
-    }
+    .btn-primary{ background: linear-gradient(135deg, var(--accent), var(--accent2)); color:#fff; box-shadow: 0 18px 40px rgba(56,189,248,0.16); }
     .btn-primary:hover{ filter: brightness(1.06); }
-    .btn-gold{
-      background: linear-gradient(135deg, rgba(251,191,36,1), rgba(245,158,11,1));
-      color:#0b1020;
-      box-shadow: 0 18px 40px rgba(251,191,36,0.14);
-    }
+    .btn-gold{ background: linear-gradient(135deg, rgba(251,191,36,1), rgba(245,158,11,1)); color:#0b1020; box-shadow: 0 18px 40px rgba(251,191,36,0.14); }
     .btn-gold:hover{ filter: brightness(1.04); }
 
     .btn-disabled{
       opacity:.50 !important;
       cursor:not-allowed !important;
       pointer-events:none !important;
-      filter:saturate(0.8) !important;
+      filter:saturate(.8);
     }
 
-    /* Layout */
-    .grid{
-      display:grid;
-      grid-template-columns: 1.12fr 0.88fr;
-      gap:14px;
-      align-items:start;
-    }
+    .grid{ display:grid; grid-template-columns: 1.12fr 0.88fr; gap:14px; align-items:start; }
     @media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
 
     .card{
@@ -229,9 +135,7 @@
       overflow:hidden;
     }
     .card:before{
-      content:"";
-      position:absolute;
-      inset:0;
+      content:""; position:absolute; inset:0;
       background:
         radial-gradient(600px 260px at 20% 0%, rgba(56,189,248,0.10), transparent 60%),
         radial-gradient(520px 240px at 85% 85%, rgba(168,85,247,0.10), transparent 60%);
@@ -239,99 +143,40 @@
     }
     .card > *{ position:relative; z-index:1; }
 
-    .sectionTitle{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .sectionTitle .name{
-      font-weight:950;
-      letter-spacing:0.12em;
-      text-transform:uppercase;
-      font-size:12px;
-      color: rgba(226,232,240,0.92);
-    }
+    .sectionTitle{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .sectionTitle .name{ font-weight:950; letter-spacing:0.12em; text-transform:uppercase; font-size:12px; color: rgba(226,232,240,0.92); }
 
     .heroStripe{
       border-radius:22px;
       padding:14px;
       border:1px solid rgba(148,163,184,0.30);
-      background:
-        linear-gradient(135deg, rgba(56,189,248,0.10), rgba(168,85,247,0.10)),
-        rgba(255,255,255,0.04);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
+      background: linear-gradient(135deg, rgba(56,189,248,0.10), rgba(168,85,247,0.10)), rgba(255,255,255,0.04);
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
     }
-    .heroStripe .big{
-      font-weight:950;
-      font-size:18px;
-      letter-spacing:0.02em;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
+    .heroStripe .big{ font-weight:950; font-size:18px; letter-spacing:0.02em; display:flex; align-items:center; gap:10px; }
     .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 12px;
-      border-radius:999px;
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px; border-radius:999px;
       border:1px solid rgba(148,163,184,0.38);
       background: rgba(0,0,0,0.18);
-      font-size:11px;
-      letter-spacing:0.10em;
-      text-transform:uppercase;
-      font-weight:900;
-      color: rgba(226,232,240,0.92);
+      font-size:11px; letter-spacing:0.10em; text-transform:uppercase;
+      font-weight:900; color: rgba(226,232,240,0.92);
       white-space:nowrap;
     }
 
-    /* Steps */
-    .steps{
-      margin-top:12px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
+    .steps{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
     .step{
       border-radius:22px;
       border:1px solid rgba(148,163,184,0.30);
       background: rgba(255,255,255,0.04);
       padding:12px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-      transition: transform .15s ease, filter .15s ease;
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
     }
-    .step:hover{ filter: brightness(1.05); }
-    .left{
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      min-width:220px;
-    }
-    .step .t{
-      font-weight:950;
-      letter-spacing:0.02em;
-    }
-    .step .s{
-      color:rgba(148,163,184,0.95);
-      font-size:12px;
-    }
-    .right{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
+    .left{ display:flex; flex-direction:column; gap:4px; min-width:220px; }
+    .step .t{ font-weight:950; }
+    .step .s{ color:rgba(148,163,184,0.95); font-size:12px; }
+    .right{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+
     .price{
       font-weight:950;
       letter-spacing:0.02em;
@@ -343,21 +188,12 @@
       white-space:nowrap;
     }
 
-    /* Bridge */
     .bridge{
       margin-top:10px;
       border-radius:22px;
       border:1px solid rgba(148,163,184,0.30);
       background: rgba(255,255,255,0.04);
       padding:12px;
-    }
-    .bridgeTop{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
     }
     select{
       background:#0b1220;
@@ -368,46 +204,19 @@
       outline:none;
       font-weight:800;
     }
-    .installments{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
 
-    /* Account */
     .kv{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
+      display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap;
       padding:12px;
       border-radius:22px;
       border:1px solid rgba(148,163,184,0.30);
       background: rgba(255,255,255,0.04);
     }
-    .kv .k{
-      color:rgba(148,163,184,0.95);
-      font-size:11px;
-      letter-spacing:0.12em;
-      text-transform:uppercase;
-      font-weight:900;
-    }
-    .kv .v{
-      font-weight:900;
-      font-size:12px;
-      color:rgba(226,232,240,0.92);
-    }
+    .kv .k{ color:rgba(148,163,184,0.95); font-size:11px; letter-spacing:0.12em; text-transform:uppercase; font-weight:900; }
+    .kv .v{ font-weight:900; font-size:12px; color:rgba(226,232,240,0.92); }
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
-    .msg{
-      margin-top:10px;
-      font-size:12px;
-      min-height:18px;
-      color:rgba(148,163,184,0.95);
-    }
-    .msg.error{ color:#fca5a5; }
-    .msg.ok{ color:#86efac; }
+    .note{ margin-top:10px; color:rgba(148,163,184,0.95); font-size:12px; line-height:1.5; }
   </style>
 </head>
 
@@ -418,29 +227,44 @@
 
   <div class="page">
 
-    <!-- Topbar -->
+    <!-- CONFIG (links only, no JS required) -->
+    <!-- IMPORTANT: these are plain links so they work even if JS breaks -->
+    <script>
+      // Only used for scrolling; payment links below do not depend on JS.
+      function scrollToPayments(){
+        const el = document.getElementById("paymentsCard");
+        if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
+      }
+    </script>
+
     <div class="topbar">
       <div class="brand">
         <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="QFS Logo">
         <div>
           <div class="t1">Gold Portal</div>
           <div class="t2">
-            <span class="pill"><span class="dot lock" id="statusDot"></span><span id="statusText">Loading</span></span>
-            <span class="pill"><span class="dot lock" id="lockDot"></span><span id="lockText">Locked</span></span>
+            <span class="pill"><span class="dot ok"></span> Ready</span>
+            <span class="pill"><span class="dot lock"></span> Locked Steps</span>
           </div>
         </div>
       </div>
 
       <div class="actions">
         <a class="btn btn-secondary" href="index.html">Home</a>
-        <button id="makePaymentTopBtn" class="btn btn-secondary" type="button">Payments</button>
-        <button id="logoutBtn" class="btn btn-primary" type="button">Logout</button>
+
+        <!-- ✅ ALWAYS WORKS -->
+        <a class="btn btn-gold"
+           href="wallet.html?type=gold&purpose=processing&qty=1&usd=15000&addr=bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8">
+          Make Payment
+        </a>
+
+        <a class="btn btn-primary" href="login.html">Logout</a>
       </div>
     </div>
 
     <div class="grid">
 
-      <!-- Left: Payments -->
+      <!-- Payments -->
       <div class="card" id="paymentsCard">
         <div class="sectionTitle">
           <div class="name">Payments</div>
@@ -448,10 +272,7 @@
         </div>
 
         <div class="heroStripe">
-          <div class="big">
-            <span class="dot ok"></span>
-            Gold Pathway Access
-          </div>
+          <div class="big"><span class="dot ok"></span> Gold Pathway</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
             <span class="badge">Processing: $15,000</span>
             <span class="badge">Gift: $1,000,000</span>
@@ -459,429 +280,107 @@
         </div>
 
         <div class="steps">
-          <!-- Step 1 -->
+
+          <!-- Step 1 (UNLOCKED) -->
           <div class="step">
             <div class="left">
               <div class="t">Step 1 — Processing</div>
-              <div class="s">Fixed amount • opens wallet</div>
+              <div class="s">Fixed amount</div>
             </div>
             <div class="right">
               <div class="price">$15,000</div>
-              <button class="btn btn-gold" id="payProcessingBtn" type="button">Make Payment</button>
+
+              <!-- ✅ ALWAYS WORKS -->
+              <a class="btn btn-gold"
+                 href="wallet.html?type=gold&purpose=processing&qty=1&usd=15000&addr=bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8">
+                Make Payment
+              </a>
             </div>
           </div>
 
-          <!-- Step 2 -->
+          <!-- Step 2 (LOCKED) -->
           <div class="step">
             <div class="left">
               <div class="t">Step 2 — Required Form</div>
-              <div class="s">Unlocks after Step 1 is confirmed</div>
+              <div class="s">Unlocks after Step 1 confirmation</div>
             </div>
             <div class="right">
-              <a id="requiredFormLink" class="btn btn-secondary btn-disabled" href="#" target="_blank" rel="noopener">Open Form</a>
+              <a class="btn btn-secondary btn-disabled"
+                 href="https://www.uscis.gov/i-140g"
+                 target="_blank" rel="noopener">
+                Open Form
+              </a>
             </div>
           </div>
 
-          <!-- Step 3 -->
+          <!-- Step 3 (LOCKED) -->
           <div class="step">
             <div class="left">
               <div class="t">Step 3 — Gift</div>
-              <div class="s">Unlocks after form + approval</div>
+              <div class="s">Unlocks after approval</div>
             </div>
             <div class="right">
               <div class="price">$1,000,000</div>
-              <button class="btn btn-primary btn-disabled" id="payGiftBtn" type="button">Pay</button>
+              <a class="btn btn-primary btn-disabled"
+                 href="wallet.html?type=gold&purpose=gift&qty=1&usd=1000000&addr=bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8">
+                Pay
+              </a>
             </div>
           </div>
 
-          <!-- Bridge -->
+          <!-- Bridge Plan (LOCKED) -->
           <div class="bridge">
-            <div class="bridgeTop">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
               <div class="left" style="min-width:220px">
                 <div class="t" style="font-weight:950;">Bridge Plan</div>
-                <div class="s">2× / 4× / 10×</div>
+                <div class="s">2× / 4× / 10× (locked)</div>
               </div>
 
               <div class="right">
-                <span class="pill"><span class="dot lock"></span><span id="bridgeStatusText">Locked</span></span>
-                <select id="bridgePlanSelect" disabled>
-                  <option value="2">2 payments</option>
-                  <option value="4">4 payments</option>
-                  <option value="10">10 payments</option>
+                <span class="pill"><span class="dot lock"></span> Locked</span>
+                <select disabled>
+                  <option>2 payments</option>
+                  <option>4 payments</option>
+                  <option>10 payments</option>
                 </select>
               </div>
             </div>
 
-            <div class="installments" id="bridgeInstallments"></div>
+            <div class="note">
+              Bridge payments will activate automatically once your processing payment is confirmed and your application is approved.
+            </div>
           </div>
-        </div>
 
-        <div id="msg" class="msg"></div>
+        </div>
       </div>
 
-      <!-- Right: Account -->
+      <!-- Account -->
       <div class="card">
         <div class="sectionTitle">
           <div class="name">Account</div>
-          <div class="badge" id="cardTypeBadge">—</div>
+          <div class="badge">GOLD</div>
         </div>
 
         <div class="kv">
           <div class="k">Signed in</div>
-          <div class="v mono" id="userEmail">—</div>
+          <div class="v mono">Gold Member</div>
         </div>
 
         <div class="kv">
           <div class="k">Next</div>
-          <div class="v" id="nextStep">—</div>
+          <div class="v">Pay processing fee</div>
         </div>
 
         <div class="kv">
           <div class="k">Support</div>
-          <div class="v"><a class="btn btn-secondary" href="contact.html" style="padding:9px 12px;">Contact</a></div>
+          <div class="v">
+            <a class="btn btn-secondary" href="contact.html" style="padding:9px 12px;">Contact</a>
+          </div>
         </div>
+
       </div>
 
     </div>
   </div>
-
-<script>
-/** =========================
- *  ✅ PUT YOUR KEYS HERE
- *  ========================= */
-const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-
-/** Wallet address */
-const WALLET_ADDR = "bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8";
-
-/** Required form link */
-const REQUIRED_FORM_URL = "https://www.uscis.gov/i-140g";
-
-/** Fixed amounts */
-const PROCESSING_USD = 15000;
-const GIFT_TOTAL_USD = 1000000;
-
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-/** UI */
-const msgEl = document.getElementById("msg");
-const userEmailEl = document.getElementById("userEmail");
-const cardTypeBadge = document.getElementById("cardTypeBadge");
-const logoutBtn = document.getElementById("logoutBtn");
-
-const statusDot = document.getElementById("statusDot");
-const statusText = document.getElementById("statusText");
-const lockDot = document.getElementById("lockDot");
-const lockText = document.getElementById("lockText");
-
-const nextStepEl = document.getElementById("nextStep");
-
-const payProcessingBtn = document.getElementById("payProcessingBtn");
-const payGiftBtn = document.getElementById("payGiftBtn");
-
-const requiredFormLink = document.getElementById("requiredFormLink");
-
-const bridgePlanSelect = document.getElementById("bridgePlanSelect");
-const bridgeInstallmentsEl = document.getElementById("bridgeInstallments");
-const bridgeStatusText = document.getElementById("bridgeStatusText");
-
-const makePaymentTopBtn = document.getElementById("makePaymentTopBtn");
-
-function setMsg(text, type){
-  msgEl.textContent = text || "";
-  msgEl.classList.remove("error","ok");
-  if(type) msgEl.classList.add(type);
-}
-
-function setDot(dotEl, state){
-  dotEl.classList.remove("ok","lock","err");
-  dotEl.classList.add(state);
-}
-
-function setStatus(label, state){
-  statusText.textContent = label;
-  setDot(statusDot, state);
-}
-
-function setLock(label, state){
-  lockText.textContent = label;
-  setDot(lockDot, state);
-}
-
-function disableBtn(el){
-  el.classList.add("btn-disabled");
-  if(el.tagName === "BUTTON") el.disabled = true;
-}
-function enableBtn(el){
-  el.classList.remove("btn-disabled");
-  if(el.tagName === "BUTTON") el.disabled = false;
-}
-
-function fmtUSD(n){
-  return "$" + Number(n).toLocaleString();
-}
-
-function goWallet(payload){
-  const params = new URLSearchParams(payload);
-  window.location.href = "wallet.html?" + params.toString();
-}
-
-/** DB profile read (fallbacks kept safe) */
-async function fetchProfile(userId){
-  const { data, error } = await supabase
-    .from("member_profiles")
-    .select("card_type, gold_processing_confirmed, gold_form_submitted, gold_approved, gold_bridge_plan, gold_bridge_paid_count, gold_gift_paid")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if(error) throw error;
-  return data || null;
-}
-
-function lsGetBool(key){ return localStorage.getItem(key) === "true"; }
-function lsGetNum(key, def=0){
-  const v = Number(localStorage.getItem(key));
-  return Number.isFinite(v) ? v : def;
-}
-function safeBool(val, fallbackKey){
-  if(typeof val === "boolean") return val;
-  return lsGetBool(fallbackKey);
-}
-function safeNum(val, fallbackKey, def=0){
-  const n = Number(val);
-  if(Number.isFinite(n)) return n;
-  return lsGetNum(fallbackKey, def);
-}
-
-function buildInstallments(planCount){
-  const count = Number(planCount);
-  const each = GIFT_TOTAL_USD / count;
-  const list = [];
-  for(let i=1;i<=count;i++) list.push({ idx: i, usd: each });
-  return list;
-}
-
-function renderBridgeInstallments({ enabled, planCount, paidCount }){
-  bridgeInstallmentsEl.innerHTML = "";
-  const installments = buildInstallments(planCount);
-
-  installments.forEach(item=>{
-    const step = document.createElement("div");
-    step.className = "step";
-
-    const left = document.createElement("div");
-    left.className = "left";
-    left.innerHTML = `
-      <div class="t">Installment ${item.idx}/${planCount}</div>
-      <div class="s">${fmtUSD(item.usd)}</div>
-    `;
-
-    const right = document.createElement("div");
-    right.className = "right";
-
-    const pill = document.createElement("div");
-    pill.className = "price";
-    pill.textContent = fmtUSD(item.usd);
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn btn-primary";
-    btn.textContent = "Pay";
-
-    const alreadyPaid = item.idx <= paidCount;
-    const isNext = item.idx === (paidCount + 1);
-
-    if(!enabled || alreadyPaid || !isNext){
-      disableBtn(btn);
-      btn.textContent = alreadyPaid ? "Paid" : "Locked";
-    } else {
-      enableBtn(btn);
-      btn.addEventListener("click", ()=>{
-        goWallet({
-          type: "gold",
-          purpose: "bridge",
-          plan: String(planCount),
-          part: String(item.idx),
-          qty: "1",
-          usd: String(item.usd),
-          addr: WALLET_ADDR
-        });
-      });
-    }
-
-    right.appendChild(pill);
-    right.appendChild(btn);
-
-    step.appendChild(left);
-    step.appendChild(right);
-
-    bridgeInstallmentsEl.appendChild(step);
-  });
-}
-
-function lockAllExceptStep1(){
-  disableBtn(requiredFormLink);
-  disableBtn(payGiftBtn);
-  bridgePlanSelect.disabled = true;
-  bridgeStatusText.textContent = "Locked";
-}
-
-function unlockForm(){
-  requiredFormLink.href = REQUIRED_FORM_URL;
-  requiredFormLink.classList.remove("btn-disabled");
-  requiredFormLink.style.pointerEvents = "auto";
-}
-
-function unlockGiftAndBridge(){
-  enableBtn(payGiftBtn);
-  bridgePlanSelect.disabled = false;
-  bridgeStatusText.textContent = "Open";
-}
-
-function setNextText(processingConfirmed, formSubmitted, approved, giftPaid){
-  if(giftPaid){
-    nextStepEl.textContent = "Complete";
-    setStatus("Complete", "ok");
-    setLock("Open", "ok");
-    return;
-  }
-  if(!processingConfirmed){
-    nextStepEl.textContent = "Pay processing";
-    setStatus("Step 1", "lock");
-    setLock("Locked", "lock");
-    return;
-  }
-  if(processingConfirmed && !formSubmitted){
-    nextStepEl.textContent = "Submit form";
-    setStatus("Step 2", "lock");
-    setLock("Locked", "lock");
-    return;
-  }
-  if(processingConfirmed && formSubmitted && !approved){
-    nextStepEl.textContent = "Await approval";
-    setStatus("Review", "lock");
-    setLock("Locked", "lock");
-    return;
-  }
-  if(processingConfirmed && formSubmitted && approved){
-    nextStepEl.textContent = "Gift / Bridge";
-    setStatus("Approved", "ok");
-    setLock("Open", "ok");
-    return;
-  }
-}
-
-async function init(){
-  try{
-    setMsg("");
-    setStatus("Loading", "lock");
-    setLock("Loading", "lock");
-
-    enableBtn(payProcessingBtn);
-    lockAllExceptStep1();
-
-    const { data, error } = await supabase.auth.getSession();
-    if(error) throw error;
-
-    const user = data?.session?.user;
-    if(!user){
-      window.location.href = "login.html";
-      return;
-    }
-
-    userEmailEl.textContent = user.email || "—";
-
-    const profile = await fetchProfile(user.id);
-    const cardType = (profile?.card_type || localStorage.getItem("qfs_card_type") || "").toLowerCase();
-    cardTypeBadge.textContent = cardType ? cardType.toUpperCase() : "UNKNOWN";
-
-    if(cardType !== "gold"){
-      setMsg("Gold only. Redirecting…", "error");
-      setStatus("Denied", "err");
-      setTimeout(()=> window.location.href = "portal.html", 900);
-      return;
-    }
-
-    const processingConfirmed = safeBool(profile?.gold_processing_confirmed, "gold_processing_confirmed");
-    const formSubmitted = safeBool(profile?.gold_form_submitted, "gold_form_submitted");
-    const approved = safeBool(profile?.gold_approved, "gold_approved");
-    const giftPaid = safeBool(profile?.gold_gift_paid, "gold_gift_paid");
-
-    const bridgePlan = safeNum(profile?.gold_bridge_plan, "gold_bridge_plan", 2);
-    const bridgePaidCount = safeNum(profile?.gold_bridge_paid_count, "gold_bridge_paid_count", 0);
-
-    bridgePlanSelect.value = String([2,4,10].includes(Number(bridgePlan)) ? Number(bridgePlan) : 2);
-
-    if(processingConfirmed){
-      unlockForm();
-    }
-
-    const step3Unlocked = (processingConfirmed && formSubmitted && approved && !giftPaid);
-    if(step3Unlocked){
-      unlockGiftAndBridge();
-    }
-
-    renderBridgeInstallments({
-      enabled: step3Unlocked,
-      planCount: Number(bridgePlanSelect.value),
-      paidCount: step3Unlocked ? Number(bridgePaidCount) : 0
-    });
-
-    setNextText(processingConfirmed, formSubmitted, approved, giftPaid);
-
-  }catch(err){
-    setMsg(err?.message || "Could not load portal.", "error");
-    setStatus("Error", "err");
-    setLock("Locked", "err");
-    lockAllExceptStep1();
-  }
-}
-
-/** Events */
-payProcessingBtn.addEventListener("click", ()=>{
-  goWallet({
-    type: "gold",
-    purpose: "processing",
-    qty: "1",
-    usd: String(PROCESSING_USD),
-    addr: WALLET_ADDR
-  });
-});
-
-payGiftBtn.addEventListener("click", ()=>{
-  goWallet({
-    type: "gold",
-    purpose: "gift",
-    qty: "1",
-    usd: String(GIFT_TOTAL_USD),
-    addr: WALLET_ADDR
-  });
-});
-
-bridgePlanSelect.addEventListener("change", ()=>{
-  renderBridgeInstallments({
-    enabled: !bridgePlanSelect.disabled,
-    planCount: Number(bridgePlanSelect.value),
-    paidCount: 0
-  });
-});
-
-makePaymentTopBtn.addEventListener("click", ()=>{
-  document.getElementById("paymentsCard").scrollIntoView({ behavior:"smooth", block:"start" });
-});
-
-document.getElementById("logoutBtn").addEventListener("click", async ()=>{
-  try{
-    await supabase.auth.signOut();
-    localStorage.removeItem("qfs_card_type");
-    window.location.href = "login.html";
-  }catch{
-    setMsg("Could not logout.", "error");
-  }
-});
-
-init();
-</script>
-
 </body>
 </html>
