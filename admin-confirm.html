@@ -7,7 +7,7 @@
 
   <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
 
-  <!-- If CDN is blocked for you, replace this line with: <script src="/supabase.min.js"></script> -->
+  <!-- Supabase JS (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -69,12 +69,12 @@
       transition: transform .15s ease, filter .15s ease, opacity .15s ease;
     }
     .btn:active{ transform: translateY(1px) scale(0.99); }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
     .btn-secondary{ background:rgba(255,255,255,0.07); border:1px solid rgba(148,163,184,0.40); color:var(--text); }
     .btn-secondary:hover{ filter: brightness(1.10); }
     .btn-primary{ background: linear-gradient(135deg, var(--accent), var(--accent2)); color:#fff; }
     .btn-danger{ background: rgba(251,113,133,0.16); border:1px solid rgba(251,113,133,0.30); color:#ffdbe4; }
 
-    .grid{ display:grid; grid-template-columns: 1fr; gap:14px; }
     .card{
       border:1px solid rgba(148,163,184,0.35);
       border-radius:var(--radius);
@@ -139,6 +139,8 @@
       border:1px solid rgba(148,163,184,0.25);
       background: rgba(0,0,0,0.18);
       display:none;
+      white-space:pre-wrap;
+      line-height:1.35;
     }
     .toast.show{ display:block; }
   </style>
@@ -157,7 +159,7 @@
       </div>
 
       <div class="row">
-        <span id="sessionPill" class="pill"><span class="dot warn"></span> Not signed in</span>
+        <span id="sessionPill" class="pill"><span class="dot warn"></span> Booting…</span>
         <button id="logoutBtn" class="btn btn-secondary" style="display:none;">Logout</button>
         <a class="btn btn-secondary" href="index.html">Home</a>
       </div>
@@ -175,7 +177,7 @@
       <div class="row" style="margin-top:12px;">
         <input id="email" class="input" type="email" placeholder="Admin email" autocomplete="email">
         <input id="password" class="input" type="password" placeholder="Password" autocomplete="current-password">
-        <button id="loginBtn" class="btn btn-primary">Sign In</button>
+        <button id="loginBtn" class="btn btn-primary" type="button">Sign In</button>
       </div>
 
       <div id="loginToast" class="toast"></div>
@@ -189,7 +191,7 @@
           <div class="muted" style="margin-top:6px;">Approve matches by TXID + email.</div>
         </div>
         <div class="row">
-          <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
+          <button id="refreshBtn" class="btn btn-secondary" type="button">Refresh</button>
         </div>
       </div>
 
@@ -216,13 +218,9 @@
   </div>
 
   <script>
-    // =========================
-    // ✅ YOUR REAL SUPABASE KEYS
-    // =========================
+    // ✅ Your real Supabase project details
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Elements
     const loginCard = document.getElementById("loginCard");
@@ -242,17 +240,20 @@
     function showToast(el, msg){
       el.textContent = msg;
       el.classList.add("show");
-      setTimeout(()=> el.classList.remove("show"), 2600);
+      clearTimeout(el.__t);
+      el.__t = setTimeout(()=> el.classList.remove("show"), 4200);
+    }
+
+    function setPill(text, ok){
+      sessionPill.innerHTML = `<span class="dot ${ok ? "ok":"warn"}"></span> ${text}`;
     }
 
     function setSignedInUI(isSignedIn){
       if(isSignedIn){
-        sessionPill.innerHTML = `<span class="dot ok"></span> Signed in`;
         loginCard.style.display = "none";
         pendingCard.style.display = "block";
         logoutBtn.style.display = "inline-flex";
       } else {
-        sessionPill.innerHTML = `<span class="dot warn"></span> Not signed in`;
         loginCard.style.display = "block";
         pendingCard.style.display = "none";
         logoutBtn.style.display = "none";
@@ -262,167 +263,148 @@
     function fmtDate(ts){
       try { return new Date(ts).toLocaleString(); } catch { return ts; }
     }
-
     function shortTxid(txid){
       if(!txid) return "";
       const t = String(txid);
       return t.length > 18 ? (t.slice(0,10) + "…" + t.slice(-8)) : t;
     }
 
-    // ✅ Admin check using admin_users table
-    async function ensureAdminOrKick(){
-      const { data: u, error: ue } = await supabase.auth.getUser();
-      if(ue || !u?.user){
-        setSignedInUI(false);
-        return false;
-      }
-
-      const user = u.user;
-
-      const { data, error } = await supabase
-        .from("admin_users")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if(error || !data){
-        showToast(loginToast, "Not authorized (admin only).");
-        try { await supabase.auth.signOut(); } catch {}
-        setSignedInUI(false);
-        return false;
-      }
-
-      return true;
+    function supaReady(){
+      return (window.supabase && typeof window.supabase.createClient === "function");
     }
 
-    async function loadPending(){
-      rowsEl.innerHTML = `<tr><td colspan="7" class="muted">Loading…</td></tr>`;
+    // ---- Boot + client creation with hard errors shown
+    if(!supaReady()){
+      setPill("Supabase JS failed to load", false);
+      showToast(loginToast, "Supabase library not found.\nIf you use strict CSP, allow cdn.jsdelivr.net.\nAlso hard refresh: Ctrl+Shift+R");
+      loginBtn.disabled = true;
+    } else {
+      // Create client
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      const ok = await ensureAdminOrKick();
-      if(!ok){
-        rowsEl.innerHTML = `<tr><td colspan="7" class="muted">Not authorized.</td></tr>`;
-        return;
-      }
+      async function loadPending(){
+        rowsEl.innerHTML = `<tr><td colspan="7" class="muted">Loading…</td></tr>`;
+        const { data, error } = await supabase.rpc("list_pending_confirmations");
 
-      const { data, error } = await supabase.rpc("list_pending_confirmations");
-      if(error){
-        rowsEl.innerHTML = `<tr><td colspan="7" class="muted">Error: ${error.message}</td></tr>`;
-        return;
-      }
-      if(!data || data.length === 0){
-        rowsEl.innerHTML = `<tr><td colspan="7" class="muted">No pending confirmations.</td></tr>`;
-        return;
-      }
+        if(error){
+          rowsEl.innerHTML = `<tr><td colspan="7" class="muted">Error: ${error.message}</td></tr>`;
+          showToast(pendingToast, "RPC error: " + error.message);
+          return;
+        }
+        if(!data || data.length === 0){
+          rowsEl.innerHTML = `<tr><td colspan="7" class="muted">No pending confirmations.</td></tr>`;
+          return;
+        }
 
-      rowsEl.innerHTML = "";
-      data.forEach((r) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="muted">${fmtDate(r.created_at)}</td>
-          <td class="mono">${r.email}</td>
-          <td class="mono" title="${r.txid}">${shortTxid(r.txid)}</td>
-          <td><span class="pill">${String(r.card_type).toUpperCase()}</span></td>
-          <td>${r.qty}</td>
-          <td>$${Number(r.amount_usd || 0).toLocaleString()}</td>
-          <td>
-            <button class="btn btn-primary" data-email="${encodeURIComponent(r.email)}" data-txid="${encodeURIComponent(r.txid)}">
-              Approve
-            </button>
-          </td>
-        `;
-        rowsEl.appendChild(tr);
-      });
+        rowsEl.innerHTML = "";
+        data.forEach((r) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="muted">${fmtDate(r.created_at)}</td>
+            <td class="mono">${r.email}</td>
+            <td class="mono" title="${r.txid}">${shortTxid(r.txid)}</td>
+            <td><span class="pill">${String(r.card_type).toUpperCase()}</span></td>
+            <td>${r.qty}</td>
+            <td>$${Number(r.amount_usd || 0).toLocaleString()}</td>
+            <td>
+              <button class="btn btn-primary" type="button"
+                data-email="${encodeURIComponent(r.email)}"
+                data-txid="${encodeURIComponent(r.txid)}">
+                Approve
+              </button>
+            </td>
+          `;
+          rowsEl.appendChild(tr);
+        });
 
-      rowsEl.querySelectorAll("button[data-email]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const ok = await ensureAdminOrKick();
-          if(!ok) return;
+        rowsEl.querySelectorAll("button[data-email]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const email = decodeURIComponent(btn.dataset.email || "");
+            const txid = decodeURIComponent(btn.dataset.txid || "");
 
-          const email = decodeURIComponent(btn.dataset.email || "");
-          const txid = decodeURIComponent(btn.dataset.txid || "");
-          btn.disabled = true;
-          btn.style.opacity = "0.7";
-          btn.textContent = "Approving…";
+            btn.disabled = true;
+            btn.textContent = "Approving…";
 
-          const { data, error } = await supabase.rpc("approve_payment_confirmation", {
-            p_email: email,
-            p_txid: txid
+            const { data, error } = await supabase.rpc("approve_payment_confirmation", {
+              p_email: email,
+              p_txid: txid
+            });
+
+            btn.disabled = false;
+            btn.textContent = "Approve";
+
+            if(error){
+              showToast(pendingToast, "Approve failed: " + error.message);
+              return;
+            }
+            if(!data?.ok){
+              showToast(pendingToast, data?.error || "Not approved.");
+              return;
+            }
+
+            showToast(pendingToast, `Approved: ${data.member_email} (${data.card_type})`);
+            await loadPending();
           });
+        });
+      }
+
+      // Login click
+      loginBtn.addEventListener("click", async () => {
+        try{
+          const email = (emailEl.value || "").trim();
+          const password = passEl.value || "";
+
+          if(!email || !password){
+            showToast(loginToast, "Enter email + password.");
+            return;
+          }
+
+          loginBtn.disabled = true;
+          showToast(loginToast, "Signing in…");
+
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+          loginBtn.disabled = false;
 
           if(error){
-            showToast(pendingToast, "Approve failed: " + error.message);
-            btn.disabled = false;
-            btn.style.opacity = "1";
-            btn.textContent = "Approve";
+            showToast(loginToast, "Login failed: " + error.message);
             return;
           }
 
-          if(!data?.ok){
-            showToast(pendingToast, data?.error || "Not approved.");
-            btn.disabled = false;
-            btn.style.opacity = "1";
-            btn.textContent = "Approve";
-            return;
-          }
-
-          showToast(pendingToast, `Approved: ${data.member_email} (${data.card_type})`);
+          setPill("Signed in", true);
+          setSignedInUI(true);
+          showToast(loginToast, "Signed in ✅");
           await loadPending();
-        });
+        } catch(e){
+          loginBtn.disabled = false;
+          showToast(loginToast, "JS error: " + (e?.message || e));
+        }
       });
-    }
 
-    loginBtn.addEventListener("click", async () => {
-      const email = (emailEl.value || "").trim();
-      const password = passEl.value || "";
-      if(!email || !password){
-        showToast(loginToast, "Enter email + password.");
-        return;
-      }
-
-      loginBtn.disabled = true;
-      loginBtn.style.opacity = "0.7";
-
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-      loginBtn.disabled = false;
-      loginBtn.style.opacity = "1";
-
-      if(error){
-        showToast(loginToast, "Login failed: " + error.message);
-        return;
-      }
-
-      const ok = await ensureAdminOrKick();
-      if(!ok) return;
-
-      showToast(loginToast, "Signed in (admin).");
-      setSignedInUI(true);
-      await loadPending();
-    });
-
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      setSignedInUI(false);
-      showToast(loginToast, "Signed out.");
-    });
-
-    refreshBtn.addEventListener("click", loadPending);
-
-    (async function boot(){
-      const { data } = await supabase.auth.getSession();
-      const hasSession = !!data?.session;
-
-      if(!hasSession){
+      // Logout
+      logoutBtn.addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        setPill("Not signed in", false);
         setSignedInUI(false);
-        return;
-      }
+      });
 
-      const ok = await ensureAdminOrKick();
-      if(!ok) return;
+      refreshBtn.addEventListener("click", loadPending);
 
-      setSignedInUI(true);
-      await loadPending();
-    })();
+      // Initial session check
+      (async function boot(){
+        try{
+          const { data } = await supabase.auth.getSession();
+          const hasSession = !!data?.session;
+          setSignedInUI(hasSession);
+          setPill(hasSession ? "Signed in" : "Not signed in", hasSession);
+          if(hasSession) await loadPending();
+          else showToast(loginToast, "Ready ✅ Enter admin email + password.");
+        } catch(e){
+          setPill("Boot error", false);
+          showToast(loginToast, "Boot error: " + (e?.message || e));
+        }
+      })();
+    }
   </script>
 </body>
 </html>
