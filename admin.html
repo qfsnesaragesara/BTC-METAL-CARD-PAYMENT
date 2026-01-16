@@ -84,6 +84,7 @@
       border:1px solid rgba(255,255,255,.12);
       font-size:12px; font-weight:900;
       background:rgba(0,0,0,.18);
+      text-transform:uppercase;
     }
     .small{font-size:12px;color:rgba(234,240,255,.72)}
     input{
@@ -121,7 +122,7 @@
       <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-end;">
         <div>
           <div style="font-weight:900">Pending Submissions</div>
-          <div class="small">This dashboard reads from <code>payment_submissions</code> (your registration/submission source).</div>
+          <div class="small">Confirming a submission sets status=confirmed so the portal unlocks.</div>
         </div>
 
         <div style="min-width:260px; max-width:380px; width:100%;">
@@ -140,17 +141,18 @@
               <th>Tier</th>
               <th>Qty</th>
               <th>Created</th>
+              <th>Note</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="rows">
-            <tr><td colspan="5" class="small">Loading…</td></tr>
+            <tr><td colspan="6" class="small">Loading…</td></tr>
           </tbody>
         </table>
       </div>
 
       <div class="msg small" style="margin-top:10px;">
-        If you get “not authorized”, your <code>is_admin()</code> is returning false for this user.
+        If you get “not authorized”, ensure your current user is listed in <code>public.admin_users</code> and <code>is_admin()</code> returns true.
       </div>
     </div>
   </div>
@@ -158,7 +160,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // =========================
-    // ✅ YOUR SUPABASE VALUES
+    // ✅ ONE SUPABASE CLIENT
     // =========================
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
@@ -184,9 +186,6 @@
         .replaceAll('"',"&quot;")
         .replaceAll("'","&#039;");
     }
-    function renderEmpty(text){
-      rowsEl.innerHTML = `<tr><td colspan="5" class="small">${esc(text)}</td></tr>`;
-    }
 
     async function requireSession(){
       const { data } = await supabase.auth.getSession();
@@ -204,15 +203,22 @@
       return { ok:true };
     }
 
+    function renderEmpty(text){
+      rowsEl.innerHTML = `<tr><td colspan="6" class="small">${esc(text)}</td></tr>`;
+    }
+
+    // =========================
+    // ✅ LOAD FROM payment_submissions (NOT card_orders)
+    // =========================
     async function loadPending(){
       setMsg("", "");
       renderEmpty("Loading…");
 
-      const q = (searchEmail.value || "").trim();
+      const q = (searchEmail.value || "").trim().toLowerCase();
 
       let query = supabase
         .from("payment_submissions")
-        .select("id,email,card_type,qty,status,created_at")
+        .select("id,email,card_type,qty,status,created_at,note")
         .eq("status","pending")
         .order("created_at", { ascending:false })
         .limit(50);
@@ -235,26 +241,28 @@
       }
 
       rowsEl.innerHTML = "";
-      data.forEach(row => {
+      data.forEach(o => {
         const tr = document.createElement("tr");
-        const created = row.created_at ? new Date(row.created_at).toLocaleString() : "—";
-        const tier = String(row.card_type || "").toUpperCase() || "—";
-        const qty = Number(row.qty || 1) || 1;
+        const created = new Date(o.created_at).toLocaleString();
 
         tr.innerHTML = `
-          <td style="font-weight:900">${esc(row.email || "—")}</td>
-          <td><span class="pill">${esc(tier)}</span></td>
-          <td><span class="pill">${esc(String(qty))}</span></td>
+          <td>
+            <div style="font-weight:900">${esc(o.email || "—")}</div>
+            <div class="small">ID: ${esc(String(o.id).slice(0,8))}…</div>
+          </td>
+          <td><span class="pill">${esc(String(o.card_type || "—"))}</span></td>
+          <td><span class="pill">${esc(String(o.qty || 1))}</span></td>
           <td class="small">${esc(created)}</td>
+          <td style="min-width:220px">
+            <input data-note="${esc(o.id)}" placeholder="Optional note…" value="${esc(o.note || "")}">
+          </td>
           <td style="min-width:220px">
             <div class="row">
               <button class="gold"
-                data-confirm="${esc(row.id)}"
-                data-email="${esc(row.email || "")}"
-                data-tier="${esc(tier)}"
-                data-qty="${esc(String(qty))}"
+                data-confirm="${esc(o.id)}"
               >Confirm</button>
-              <button class="danger" data-reject="${esc(row.id)}">Reject</button>
+
+              <button class="danger" data-reject="${esc(o.id)}">Reject</button>
             </div>
           </td>
         `;
@@ -264,10 +272,7 @@
       rowsEl.querySelectorAll("button[data-confirm]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-confirm");
-          const email = (btn.getAttribute("data-email") || "").trim();
-          const tier = (btn.getAttribute("data-tier") || "").trim();
-          const qty = Number(btn.getAttribute("data-qty") || "1") || 1;
-          await updateSubmissionStatus(id, "confirmed", btn, { email, tier, qty });
+          await updateSubmissionStatus(id, "confirmed", btn);
         });
       });
 
@@ -279,17 +284,20 @@
       });
     }
 
-    async function updateSubmissionStatus(id, status, btn, meta){
+    async function updateSubmissionStatus(id, status, btn){
       setMsg("", "");
       btn.disabled = true;
       const oldText = btn.textContent;
       btn.textContent = "Working…";
 
+      const noteInput = rowsEl.querySelector(`input[data-note="${CSS.escape(id)}"]`);
+      const note = (noteInput?.value || "").trim() || null;
+
       const { error } = await supabase
         .from("payment_submissions")
-        .update({ status })
+        .update({ status, note })
         .eq("id", id)
-        .eq("status", "pending"); // prevent double-confirm
+        .eq("status","pending");
 
       btn.disabled = false;
       btn.textContent = oldText;
@@ -299,37 +307,7 @@
         return;
       }
 
-      if(status === "confirmed"){
-        setMsg("Confirmed. Sending activation email…", "ok");
-
-        // send activation email (best-effort)
-        try{
-          const email = (meta?.email || "").trim();
-          const tier = (meta?.tier || "").trim();
-          const qty = Number(meta?.qty || 1) || 1;
-
-          if(email){
-            const { data, error: fnErr } = await supabase.functions.invoke("send-activation", {
-              body: { email, tier, qty }
-            });
-
-            if(fnErr){
-              setMsg("Confirmed ✅ (Activation email failed: " + fnErr.message + ")", "ok");
-            } else if(data?.ok === false){
-              setMsg("Confirmed ✅ (Activation email error: " + (data?.error || "unknown") + ")", "ok");
-            } else {
-              setMsg("Confirmed ✅ Activation email sent.", "ok");
-            }
-          } else {
-            setMsg("Confirmed ✅ (No email found).", "ok");
-          }
-        } catch {
-          setMsg("Confirmed ✅ (Activation email failed).", "ok");
-        }
-      } else {
-        setMsg("Rejected.", "ok");
-      }
-
+      setMsg(status === "confirmed" ? "Confirmed ✅" : "Rejected ✅", "ok");
       await loadPending();
     }
 
