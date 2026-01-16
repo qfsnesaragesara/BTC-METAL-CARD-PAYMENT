@@ -5,10 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Member Portal — QFS</title>
 <meta name="robots" content="noindex, nofollow">
-<!-- Official website logo -->
 <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
 
-<!-- Supabase JS (CDN) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -39,7 +37,6 @@
 
   .wrap{ max-width:var(--maxw); margin:0 auto; }
 
-  /* HEADER */
   .header{
     display:flex;
     justify-content:space-between;
@@ -99,7 +96,6 @@
   .badge.active{ border-color: rgba(34,197,94,0.35); color:#bbf7d0; }
   .badge.rejected{ border-color: rgba(244,63,94,0.35); color:#fecdd3; }
 
-  /* GRID */
   .grid{
     display:grid;
     grid-template-columns: 1fr 1fr;
@@ -107,7 +103,6 @@
   }
   @media (max-width:860px){ .grid{ grid-template-columns:1fr; } }
 
-  /* CARD */
   .card{
     background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.84));
     border:1px solid var(--border);
@@ -131,7 +126,6 @@
   .card h2{ margin:0 0 6px; font-size:16px; font-weight:900; }
   .sub{ font-size:12px; color:var(--muted); }
 
-  /* BALANCE */
   .balance{
     font-size:34px;
     font-weight:900;
@@ -146,7 +140,6 @@
     line-height:1.55;
   }
 
-  /* ACTIONS */
   .actions{ display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; }
   .btn{
     flex:1;
@@ -169,7 +162,6 @@
     cursor:not-allowed;
   }
 
-  /* STATUS */
   .status{
     margin-top:10px;
     padding:10px 12px;
@@ -179,7 +171,6 @@
     font-size:12px;
   }
 
-  /* TABLE */
   table{
     width:100%;
     border-collapse:collapse;
@@ -205,7 +196,6 @@
 <body>
 <div class="wrap">
 
-  <!-- HEADER -->
   <header class="header">
     <div class="brand">
       <img class="logo"
@@ -223,10 +213,8 @@
     </div>
   </header>
 
-  <!-- GRID -->
   <section class="grid">
 
-    <!-- BALANCE -->
     <div class="card">
       <h2>Available Balance</h2>
       <div class="sub">Balance becomes active after you order your access card</div>
@@ -246,7 +234,6 @@
       <div class="mutedline" id="lastChecked">Checking confirmation…</div>
     </div>
 
-    <!-- ACCOUNT INFO -->
     <div class="card">
       <h2>Account Details</h2>
       <div class="sub">Your Membership Balance</div>
@@ -272,7 +259,6 @@
 
     </div>
 
-    <!-- TRANSACTIONS -->
     <div class="card" style="grid-column:1 / -1;">
       <h2>Recent Activity</h2>
       <div class="sub">Transactions will appear after activation</div>
@@ -314,6 +300,9 @@
     localStorage.getItem("qfsEmail") ||
     localStorage.getItem("memberEmail") ||
     "";
+
+  let __profileTier = "";
+  let __profileQty = 0;
 
   function fmtUSD(n){
     return "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -404,7 +393,6 @@
     const session = data?.session || null;
 
     if(error || !session){
-      // Not logged in → go to login
       window.location.replace("login.html");
       return null;
     }
@@ -412,7 +400,6 @@
     const user = session.user || {};
     const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
 
-    // Use session email as source of truth
     email = user.email || email || "";
     if(email){
       localStorage.setItem("qfsEmail", email);
@@ -423,16 +410,48 @@
     }
 
     if(!verifiedAt){
-      // Not verified → sign out + redirect
       try{
         $("btcBalance").textContent = "⚠️ Please verify your email before accessing the portal. Redirecting to login…";
         await supabase.auth.signOut();
       } catch {}
-      setTimeout(() => window.location.replace("login.html"), 900);
+      setTimeout(() => window.location.replace("login.html?msg=verify_email"), 900);
       return null;
     }
 
     return session;
+  }
+
+  /*********************************************************
+   * ✅ NEW: HARD GATE #2 — require admin activation (flow C)
+   *********************************************************/
+  async function requireAdminActivation(session){
+    try{
+      const user = session?.user || {};
+      const { data: profile, error } = await supabase
+        .from("portal_users")
+        .select("is_activated, tier, card_qty")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if(error || !profile){
+        // If profile missing, block (safer)
+        window.location.replace("login.html?msg=profile_missing");
+        return false;
+      }
+
+      __profileTier = (profile.tier || "").toUpperCase();
+      __profileQty = Number(profile.card_qty || 0) || 0;
+
+      if(!profile.is_activated){
+        window.location.replace("pending.html");
+        return false;
+      }
+
+      return true;
+    } catch {
+      window.location.replace("login.html");
+      return false;
+    }
   }
 
   /*********************************************************
@@ -445,6 +464,11 @@
     const params = new URLSearchParams(location.search);
     let fallbackTier = (params.get("tier") || params.get("type") || "").toUpperCase();
     let fallbackQty = Number(params.get("qty") || 1);
+
+    // Prefer profile tier/qty when present (no layout change)
+    if(__profileTier) fallbackTier = __profileTier;
+    if(__profileQty) fallbackQty = __profileQty;
+
     if(fallbackTier === "BLACK") fallbackQty = 1;
     if(fallbackTier === "SILVER" && fallbackQty > 50) fallbackQty = 50;
     if(!Number.isFinite(fallbackQty) || fallbackQty < 1) fallbackQty = 1;
@@ -461,6 +485,7 @@
     }
 
     try{
+      // Keep your existing payment_submissions status logic for unlocking Send/Receive.
       const { data, error } = await supabase
         .from("payment_submissions")
         .select("status, card_type, qty, created_at")
@@ -519,7 +544,6 @@
     }
   }
 
-  // Click handlers
   $("sendBtn").addEventListener("click", () => {
     alert("Send is enabled for Active accounts. (Next step: build real Send flow.)");
   });
@@ -527,19 +551,20 @@
     alert("Receive is enabled for Active accounts. (Next step: build real Receive flow.)");
   });
 
-  // ✅ Real logout (signs out session)
   $("logoutLink").addEventListener("click", async (e) => {
     e.preventDefault();
     try{ await supabase.auth.signOut(); } catch {}
     window.location.href = "login.html";
   });
 
-  // ✅ Boot with hard gate first
   (async () => {
-    const ok = await requireSessionAndVerified();
-    if(!ok) return;
+    const session = await requireSessionAndVerified();
+    if(!session) return;
 
-    // Once allowed in, run normal portal logic
+    // ✅ NEW: enforce admin activation (flow C)
+    const activated = await requireAdminActivation(session);
+    if(!activated) return;
+
     $("emailCell").textContent = email || "—";
     await checkStatusAndUpdateUI();
     setInterval(checkStatusAndUpdateUI, 20000);
@@ -547,4 +572,3 @@
 </script>
 </body>
 </html>
-
