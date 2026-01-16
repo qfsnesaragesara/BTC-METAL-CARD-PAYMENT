@@ -199,16 +199,16 @@
 
 <script>
 /* =========================
-   1) PUT YOUR SUPABASE KEYS HERE
+   1) SUPABASE
    ========================= */
 const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* =========================
    Helpers
    ========================= */
+function safeLower(s){ return (s || "").trim().toLowerCase(); }
 function qs(key){ return new URLSearchParams(location.search).get(key); }
 
 function setStatus(msg){
@@ -217,7 +217,26 @@ function setStatus(msg){
   box.textContent = msg;
 }
 
-function safeLower(s){ return (s || "").trim().toLowerCase(); }
+function normTier(v) {
+  const s = safeLower(v);
+  if (s === "gold" || s === "silver" || s === "black") return s;
+  return "";
+}
+
+// Your rule (grouped)
+function routeByTierLikeYouWant(tierValue) {
+  const t = normTier(tierValue);
+  if (t === "gold") return "portal-gold.html";
+  return "portal.html"; // silver + black + fallback
+}
+
+function inferTierFromCardType(typeValue) {
+  const t = safeLower(typeValue);
+  if (t.includes("gold")) return "gold";
+  if (t.includes("black")) return "black";
+  if (t.includes("silver")) return "silver";
+  return "";
+}
 
 /* =========================
    Prefill hidden context from URL (from wallet.html)
@@ -272,7 +291,33 @@ function safeLower(s){ return (s || "").trim().toLowerCase(); }
 })();
 
 /* =========================
-   Submit -> Upload screenshot -> Insert row -> Redirect
+   Require login (so we have auth.uid + stable routing)
+   ========================= */
+let CURRENT_USER = null;
+
+(async function requireLogin(){
+  try{
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user) {
+      // remember where to come back
+      const next = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = "login.html?next=" + next;
+      return;
+    }
+    CURRENT_USER = data.user;
+
+    // Prefill email with account email (safer)
+    const emailEl = document.getElementById("email");
+    if (emailEl && !emailEl.value) emailEl.value = (CURRENT_USER.email || "");
+
+  }catch{
+    const next = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = "login.html?next=" + next;
+  }
+})();
+
+/* =========================
+   Submit -> Upload screenshot -> Insert row -> Sync portal_users -> Redirect
    ========================= */
 document.getElementById("confirmForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -281,15 +326,33 @@ document.getElementById("confirmForm").addEventListener("submit", async (e) => {
   btn.disabled = true;
 
   try {
+    // ensure login check completed
+    if (!CURRENT_USER) {
+      btn.disabled = false;
+      setStatus("Please login first. Redirecting…");
+      const next = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = "login.html?next=" + next;
+      return;
+    }
+
     const txid = document.getElementById("txid").value.trim();
-    const email = document.getElementById("email").value.trim().toLowerCase();
+    const typedEmail = safeLower(document.getElementById("email").value);
     const fileInput = document.getElementById("payShot");
     const file = fileInput.files && fileInput.files[0];
 
-    if(!txid || !email || !file){
+    if(!txid || !typedEmail || !file){
       btn.disabled = false;
       return;
     }
+
+    // Determine tier from URL card type, or localStorage fallback
+    const cardType = document.getElementById("cardTypeField").value || "";
+    const tierFromType = inferTierFromCardType(cardType);
+    const tierFromLocal = normTier(localStorage.getItem("qfs_selected_tier"));
+    const effectiveTier = tierFromType || tierFromLocal || "silver"; // safe default
+
+    // Save locally (keeps pages consistent even before activation)
+    try { localStorage.setItem("qfs_selected_tier", effectiveTier); } catch {}
 
     setStatus("Uploading screenshot…");
 
@@ -308,15 +371,17 @@ document.getElementById("confirmForm").addEventListener("submit", async (e) => {
     setStatus("Submitting confirmation…");
 
     const payload = {
-      card_type: document.getElementById("cardTypeField").value || null,
+      card_type: cardType || null,
       qty: document.getElementById("qtyField").value ? Number(document.getElementById("qtyField").value) : null,
       usd: document.getElementById("usdField").value || null,
       btc: document.getElementById("btcField").value || null,
       wallet_addr: document.getElementById("addrField").value || null,
       order_id: document.getElementById("orderIdField").value || null,
       txid,
-      email,
-      screenshot_path: objectPath
+      email: typedEmail,
+      screenshot_path: objectPath,
+      // if your table has user_id, keep it (harmless if column doesn't exist? actually insert would fail)
+      // so we do NOT include user_id unless you confirm the column exists.
     };
 
     const { error: insErr } = await supabase
@@ -325,22 +390,40 @@ document.getElementById("confirmForm").addEventListener("submit", async (e) => {
 
     if(insErr) throw insErr;
 
+    // ✅ Sync portal_users (tier NOT NULL in your schema)
+    // We keep is_active=false until admin confirms.
+    try{
+      const upsertRow = {
+        id: CURRENT_USER.id,
+        email: (CURRENT_USER.email || typedEmail || null),
+        selected_tier: effectiveTier,
+        tier: effectiveTier,
+        is_active: false,
+        qty: 0
+      };
+
+      const { error: puErr } = await supabase
+        .from("portal_users")
+        .upsert(upsertRow, { onConflict: "id" });
+
+      if (puErr) {
+        console.warn("portal_users upsert warning:", puErr.message);
+      }
+    }catch(err){
+      console.warn("portal_users upsert exception:", err);
+    }
+
     setStatus("Submitted ✅ Your confirmation is now pending admin review… Redirecting…");
 
-    const tier = (payload.card_type || "unknown");
-    const redirectParams = new URLSearchParams({
-      tier,
-      status: "pending"
-    });
-
+    // ✅ Your rule: gold -> portal-gold.html, silver+black -> portal.html
     setTimeout(() => {
-      window.location.href = "order-success.html?" + redirectParams.toString();
+      window.location.href = routeByTierLikeYouWant(effectiveTier);
     }, 900);
 
   } catch (err) {
     console.error(err);
-    const msg = (err && err.message) ? err.message : "Submission failed.";
-    setStatus("Error: " + msg);
+    const m = (err && err.message) ? err.message : "Submission failed.";
+    setStatus("Error: " + m);
     btn.disabled = false;
   }
 });
