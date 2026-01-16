@@ -120,8 +120,8 @@
     <div class="card">
       <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-end;">
         <div>
-          <div style="font-weight:900">Pending Orders</div>
-          <div class="small">Confirming an order triggers automatic activation (tier + qty + unlocks transfers).</div>
+          <div style="font-weight:900">Pending Submissions</div>
+          <div class="small">This dashboard reads from <code>payment_submissions</code> (your registration/submission source).</div>
         </div>
 
         <div style="min-width:260px; max-width:380px; width:100%;">
@@ -140,24 +140,26 @@
               <th>Tier</th>
               <th>Qty</th>
               <th>Created</th>
-              <th>Note</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="rows">
-            <tr><td colspan="6" class="small">Loading…</td></tr>
+            <tr><td colspan="5" class="small">Loading…</td></tr>
           </tbody>
         </table>
       </div>
 
       <div class="msg small" style="margin-top:10px;">
-        If you get “not authorized”, add your admin user id to <code>public.admin_users</code>.
+        If you get “not authorized”, your <code>is_admin()</code> is returning false for this user.
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    // =========================
+    // ✅ YOUR SUPABASE VALUES
+    // =========================
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -174,7 +176,6 @@
       msgEl.textContent = text || "";
       msgEl.className = "msg " + (type || "");
     }
-
     function esc(s){
       return String(s ?? "")
         .replaceAll("&","&amp;")
@@ -182,6 +183,9 @@
         .replaceAll(">","&gt;")
         .replaceAll('"',"&quot;")
         .replaceAll("'","&#039;");
+    }
+    function renderEmpty(text){
+      rowsEl.innerHTML = `<tr><td colspan="5" class="small">${esc(text)}</td></tr>`;
     }
 
     async function requireSession(){
@@ -200,67 +204,57 @@
       return { ok:true };
     }
 
-    function renderEmpty(text){
-      rowsEl.innerHTML = `<tr><td colspan="6" class="small">${esc(text)}</td></tr>`;
-    }
-
     async function loadPending(){
       setMsg("", "");
       renderEmpty("Loading…");
 
-      const q = (searchEmail.value || "").trim().toLowerCase();
+      const q = (searchEmail.value || "").trim();
 
       let query = supabase
-        .from("card_orders")
-        .select("id,user_id,purchaser_email,tier,qty,status,created_at,note")
+        .from("payment_submissions")
+        .select("id,email,card_type,qty,status,created_at")
         .eq("status","pending")
         .order("created_at", { ascending:false })
         .limit(50);
 
       if(q){
-        query = query.ilike("purchaser_email", `%${q}%`);
+        query = query.ilike("email", `%${q}%`);
       }
 
       const { data, error } = await query;
 
       if(error){
-        renderEmpty("Error loading orders.");
+        renderEmpty("Error loading submissions.");
         setMsg(error.message, "err");
         return;
       }
 
       if(!data || data.length === 0){
-        renderEmpty("No pending orders.");
+        renderEmpty("No pending submissions.");
         return;
       }
 
       rowsEl.innerHTML = "";
-      data.forEach(o => {
+      data.forEach(row => {
         const tr = document.createElement("tr");
-        const created = new Date(o.created_at).toLocaleString();
+        const created = row.created_at ? new Date(row.created_at).toLocaleString() : "—";
+        const tier = String(row.card_type || "").toUpperCase() || "—";
+        const qty = Number(row.qty || 1) || 1;
 
         tr.innerHTML = `
-          <td>
-            <div style="font-weight:900">${esc(o.purchaser_email || "—")}</div>
-            <div class="small">User: ${esc(String(o.user_id).slice(0,8))}…</div>
-          </td>
-          <td><span class="pill">${esc(String(o.tier).toUpperCase())}</span></td>
-          <td><span class="pill">${esc(String(o.qty))}</span></td>
+          <td style="font-weight:900">${esc(row.email || "—")}</td>
+          <td><span class="pill">${esc(tier)}</span></td>
+          <td><span class="pill">${esc(String(qty))}</span></td>
           <td class="small">${esc(created)}</td>
-          <td style="min-width:220px">
-            <input data-note="${esc(o.id)}" placeholder="Optional note…" value="${esc(o.note || "")}">
-          </td>
           <td style="min-width:220px">
             <div class="row">
               <button class="gold"
-                data-confirm="${esc(o.id)}"
-                data-user="${esc(o.user_id || "")}"
-                data-email="${esc(o.purchaser_email || "")}"
-                data-tier="${esc(String(o.tier || ""))}"
-                data-qty="${esc(String(o.qty || 1))}"
+                data-confirm="${esc(row.id)}"
+                data-email="${esc(row.email || "")}"
+                data-tier="${esc(tier)}"
+                data-qty="${esc(String(qty))}"
               >Confirm</button>
-
-              <button class="danger" data-reject="${esc(o.id)}">Reject</button>
+              <button class="danger" data-reject="${esc(row.id)}">Reject</button>
             </div>
           </td>
         `;
@@ -270,71 +264,32 @@
       rowsEl.querySelectorAll("button[data-confirm]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-confirm");
-          const userId = btn.getAttribute("data-user") || "";
-          const email = btn.getAttribute("data-email") || "";
-          const tier = btn.getAttribute("data-tier") || "";
+          const email = (btn.getAttribute("data-email") || "").trim();
+          const tier = (btn.getAttribute("data-tier") || "").trim();
           const qty = Number(btn.getAttribute("data-qty") || "1") || 1;
-
-          await updateOrderStatus(id, "confirmed", btn, { userId, email, tier, qty });
+          await updateSubmissionStatus(id, "confirmed", btn, { email, tier, qty });
         });
       });
 
       rowsEl.querySelectorAll("button[data-reject]").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-reject");
-          await updateOrderStatus(id, "rejected", btn);
+          await updateSubmissionStatus(id, "rejected", btn);
         });
       });
     }
 
-    async function activatePortalUser(meta){
-      // ✅ Flow C: admin activation is stored on portal_users
-      try{
-        const userId = (meta?.userId || "").trim();
-        const tier = (meta?.tier || "").trim();
-        let qty = Number(meta?.qty || 1) || 1;
-
-        const tierUpper = String(tier || "").toUpperCase();
-        if(tierUpper === "BLACK") qty = 1;
-        if(tierUpper === "SILVER" && qty > 50) qty = 50;
-        if(!Number.isFinite(qty) || qty < 1) qty = 1;
-
-        if(!userId) return { ok:false, reason:"Missing user_id" };
-
-        // Prefer update if row exists
-        const { error: updErr } = await supabase
-          .from("portal_users")
-          .update({ is_activated: true, tier: tier, card_qty: qty })
-          .eq("user_id", userId);
-
-        if(!updErr) return { ok:true };
-
-        // If update fails (row missing), try insert
-        const { error: insErr } = await supabase
-          .from("portal_users")
-          .insert([{ user_id: userId, tier: tier, card_qty: qty, is_activated: true }]);
-
-        if(insErr) return { ok:false, reason: insErr.message };
-        return { ok:true };
-      } catch(e){
-        return { ok:false, reason:"Activation update failed" };
-      }
-    }
-
-    async function updateOrderStatus(orderId, status, btn, meta){
+    async function updateSubmissionStatus(id, status, btn, meta){
       setMsg("", "");
       btn.disabled = true;
       const oldText = btn.textContent;
       btn.textContent = "Working…";
 
-      const noteInput = rowsEl.querySelector(`input[data-note="${CSS.escape(orderId)}"]`);
-      const note = (noteInput?.value || "").trim() || null;
-
       const { error } = await supabase
-        .from("card_orders")
-        .update({ status, note })
-        .eq("id", orderId)
-        .eq("status","pending");
+        .from("payment_submissions")
+        .update({ status })
+        .eq("id", id)
+        .eq("status", "pending"); // prevent double-confirm
 
       btn.disabled = false;
       btn.textContent = oldText;
@@ -345,15 +300,9 @@
       }
 
       if(status === "confirmed"){
-        setMsg("Confirmed. Activating portal user + sending activation email…", "ok");
+        setMsg("Confirmed. Sending activation email…", "ok");
 
-        // ✅ NEW: activate portal user (admin gate for dashboard access)
-        const act = await activatePortalUser(meta);
-        if(!act.ok){
-          setMsg("Confirmed ✅ (Portal activation failed: " + (act.reason || "unknown") + ")", "ok");
-        }
-
-        // ✅ Send activation email immediately (does not block)
+        // send activation email (best-effort)
         try{
           const email = (meta?.email || "").trim();
           const tier = (meta?.tier || "").trim();
@@ -369,15 +318,14 @@
             } else if(data?.ok === false){
               setMsg("Confirmed ✅ (Activation email error: " + (data?.error || "unknown") + ")", "ok");
             } else {
-              setMsg("Confirmed ✅ Portal activated + activation email sent.", "ok");
+              setMsg("Confirmed ✅ Activation email sent.", "ok");
             }
           } else {
-            setMsg("Confirmed ✅ (No purchaser email found to send activation email).", "ok");
+            setMsg("Confirmed ✅ (No email found).", "ok");
           }
-        } catch(e){
+        } catch {
           setMsg("Confirmed ✅ (Activation email failed).", "ok");
         }
-
       } else {
         setMsg("Rejected.", "ok");
       }
@@ -392,7 +340,7 @@
     });
 
     logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
+      try{ await supabase.auth.signOut(); } catch {}
       window.location.href = "./login.html";
     });
 
