@@ -8,6 +8,9 @@
   <!-- Website logo -->
   <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
 
+  <!-- ✅ Supabase JS (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     :root{
       --bg:#020617;
@@ -258,7 +261,8 @@
           Make Payment
         </a>
 
-        <a class="btn btn-primary" href="login.html">Logout</a>
+        <!-- ✅ Real logout now -->
+        <a class="btn btn-primary" href="login.html" id="logoutBtn">Logout</a>
       </div>
     </div>
 
@@ -382,5 +386,81 @@
 
     </div>
   </div>
+
+  <!-- ======================================================
+       ✅ HARD GATE (GOLD ONLY): login + verified + tier check
+       ====================================================== -->
+  <script>
+    (async () => {
+      const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // Real logout handler
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          try { await supabase.auth.signOut(); } catch {}
+          window.location.href = "login.html";
+        });
+      }
+
+      // Require session
+      const { data, error } = await supabase.auth.getSession();
+      const session = data?.session || null;
+
+      if (error || !session) {
+        window.location.replace("login.html");
+        return;
+      }
+
+      // Require verified email
+      const user = session.user || {};
+      const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
+      if (!verifiedAt) {
+        try { await supabase.auth.signOut(); } catch {}
+        window.location.replace("login.html");
+        return;
+      }
+
+      const email = (user.email || "").trim();
+      if (!email) {
+        try { await supabase.auth.signOut(); } catch {}
+        window.location.replace("login.html");
+        return;
+      }
+
+      // GOLD-only gate based on latest payment_submissions.card_type
+      // If not gold -> send to portal.html
+      try {
+        const { data: rows, error: qErr } = await supabase
+          .from("payment_submissions")
+          .select("card_type, created_at")
+          .ilike("email", email)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (qErr) {
+          // If we can't check, be safe: send to normal portal
+          window.location.replace("portal.html");
+          return;
+        }
+
+        const tier = String(rows?.[0]?.card_type || "").trim().toLowerCase();
+        if (tier !== "gold") {
+          window.location.replace("portal.html");
+          return;
+        }
+
+        // Keep for other pages
+        localStorage.setItem("qfsEmail", email);
+        localStorage.setItem("memberEmail", email);
+      } catch {
+        window.location.replace("portal.html");
+      }
+    })();
+  </script>
 </body>
 </html>
