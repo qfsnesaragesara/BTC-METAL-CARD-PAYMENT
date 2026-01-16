@@ -48,6 +48,7 @@
       backdrop-filter: blur(22px);
       position:relative;
       z-index:1;
+      overflow:visible;
     }
 
     .brand{
@@ -75,31 +76,37 @@
       font-size:14px;
     }
 
-    /* Password + eye icon wrapper */
+    /* ✅ Password field with clickable eye icon */
     .pw-wrap{
       position:relative;
+      z-index:20; /* keep above */
     }
     .pw-wrap input{
-      padding-right:44px;
+      padding-right:52px; /* room for icon */
     }
     .pw-toggle{
       position:absolute;
       right:10px;
       top:50%;
       transform:translateY(-50%);
-      width:34px;
-      height:34px;
+      width:36px;
+      height:36px;
       border-radius:999px;
-      border:1px solid rgba(148,163,184,0.45);
+      border:1px solid rgba(148,163,184,0.50);
       background:rgba(2,6,23,0.35);
       display:flex;
       align-items:center;
       justify-content:center;
       cursor:pointer;
-      z-index:20;
+      z-index:999;          /* ✅ ensure it stays clickable */
+      pointer-events:auto;  /* ✅ ensure clicks work */
+      padding:0;
     }
     .pw-toggle:hover{
       background:rgba(2,6,23,0.55);
+    }
+    .pw-toggle:active{
+      transform:translateY(-50%) scale(0.98);
     }
     .pw-toggle svg{
       width:18px;height:18px;
@@ -108,6 +115,13 @@
       stroke-width:2;
       stroke-linecap:round;
       stroke-linejoin:round;
+      pointer-events:none;
+    }
+    .pw-toggle .slash{
+      display:none;
+    }
+    .pw-toggle.is-showing .slash{
+      display:block;
     }
 
     .row{
@@ -117,7 +131,6 @@
       position:relative;
       z-index:10;
     }
-
     button{
       flex:1;
       padding:12px 14px;
@@ -173,11 +186,12 @@
   <!-- ✅ ONE Supabase library (ONLY) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- ✅ Your single auth controller -->
+  <!-- ✅ One controller file (creates ONE Supabase client) -->
   <script src="/login.js" defer></script>
 </head>
 
 <body>
+
   <div class="card">
     <div class="brand">
       <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="Logo">
@@ -193,11 +207,13 @@
     <label for="password">Password</label>
     <div class="pw-wrap">
       <input id="password" type="password" placeholder="Your password" autocomplete="current-password">
-      <button id="pwToggle" class="pw-toggle" type="button" aria-label="Toggle password visibility" title="Show/Hide password">
-        <!-- eye icon -->
-        <svg id="eyeIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <button id="pwToggle" class="pw-toggle" type="button" aria-label="Show or hide password" title="Show/Hide password">
+        <!-- Eye -->
+        <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
           <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path>
+          <!-- Slash (only when showing) -->
+          <path class="slash" d="M4 20L20 4"></path>
         </svg>
       </button>
     </div>
@@ -212,12 +228,30 @@
     </div>
 
     <div class="row" style="margin-top:10px;">
-      <button id="resendBtn" type="button" class="btn-secondary">Resend Verification Email</button>
+      <button id="resendBtn" type="button" class="btn-secondary">
+        Resend Verification Email
+      </button>
     </div>
 
     <div id="msg" class="msg"></div>
   </div>
 
   <div class="debug-badge" id="dbg">dbg: loading…</div>
+
+  <!-- ✅ Tiny isolated toggle (no Supabase, no conflicts) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const passEl = document.getElementById("password");
+      const toggle = document.getElementById("pwToggle");
+      if (!passEl || !toggle) return;
+
+      toggle.addEventListener("click", () => {
+        const isHidden = passEl.type === "password";
+        passEl.type = isHidden ? "text" : "password";
+        toggle.classList.toggle("is-showing", isHidden);
+      });
+    });
+  </script>
+
 </body>
 </html>
