@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pending Activation — QFS</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png"
+    href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg:#020617;
+      --border:rgba(148,163,184,0.45);
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --accent:#38bdf8;
+      --accent2:#a855f7;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,0.32), transparent 55%),
+        radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
+        var(--bg);
+      color:var(--text);
+    }
+    .card{
+      width:100%;
+      max-width:520px;
+      padding:26px;
+      border-radius:26px;
+      background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.82));
+      border:1px solid var(--border);
+      box-shadow:0 28px 90px rgba(0,0,0,0.55);
+      backdrop-filter: blur(22px);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .brand img{
+      width:44px;height:44px;border-radius:12px;
+      border:1px solid rgba(255,255,255,0.18);
+    }
+    h1{margin:0;font-size:20px;font-weight:850;letter-spacing:0.02em}
+    p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.6}
+    .row{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;}
+    button,a{
+      flex:1;
+      padding:12px 14px;
+      border-radius:999px;
+      border:none;
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+      font-size:12px;
+      text-decoration:none;
+      text-align:center;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
+    .btn-secondary{background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.5);color:var(--text)}
+    .msg{
+      margin-top:14px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,0.35);
+      background:rgba(2,6,23,0.4);
+      color:var(--text);
+      font-size:13px;
+      line-height:1.4;
+      white-space:pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <div class="brand">
+      <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="Logo">
+      <div>
+        <h1>Pending Activation</h1>
+        <p>Your email is verified. Your account is waiting for admin activation.</p>
+      </div>
+    </div>
+
+    <div class="msg" id="statusMsg">Checking status…</div>
+
+    <div class="row">
+      <button class="btn-primary" id="refreshBtn" type="button">Refresh Status</button>
+      <a class="btn-secondary" href="login.html" id="backBtn">Back to Login</a>
+    </div>
+
+    <div class="row">
+      <button class="btn-secondary" id="logoutBtn" type="button">Logout</button>
+    </div>
+  </div>
+
+<script>
+  const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const statusMsg = document.getElementById("statusMsg");
+  const refreshBtn = document.getElementById("refreshBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  async function check(){
+    statusMsg.textContent = "Checking status…";
+
+    const { data, error } = await supabase.auth.getSession();
+    const session = data?.session || null;
+
+    if(error || !session){
+      window.location.replace("login.html");
+      return;
+    }
+
+    const user = session.user || {};
+    const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
+
+    if(!verifiedAt){
+      statusMsg.textContent = "⚠️ Your email is not verified yet. Please verify your email, then login again.";
+      return;
+    }
+
+    const { data: profile, error: profErr } = await supabase
+      .from("portal_users")
+      .select("is_activated")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if(profErr || !profile){
+      statusMsg.textContent = "⚠️ Profile not found. Please contact support.";
+      return;
+    }
+
+    if(profile.is_activated){
+      statusMsg.textContent = "✅ Activated! Redirecting to portal…";
+      setTimeout(() => window.location.replace("portal.html"), 800);
+      return;
+    }
+
+    statusMsg.textContent = "⏳ Still pending admin activation. Please check back shortly.";
+  }
+
+  refreshBtn.addEventListener("click", () => check().catch(()=>{}));
+  logoutBtn.addEventListener("click", async () => {
+    try{ await supabase.auth.signOut(); } catch {}
+    window.location.replace("login.html");
+  });
+
+  check().catch(()=>{});
+</script>
+
+</body>
+</html>
