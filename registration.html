@@ -75,4 +75,337 @@
         </div>
 
         <div>
-          <label class
+          <label class="font-semibold">Last Name</label>
+          <input type="text" name="last_name" required class="w-full mt-1 p-3 border rounded-lg">
+        </div>
+      </div>
+
+      <!-- DOB, PHONE, GENDER -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="font-semibold">Date of Birth</label>
+          <input type="date" name="dob" required class="w-full mt-1 p-3 border rounded-lg">
+        </div>
+
+        <div>
+          <label class="font-semibold">Phone Number</label>
+          <input type="tel" name="phone" required class="w-full mt-1 p-3 border rounded-lg">
+        </div>
+
+        <div>
+          <label class="font-semibold">Gender</label>
+          <select name="gender" required class="w-full mt-1 p-3 border rounded-lg">
+            <option value="">Select…</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Non-Binary</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- EMAIL + A NUMBER -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="font-semibold">Email Address</label>
+          <input id="email" type="email" name="email" required class="w-full mt-1 p-3 border rounded-lg">
+        </div>
+
+        <div>
+          <label class="font-semibold">A Number (Optional)</label>
+          <input type="text" name="a_number" class="w-full mt-1 p-3 border rounded-lg">
+        </div>
+      </div>
+
+      <!-- ✅ CREATE LOGIN (PASSWORD) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="font-semibold">Create Password</label>
+          <div class="relative">
+            <input id="password" type="password" required minlength="6"
+                   class="w-full mt-1 p-3 border rounded-lg pr-12"
+                   placeholder="Minimum 6 characters">
+            <button type="button" id="togglePass"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800"
+                    aria-label="Show/Hide password">
+              <!-- eye icon -->
+              <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                <path d="M12 5c-7.633 0-11 7-11 7s3.367 7 11 7 11-7 11-7-3.367-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
+              </svg>
+              <svg id="eyeOff" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 hidden">
+                <path d="M2.3 3.7a1 1 0 0 1 1.4-1.4l18.6 18.6a1 1 0 0 1-1.4 1.4l-3.2-3.2A12.6 12.6 0 0 1 12 19c-7.6 0-11-7-11-7a19.4 19.4 0 0 1 4.4-5.7L2.3 3.7zM7 7.6A17.2 17.2 0 0 0 3.2 12S6.4 18 12 18a10.6 10.6 0 0 0 4.2-.8l-2.1-2.1a5 5 0 0 1-6.1-6.1L7 7.6zM9.7 10.3a3 3 0 0 0 4 4l-4-4zM12 6c7.6 0 11 6 11 6a18.8 18.8 0 0 1-3.4 4.8l-2-2A10.8 10.8 0 0 0 20.8 12S17.6 6 12 6c-.7 0-1.4.1-2 .2L8.2 4.4A12.8 12.8 0 0 1 12 6z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-semibold">Confirm Password</label>
+          <input id="password2" type="password" required minlength="6"
+                 class="w-full mt-1 p-3 border rounded-lg"
+                 placeholder="Re-type password">
+        </div>
+      </div>
+
+      <!-- REGISTERING FOR -->
+      <div>
+        <label class="font-semibold">What are you registering for?</label>
+        <select id="registeringFor" name="registering_for" required class="w-full mt-1 p-3 border rounded-lg">
+          <option value="">Select one…</option>
+          <option value="Trump Gold Card Program">Trump Gold Card Program ( Unlock life in America )</option>
+          <option value="Physical Bitcoin Metal Card (Silver $25,000)">Physical Bitcoin Metal Card Silver ( Preloaded with $25,000 worth of Bitcoin)</option>
+          <option value="Physical Bitcoin Metal Card (Black 25,000 BTC)">Physical Bitcoin Metal Card Black ( Preloaded with 25,000 Bitcoin )</option>
+          <option value="MedBeds Application Fees $2000 - $5000">MedBeds Aplication Fees Applicable</option>
+        </select>
+      </div>
+
+      <!-- PAYMENT OPTION -->
+      <div>
+        <label class="font-semibold">Payment Option</label>
+        <select name="payment_option" required class="w-full mt-1 p-3 border rounded-lg">
+          <option value="">Select payment option…</option>
+          <option>Full Payment</option>
+          <option>Bridge Payment</option>
+        </select>
+      </div>
+
+      <!-- BIRTH DETAILS -->
+      <h3 class="text-lg font-bold mt-4">Birth Information</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="font-semibold">Place of Birth</label>
+          <input type="text" name="place_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
+        </div>
+
+        <div>
+          <label class="font-semibold">City of Birth</label>
+          <input type="text" name="city_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
+        </div>
+
+        <div>
+          <label class="font-semibold">State/Province of Birth</label>
+          <input type="text" name="state_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
+        </div>
+      </div>
+
+      <div>
+        <label class="font-semibold">Country of Birth</label>
+        <input type="text" name="country_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
+      </div>
+
+      <div>
+        <label class="font-semibold">Country of Citizenship</label>
+        <input type="text" name="citizenship_country" required class="w-full mt-1 p-3 border rounded-lg">
+      </div>
+
+      <!-- ADDRESS -->
+      <h3 class="text-lg font-bold mt-4">Physical Address</h3>
+
+      <div>
+        <label class="font-semibold">Street Address</label>
+        <input type="text" name="street_address" required class="w-full mt-1 p-3 border rounded-lg">
+      </div>
+
+      <div>
+        <label class="font-semibold">Apartment / Suite</label>
+        <input type="text" name="apartment" class="w-full mt-1 p-3 border rounded-lg">
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="font-semibold">City</label>
+          <input type="text" name="city" required class="w-full mt-1 p-3 border rounded-lg">
+        </div>
+
+        <div>
+          <label class="font-semibold">State / Province</label>
+          <input type="text" name="state" required class="w-full mt-1 p-3 border rounded-lg">
+        </div>
+
+        <div>
+          <label class="font-semibold">ZIP / Postal Code</label>
+          <input type="text" name="zip" required class="w-full mt-1 p-3 border rounded-lg">
+        </div>
+      </div>
+
+      <div>
+        <label class="font-semibold">Country</label>
+        <input type="text" name="country" required class="w-full mt-1 p-3 border rounded-lg">
+      </div>
+
+      <!-- FAMILY -->
+      <div>
+        <label class="font-semibold">
+          Number of Family Members (Spouse or Children under 21)
+        </label>
+        <input type="number" name="family_members" min="0" required
+               class="w-full mt-1 p-3 border rounded-lg">
+      </div>
+
+      <!-- SUBMIT -->
+      <button id="submitBtn" type="submit"
+              class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition">
+        Submit Registration
+      </button>
+
+    </form>
+  </div>
+
+  <script>
+    /*********************************************************
+     * ✅ ONE Supabase client
+     *********************************************************/
+    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const form = document.getElementById("regForm");
+    const msg = document.getElementById("msg");
+    const submitBtn = document.getElementById("submitBtn");
+
+    const emailEl = document.getElementById("email");
+    const pass1 = document.getElementById("password");
+    const pass2 = document.getElementById("password2");
+    const registeringFor = document.getElementById("registeringFor");
+
+    const togglePass = document.getElementById("togglePass");
+    const eyeOpen = document.getElementById("eyeOpen");
+    const eyeOff = document.getElementById("eyeOff");
+
+    function showMsg(text, type){
+      msg.classList.remove("hidden");
+      msg.className = "mb-6 rounded-xl border p-3 text-sm";
+      if(type === "ok"){
+        msg.classList.add("border-emerald-200","bg-emerald-50","text-emerald-800");
+      } else if(type === "warn"){
+        msg.classList.add("border-amber-200","bg-amber-50","text-amber-900");
+      } else {
+        msg.classList.add("border-rose-200","bg-rose-50","text-rose-800");
+      }
+      msg.textContent = text;
+    }
+
+    function setBusy(b){
+      submitBtn.disabled = b;
+      submitBtn.classList.toggle("opacity-60", b);
+      submitBtn.classList.toggle("cursor-not-allowed", b);
+    }
+
+    function mapRegisteringToTier(value){
+      const v = (value || "").toLowerCase();
+      if(v.includes("trump gold")) return { tier: "GOLD", redirect: "portal-gold.html" };
+      if(v.includes("metal card") && v.includes("silver")) return { tier: "SILVER", redirect: "portal.html" };
+      if(v.includes("metal card") && v.includes("black")) return { tier: "BLACK", redirect: "portal.html" };
+      // everything else -> normal portal
+      return { tier: "STANDARD", redirect: "portal.html" };
+    }
+
+    // ✅ Password visibility toggle (works)
+    togglePass.addEventListener("click", () => {
+      const isHidden = pass1.type === "password";
+      pass1.type = isHidden ? "text" : "password";
+      eyeOpen.classList.toggle("hidden", !isHidden);
+      eyeOff.classList.toggle("hidden", isHidden);
+    });
+
+    /*********************************************************
+     * ✅ ONE submit handler:
+     * 1) Create Supabase account with user metadata (tier + redirect)
+     * 2) Insert payment_submissions starter row (pending)
+     * 3) Submit to formsubmit (so you still get the email)
+     * 4) Redirect to your success-registration page
+     *********************************************************/
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = (emailEl.value || "").trim().toLowerCase();
+      const p1 = pass1.value || "";
+      const p2 = pass2.value || "";
+      const regFor = registeringFor.value || "";
+
+      if(!email) return showMsg("Please enter a valid email.", "error");
+      if(p1.length < 6) return showMsg("Password must be at least 6 characters.", "error");
+      if(p1 !== p2) return showMsg("Passwords do not match.", "error");
+      if(!regFor) return showMsg("Please choose what you are registering for.", "error");
+
+      const mapped = mapRegisteringToTier(regFor);
+
+      setBusy(true);
+      showMsg("Creating your login and submitting registration…", "warn");
+
+      // 1) Create Supabase account (+ store tier + where to route after login)
+      let signUpOk = false;
+      try{
+        const { error } = await supabase.auth.signUp({
+          email,
+          password: p1,
+          options: {
+            // after email verification, send them to your login
+            emailRedirectTo: location.origin + "/login.html",
+            data: {
+              registering_for: regFor,
+              tier: mapped.tier,
+              portal_redirect: mapped.redirect
+            }
+          }
+        });
+
+        if(error){
+          // If already registered, we still submit registration and tell them to login
+          if(String(error.message || "").toLowerCase().includes("already registered")){
+            showMsg("Account already exists for this email. Registration will still submit — please login from the login page.", "warn");
+            signUpOk = true;
+          } else {
+            showMsg("Signup failed: " + error.message, "error");
+            setBusy(false);
+            return;
+          }
+        } else {
+          signUpOk = true;
+        }
+      } catch(err){
+        showMsg("Signup failed. Please try again.", "error");
+        setBusy(false);
+        return;
+      }
+
+      // 2) Insert a starter row into payment_submissions (non-blocking)
+      //    This helps admin/portal immediately identify the user and tier choice.
+      try{
+        const qty = 1;
+        const tier = mapped.tier;
+
+        // Only create submissions for tiers you care about (gold/silver/black/standard)
+        await supabase.from("payment_submissions").insert([{
+          email,
+          card_type: tier,   // portal/admin already expects card_type
+          qty,
+          status: "pending",
+          note: "Registration: " + regFor
+        }]);
+      } catch {
+        // ignore (RLS or duplicate); registration can still proceed
+      }
+
+      // 3) Submit to formsubmit (so you still receive the registration email)
+      //    We mimic a normal form post via fetch.
+      try{
+        const fd = new FormData(form);
+        await fetch(form.action, { method: "POST", body: fd, mode: "no-cors" });
+      } catch {
+        // ignore; we'll still redirect
+      }
+
+      // 4) Redirect to your existing success page
+      //    (keep your original flow)
+      const nextUrl = (form.querySelector('input[name="_next"]')?.value) || "success-registration.html";
+      showMsg("Submitted ✅ Check your email for verification, then login.", "ok");
+      setTimeout(() => {
+        window.location.href = nextUrl;
+      }, 800);
+    });
+  </script>
+
+</body>
+</html>
