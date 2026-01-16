@@ -255,6 +255,15 @@
     msg.classList.remove("hidden");
   }
 
+  function inferTierFromRegisteringFor(registeringForText) {
+    const v = (registeringForText || "").toLowerCase();
+    if (v.includes("gold")) return "gold";
+    if (v.includes("black")) return "black";
+    if (v.includes("silver")) return "silver";
+    // default for non-card registrations
+    return "silver";
+  }
+
   let busy = false;
 
   form.addEventListener("submit", async (e) => {
@@ -282,19 +291,23 @@
       return show("Please complete required fields.", false);
     }
 
-    // Save choice locally too (helps prefill + routing)
-    try { localStorage.setItem("qfs_registering_for", registering_for); } catch {}
+    const selectedTier = inferTierFromRegisteringFor(registering_for);
+
+    // Save choice locally (helps routing even if portal_users row is created later)
+    try {
+      localStorage.setItem("qfs_registering_for", registering_for);
+      localStorage.setItem("qfs_selected_tier", selectedTier);
+    } catch {}
 
     btn.disabled = true;
     show("Creating your portal account…");
 
     // Create Supabase auth user (and store what they registered for)
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password: pwA,
       options: {
-        data: { registering_for },
-        // keep consistent with your site
+        data: { registering_for, selected_tier: selectedTier },
         emailRedirectTo: "https://qfsnesaragesara.org/login.html"
       }
     });
@@ -304,6 +317,33 @@
       btn.disabled = false;
       busy = false;
       return show("Signup failed: " + error.message, false);
+    }
+
+    // Best-effort: create/update portal_users now (your portal_users.tier is NOT NULL)
+    // If data.user is null (some setups), we still let FormSubmit proceed; login will handle routing.
+    try {
+      const newUserId = data?.user?.id;
+      if (newUserId) {
+        const payload = {
+          id: newUserId,                 // portal_users.id = auth.users.id
+          email: email,
+          selected_tier: selectedTier,
+          tier: selectedTier,            // keep tier non-null before activation
+          is_active: false,
+          qty: 0
+        };
+
+        const { error: upsertErr } = await supabase
+          .from("portal_users")
+          .upsert(payload, { onConflict: "id" });
+
+        if (upsertErr) {
+          // don't block the form submit; just show a hint
+          console.warn("portal_users upsert warning:", upsertErr.message);
+        }
+      }
+    } catch (err) {
+      console.warn("portal_users upsert exception:", err);
     }
 
     // Let FormSubmit continue normally (sends your email + redirects)
