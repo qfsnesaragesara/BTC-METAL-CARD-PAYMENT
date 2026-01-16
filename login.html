@@ -177,9 +177,6 @@
 
   <!-- ✅ ONE Supabase library (ONLY) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- ✅ Your auth controller -->
-  <script src="/login.js" defer></script>
 </head>
 
 <body>
@@ -241,6 +238,199 @@
         if (dbg) dbg.textContent = "dbg: PW toggle ✅ " + new Date().toLocaleTimeString();
       });
     });
+  </script>
+
+  <!-- ✅ Auth + Routing logic -->
+  <script>
+    // ============
+    // IMPORTANT: paste your real values here
+    // ============
+    const SUPABASE_URL = "PASTE_SUPABASE_URL_HERE";
+    const SUPABASE_ANON_KEY = "PASTE_SUPABASE_ANON_KEY_HERE";
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const elEmail = document.getElementById("email");
+    const elPass = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const signupBtn = document.getElementById("signupBtn");
+    const forgotBtn = document.getElementById("forgotBtn");
+    const resendBtn = document.getElementById("resendBtn");
+    const msg = document.getElementById("msg");
+    const dbg = document.getElementById("dbg");
+
+    function setDbg(text) {
+      if (!dbg) return;
+      dbg.textContent = "dbg: " + text;
+    }
+
+    function showMsg(text, kind) {
+      if (!msg) return;
+      msg.textContent = text || "";
+      msg.classList.remove("error", "ok", "show");
+      msg.classList.add("show");
+      if (kind === "error") msg.classList.add("error");
+      if (kind === "ok") msg.classList.add("ok");
+    }
+
+    function normTier(v) {
+      const s = (v || "").toString().trim().toLowerCase();
+      if (s === "gold" || s === "silver" || s === "black") return s;
+      return "";
+    }
+
+    function setLoading(isLoading, label) {
+      const buttons = [loginBtn, signupBtn, forgotBtn, resendBtn].filter(Boolean);
+      buttons.forEach((b) => (b.disabled = !!isLoading));
+      if (loginBtn) loginBtn.textContent = isLoading ? (label || "Working...") : "Login";
+    }
+
+    // ✅ Your rule:
+    // - Gold → portal-gold.html
+    // - Silver + Black → portal.html
+    function routeByTierLikeYouWant(tierValue) {
+      const t = normTier(tierValue);
+      if (t === "gold") return "portal-gold.html";
+      return "portal.html"; // silver + black + fallback
+    }
+
+    async function routeAfterLogin(user) {
+      // 🔥 portal_users links by id = auth.users.id
+      const { data: pu, error } = await supabase
+        .from("portal_users")
+        .select("tier, selected_tier, is_active")
+        .eq("id", user.id)
+        .single();
+
+      if (error || !pu) {
+        setDbg("no portal_users row → registration.html");
+        window.location.href = "registration.html";
+        return;
+      }
+
+      const tier = normTier(pu.tier);
+      const selectedTier = normTier(pu.selected_tier);
+      const isActive = pu.is_active === true;
+
+      setDbg("route: active=" + isActive + " tier=" + tier + " sel=" + selectedTier);
+
+      // ✅ Activated: route by ACTIVATED tier
+      if (isActive) {
+        window.location.href = routeByTierLikeYouWant(tier);
+        return;
+      }
+
+      // ⛔ Not active yet: route by SELECTED tier (registration choice)
+      window.location.href = routeByTierLikeYouWant(selectedTier || tier);
+    }
+
+    async function doLogin() {
+      const email = (elEmail?.value || "").trim();
+      const password = elPass?.value || "";
+
+      if (!email || !password) {
+        showMsg("Please enter your email and password.", "error");
+        return;
+      }
+
+      setLoading(true, "Logging in...");
+      showMsg("", "");
+      setDbg("signInWithPassword…");
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        setLoading(false);
+        showMsg(error.message || "Login failed.", "error");
+        setDbg("login error");
+        return;
+      }
+
+      setDbg("login ok → routing");
+      showMsg("Login successful. Redirecting…", "ok");
+      await routeAfterLogin(data.user);
+    }
+
+    function goToSignup() {
+      window.location.href = "registration.html";
+    }
+
+    async function doForgot() {
+      const email = (elEmail?.value || "").trim();
+      if (!email) {
+        showMsg("Enter your email first, then click Forgot Password.", "error");
+        return;
+      }
+      setLoading(true, "Sending…");
+      showMsg("", "");
+      setDbg("resetPasswordForEmail…");
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/reset-password.html"
+      });
+
+      setLoading(false);
+      if (error) {
+        showMsg(error.message || "Failed to send reset email.", "error");
+        setDbg("reset error");
+        return;
+      }
+      showMsg("Password reset email sent. Check your inbox.", "ok");
+      setDbg("reset sent");
+    }
+
+    async function doResendVerification() {
+      const email = (elEmail?.value || "").trim();
+      if (!email) {
+        showMsg("Enter your email first, then click Resend Verification Email.", "error");
+        return;
+      }
+
+      setLoading(true, "Sending…");
+      showMsg("", "");
+      setDbg("resend signup…");
+
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email
+      });
+
+      setLoading(false);
+      if (error) {
+        showMsg(error.message || "Failed to resend verification email.", "error");
+        setDbg("resend error");
+        return;
+      }
+
+      showMsg("Verification email resent. Check your inbox (and spam).", "ok");
+      setDbg("resend sent");
+    }
+
+    // Wire buttons
+    loginBtn?.addEventListener("click", doLogin);
+    signupBtn?.addEventListener("click", goToSignup);
+    forgotBtn?.addEventListener("click", doForgot);
+    resendBtn?.addEventListener("click", doResendVerification);
+
+    // Enter key to login
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doLogin();
+    });
+
+    // Optional: if already logged in, route immediately
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (data?.user) {
+          setDbg("already logged in → routing");
+          await routeAfterLogin(data.user);
+        } else {
+          setDbg("ready");
+        }
+      } catch {
+        setDbg("ready");
+      }
+    })();
   </script>
 
 </body>
