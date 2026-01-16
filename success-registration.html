@@ -1,316 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registration Form — QFS NESARA GESARA</title>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
+<title>Success | QFS Portal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png"
-        href="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/photo%201.jpg">
-
-  <style>
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background:
-        radial-gradient(circle at top, rgba(56,189,248,0.35), transparent 55%),
-        radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
-        #020617;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 16px;
+<style>
+    :root {
+        --bg:#020617;
+        --glass:rgba(255,255,255,0.06);
+        --glass-border:rgba(255,255,255,0.18);
+        --text:#e2e8f0;
+        --muted:#94a3b8;
+        --accent:#38bdf8;
+        --accent2:#a855f7;
+        --success:#22c55e;
     }
-  </style>
 
-  <!-- ✅ ONE Supabase library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    body {
+        margin:0;
+        padding:0;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui;
+        background:
+            radial-gradient(circle at top, rgba(56,189,248,0.35), transparent 55%),
+            radial-gradient(circle at bottom, rgba(147,51,234,0.35), transparent 60%),
+            var(--bg);
+        color:var(--text);
+        height:100vh;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        overflow:hidden;
+    }
+
+    .panel {
+        width: 90%;
+        max-width: 480px;
+        padding: 40px 32px 44px;
+        background: var(--glass);
+        border-radius: 28px;
+        border: 1px solid var(--glass-border);
+        box-shadow:
+            0 0 0 1px rgba(255,255,255,0.10),
+            0 28px 95px rgba(0,0,0,0.65),
+            inset 0 0 40px rgba(255,255,255,0.05);
+        backdrop-filter: blur(28px);
+        text-align:center;
+        opacity:0;
+        transform: translateY(20px);
+        animation: fadeUp 1.1s ease forwards;
+    }
+
+    @keyframes fadeUp {
+        to {
+            opacity:1;
+            transform: translateY(0);
+        }
+    }
+
+    .checkmark {
+        width:110px;
+        height:110px;
+        border-radius:50%;
+        margin:0 auto 20px auto;
+        position:relative;
+        background: radial-gradient(circle at center, rgba(34,197,94,0.30), rgba(15,23,42,0.95));
+        border:1px solid rgba(34,197,94,0.45);
+        box-shadow:
+            0 0 25px rgba(34,197,94,0.45),
+            0 14px 40px rgba(15,23,42,0.6),
+            inset 0 0 30px rgba(34,197,94,0.35);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        animation: popIn 0.6s ease-out 0.3s forwards;
+        opacity:0;
+        transform: scale(0.6);
+    }
+
+    @keyframes popIn {
+        0% { opacity:0; transform:scale(0.6); }
+        80% { opacity:1; transform:scale(1.05); }
+        100% { opacity:1; transform:scale(1); }
+    }
+
+    .checkmark::after {
+        content:"";
+        position:absolute;
+        width:28px;
+        height:55px;
+        border-right:6px solid var(--success);
+        border-bottom:6px solid var(--success);
+        transform:rotate(45deg);
+        opacity:0;
+        animation:draw 0.45s ease-out 0.6s forwards;
+    }
+
+    @keyframes draw {
+        0% { opacity:1; height:0; width:0; }
+        100% { opacity:1; height:55px; width:28px; }
+    }
+
+    h1 {
+        font-size:30px;
+        font-weight:800;
+        margin-top:10px;
+        margin-bottom:8px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    p {
+        color:var(--muted);
+        font-size:15px;
+        margin:8px 0;
+        line-height:1.6;
+    }
+
+    .btn {
+        display:block;
+        width:100%;
+        max-width:260px;
+        margin:14px auto 0;
+        padding:14px;
+        font-size:17px;
+        font-weight:700;
+        border-radius:14px;
+        background:linear-gradient(135deg, var(--accent), var(--accent2));
+        color:#fff;
+        text-decoration:none;
+        transition:0.25s ease;
+        box-shadow:
+            0 16px 40px rgba(56,189,248,0.35),
+            0 0 0 1px rgba(255,255,255,0.12);
+    }
+
+    .btn.secondary{
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.18);
+        box-shadow:none;
+    }
+
+    .btn:hover {
+        transform:translateY(-2px);
+        box-shadow:
+            0 22px 55px rgba(56,189,248,0.55),
+            0 0 0 1px rgba(255,255,255,0.18);
+    }
+
+    #loader {
+        position:fixed;
+        top:0;
+        left:0;
+        width:100%;
+        height:100%;
+        background:var(--bg);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:9999;
+        transition:opacity 0.8s ease;
+    }
+
+    .spinner {
+        width:72px;
+        height:72px;
+        border:7px solid rgba(148,163,184,0.25);
+        border-top-color:var(--accent);
+        border-radius:50%;
+        animation:spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform:rotate(360deg); }
+    }
+</style>
 </head>
-
 <body>
 
-  <!-- WHITE FORM CARD -->
-  <div class="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-2xl">
+<div id="loader">
+    <div class="spinner"></div>
+</div>
 
-    <h2 class="text-2xl font-bold text-center mb-2">
-      QFS Registration Form
-    </h2>
-    <p class="text-center text-slate-600 mb-6 text-sm">
-      Create your portal login password below. After submitting, you can sign in on the Login page.
+<div class="panel">
+    <div class="checkmark"></div>
+
+    <h1>Registration Successful</h1>
+    <p>Your registration has been submitted successfully.</p>
+
+    <p style="margin-top:14px;">
+        <strong>Next Step</strong>
+    </p>
+    <p>
+        Please check your email inbox for confirmation and next-step instructions.
+        If you don’t see it, check Spam/Promotions.
     </p>
 
-    <form id="regForm"
-          action="https://formsubmit.co/support@qfsnesaragesara.org"
-          method="POST"
-          class="space-y-6">
-
-      <!-- Redirect After Successful Submission -->
-      <input type="hidden"
-             name="_next"
-             value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-registration.html">
-
-      <input type="hidden" name="_captcha" value="false">
-      <input type="hidden" name="_template" value="table">
-      <input type="text" name="_honey" class="hidden" style="display:none">
-
-      <!-- NAME SECTION -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="font-semibold">First Name</label>
-          <input type="text" name="first_name" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-
-        <div>
-          <label class="font-semibold">Middle Name</label>
-          <input type="text" name="middle_name" class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-
-        <div>
-          <label class="font-semibold">Last Name</label>
-          <input type="text" name="last_name" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-      </div>
-
-      <!-- DOB, PHONE, GENDER -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="font-semibold">Date of Birth</label>
-          <input type="date" name="dob" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-
-        <div>
-          <label class="font-semibold">Phone Number</label>
-          <input type="tel" name="phone" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-
-        <div>
-          <label class="font-semibold">Gender</label>
-          <select name="gender" required class="w-full mt-1 p-3 border rounded-lg">
-            <option value="">Select…</option>
-            <option>Male</option>
-            <option>Female</option>
-            <option>Non-Binary</option>
-            <option>Other</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- EMAIL + A NUMBER -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="font-semibold">Email Address</label>
-          <input id="regEmail" type="email" name="email" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-
-        <div>
-          <label class="font-semibold">A Number (Optional)</label>
-          <input type="text" name="a_number" class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-      </div>
-
-      <!-- ✅ PASSWORD (for Supabase login) -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="font-semibold">Create Password</label>
-          <input id="regPass1" type="password" required class="w-full mt-1 p-3 border rounded-lg"
-                 placeholder="Minimum 8 characters" autocomplete="new-password">
-        </div>
-        <div>
-          <label class="font-semibold">Confirm Password</label>
-          <input id="regPass2" type="password" required class="w-full mt-1 p-3 border rounded-lg"
-                 placeholder="Repeat password" autocomplete="new-password">
-        </div>
-      </div>
-
-      <!-- REGISTERING FOR -->
-      <div>
-        <label class="font-semibold">What are you registering for?</label>
-        <select id="regFor" name="registering_for" required class="w-full mt-1 p-3 border rounded-lg">
-          <option value="">Select one…</option>
-          <option value="Trump Gold Card Program">Trump Gold Card Program ( Unlock life in America )</option>
-          <option value="Physical Bitcoin Metal Card (Silver $25,000)">Physical Bitcoin Metal Card Silver ( Preloaded with $25,000 worth of Bitcoin)</option>
-          <option value="Physical Bitcoin Metal Card (Black 25,000 BTC)">Physical Bitcoin Metal Card Black ( Preloaded with 25,000 Bitcoin )</option>
-          <option value="MedBeds Application Fees $2000 - $5000">MedBeds Aplication Fees Applicable</option>
-        </select>
-      </div>
-
-      <!-- PAYMENT OPTION -->
-      <div>
-        <label class="font-semibold">Payment Option</label>
-        <select name="payment_option" required class="w-full mt-1 p-3 border rounded-lg">
-          <option value="">Select payment option…</option>
-          <option>Full Payment</option>
-          <option>Bridge Payment</option>
-        </select>
-      </div>
-
-      <!-- BIRTH DETAILS -->
-      <h3 class="text-lg font-bold mt-4">Birth Information</h3>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="font-semibold">Place of Birth</label>
-          <input type="text" name="place_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-
-        <div>
-          <label class="font-semibold">City of Birth</label>
-          <input type="text" name="city_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-
-        <div>
-          <label class="font-semibold">State/Province of Birth</label>
-          <input type="text" name="state_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-      </div>
-
-      <div>
-        <label class="font-semibold">Country of Birth</label>
-        <input type="text" name="country_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
-      </div>
-
-      <div>
-        <label class="font-semibold">Country of Citizenship</label>
-        <input type="text" name="citizenship_country" required class="w-full mt-1 p-3 border rounded-lg">
-      </div>
-
-      <!-- ADDRESS -->
-      <h3 class="text-lg font-bold mt-4">Physical Address</h3>
-
-      <div>
-        <label class="font-semibold">Street Address</label>
-        <input type="text" name="street_address" required class="w-full mt-1 p-3 border rounded-lg">
-      </div>
-
-      <div>
-        <label class="font-semibold">Apartment / Suite</label>
-        <input type="text" name="apartment" class="w-full mt-1 p-3 border rounded-lg">
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="font-semibold">City</label>
-          <input type="text" name="city" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-
-        <div>
-          <label class="font-semibold">State / Province</label>
-          <input type="text" name="state" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-
-        <div>
-          <label class="font-semibold">ZIP / Postal Code</label>
-          <input type="text" name="zip" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-      </div>
-
-      <div>
-        <label class="font-semibold">Country</label>
-        <input type="text" name="country" required class="w-full mt-1 p-3 border rounded-lg">
-      </div>
-
-      <!-- FAMILY -->
-      <div>
-        <label class="font-semibold">
-          Number of Family Members (Spouse or Children under 21)
-        </label>
-        <input type="number" name="family_members" min="0" required
-               class="w-full mt-1 p-3 border rounded-lg">
-      </div>
-
-      <!-- status -->
-      <div id="regMsg" class="text-sm text-center hidden"></div>
-
-      <!-- SUBMIT -->
-      <button id="regSubmit" type="submit"
-              class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition">
-        Submit Registration
-      </button>
-
-    </form>
-  </div>
+    <a href="login.html" class="btn">Go to Login</a>
+    <a href="index.html" class="btn secondary">Return to Homepage</a>
+</div>
 
 <script>
-(() => {
-  const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+setTimeout(() => {
+    const loader = document.getElementById("loader");
+    loader.style.opacity = "0";
+    setTimeout(() => loader.style.display = "none", 600);
+}, 1800);
 
-  const form = document.getElementById("regForm");
-  const emailEl = document.getElementById("regEmail");
-  const p1 = document.getElementById("regPass1");
-  const p2 = document.getElementById("regPass2");
-  const regFor = document.getElementById("regFor");
-  const msg = document.getElementById("regMsg");
-  const btn = document.getElementById("regSubmit");
-
-  function show(text, ok=true){
-    msg.className = "text-sm text-center " + (ok ? "text-emerald-600" : "text-red-600");
-    msg.textContent = text;
-    msg.classList.remove("hidden");
-  }
-
-  let busy = false;
-
-  form.addEventListener("submit", async (e) => {
-    if (busy) return;
-    busy = true;
-
-    const email = (emailEl.value || "").trim().toLowerCase();
-    const pwA = (p1.value || "").trim();
-    const pwB = (p2.value || "").trim();
-    const registering_for = (regFor.value || "").trim();
-
-    if (pwA.length < 8) {
-      e.preventDefault();
-      busy = false;
-      return show("Password must be at least 8 characters.", false);
-    }
-    if (pwA !== pwB) {
-      e.preventDefault();
-      busy = false;
-      return show("Passwords do not match.", false);
-    }
-    if (!email || !registering_for) {
-      e.preventDefault();
-      busy = false;
-      return show("Please complete required fields.", false);
-    }
-
-    // Save choice locally too (helps prefill + routing)
-    try { localStorage.setItem("qfs_registering_for", registering_for); } catch {}
-
-    btn.disabled = true;
-    show("Creating your portal account…");
-
-    // Create Supabase auth user (and store what they registered for)
-    const { error } = await supabase.auth.signUp({
-      email,
-      password: pwA,
-      options: {
-        data: { registering_for },
-        // keep consistent with your site
-        emailRedirectTo: "https://qfsnesaragesara.org/login.html"
-      }
-    });
-
-    if (error) {
-      e.preventDefault();
-      btn.disabled = false;
-      busy = false;
-      return show("Signup failed: " + error.message, false);
-    }
-
-    // Let FormSubmit continue normally (sends your email + redirects)
-    show("Account created ✅ Submitting your registration…");
-    // do not preventDefault here
-  });
-})();
+setTimeout(() => {
+    window.location.href = "index.html";
+}, 20000);
 </script>
 
 </body>
