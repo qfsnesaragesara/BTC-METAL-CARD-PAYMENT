@@ -12,12 +12,23 @@
 
   <style>
     :root{
-      --bg:#020617; --border:rgba(148,163,184,0.45);
-      --text:#e5e7eb; --muted:#94a3b8; --accent:#38bdf8; --accent2:#a855f7;
+      --bg:#020617;
+      --border:rgba(148,163,184,0.45);
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --accent:#38bdf8;
+      --accent2:#a855f7;
+      --danger:#ef4444;
+      --ok:#22c55e;
     }
     *{box-sizing:border-box}
     body{
-      margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
       font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
       background:
         radial-gradient(circle at top, rgba(56,189,248,0.32), transparent 55%),
@@ -25,31 +36,72 @@
         var(--bg);
       color:var(--text);
     }
+
     .card{
-      width:100%; max-width:460px; padding:26px; border-radius:26px;
+      width:100%;
+      max-width:460px;
+      padding:26px;
+      border-radius:26px;
       background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.82));
       border:1px solid var(--border);
       box-shadow:0 28px 90px rgba(0,0,0,0.55);
       backdrop-filter: blur(22px);
     }
+
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    .brand img{width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,0.18)}
     h1{margin:0;font-size:20px;font-weight:850}
     p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.6}
+
     label{display:block;margin-top:14px;margin-bottom:6px;color:var(--muted);font-size:12px}
     input{
-      width:100%; padding:12px 14px; border-radius:14px;
-      border:1px solid rgba(255,255,255,0.16); background:rgba(255,255,255,0.06);
-      color:var(--text); outline:none; font-size:14px;
+      width:100%;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.16);
+      background:rgba(255,255,255,0.06);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
     }
+
+    .row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
     button{
-      width:100%; margin-top:16px; padding:12px 14px; border-radius:999px;
-      border:none; cursor:pointer; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; font-size:12px;
-      background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff;
+      flex:1;
+      padding:12px 14px;
+      border-radius:999px;
+      border:none;
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+      font-size:12px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#fff;
     }
-    button:disabled{opacity:.6;cursor:not-allowed}
+    button.secondary{
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(148,163,184,0.5);
+      color:var(--text);
+      text-transform:none;
+      letter-spacing:0.02em;
+      font-weight:800;
+    }
+    button:disabled{
+      opacity:0.55;
+      cursor:not-allowed;
+    }
+
     .msg{
-      margin-top:14px; padding:10px 12px; border-radius:14px;
-      border:1px solid rgba(148,163,184,0.35); background:rgba(2,6,23,0.4);
-      font-size:13px; display:none; line-height:1.45; white-space:pre-wrap;
+      margin-top:14px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,0.35);
+      background:rgba(2,6,23,0.4);
+      font-size:13px;
+      display:none;
+      line-height:1.45;
+      white-space:pre-wrap;
     }
     .msg.show{display:block}
     .msg.error{border-color:rgba(239,68,68,0.45)}
@@ -60,16 +112,27 @@
 
 <body>
   <div class="card">
-    <h1>Reset Password</h1>
-    <p>Enter your new password below.</p>
+    <div class="brand">
+      <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="Logo">
+      <div>
+        <h1>Reset Password</h1>
+        <p>Enter your new password below.</p>
+      </div>
+    </div>
+
+    <label for="email">Email (to resend reset)</label>
+    <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
 
     <label for="p1">New Password</label>
-    <input id="p1" type="password" placeholder="New password (6+ characters)" />
+    <input id="p1" type="password" placeholder="New password (6+ characters)" autocomplete="new-password" />
 
     <label for="p2">Confirm Password</label>
-    <input id="p2" type="password" placeholder="Confirm password" />
+    <input id="p2" type="password" placeholder="Confirm password" autocomplete="new-password" />
 
-    <button id="saveBtn" type="button" disabled>Update Password</button>
+    <div class="row">
+      <button id="saveBtn" type="button" disabled>Update Password</button>
+      <button id="resendBtn" type="button" class="secondary">Send new reset link</button>
+    </div>
 
     <div id="msg" class="msg"></div>
     <div class="tiny" id="hint">Preparing secure reset session…</div>
@@ -80,18 +143,16 @@
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true
-    }
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
 
   const msg = document.getElementById("msg");
   const hint = document.getElementById("hint");
+  const emailEl = document.getElementById("email");
   const p1 = document.getElementById("p1");
   const p2 = document.getElementById("p2");
   const saveBtn = document.getElementById("saveBtn");
+  const resendBtn = document.getElementById("resendBtn");
 
   function show(text, ok){
     msg.textContent = text || "";
@@ -103,18 +164,24 @@
   }
 
   function parseHashTokens(){
-    // Supports older recovery links that use URL hash tokens
     const h = (window.location.hash || "").replace(/^#/, "");
     const params = new URLSearchParams(h);
-    const access_token = params.get("access_token");
-    const refresh_token = params.get("refresh_token");
-    return { access_token, refresh_token };
+    return {
+      access_token: params.get("access_token"),
+      refresh_token: params.get("refresh_token")
+    };
+  }
+
+  function normalizeErrText(){
+    const err = getParam("error");
+    const code = getParam("error_code");
+    const desc = (getParam("error_description") || "").replaceAll("+"," ");
+    return { err, code, desc };
   }
 
   async function establishRecoverySession(){
-    // Newer Supabase reset links (PKCE) include ?code=...
+    // Newer Supabase reset links include ?code=...
     const code = getParam("code");
-
     if (code) {
       hint.textContent = "Exchanging recovery code…";
       const { data, error } = await supabase.auth.exchangeCodeForSession(code);
@@ -122,7 +189,7 @@
       return data?.session || null;
     }
 
-    // Older links may include #access_token=...&refresh_token=...
+    // Older links include #access_token=...&refresh_token=...
     const { access_token, refresh_token } = parseHashTokens();
     if (access_token && refresh_token) {
       hint.textContent = "Restoring secure session…";
@@ -131,22 +198,42 @@
       return data?.session || null;
     }
 
-    // Fallback: maybe session already exists (detectSessionInUrl)
+    // Fallback: maybe session already exists
     hint.textContent = "Checking session…";
     const { data } = await supabase.auth.getSession();
     return data?.session || null;
   }
 
+  function setFormEnabled(enabled){
+    saveBtn.disabled = !enabled;
+    p1.disabled = !enabled;
+    p2.disabled = !enabled;
+  }
+
   async function boot(){
+    // ✅ Detect expired/invalid links from query params
+    const { err, code, desc } = normalizeErrText();
+    if (err === "access_denied" || code === "otp_expired") {
+      setFormEnabled(false);
+      hint.textContent = "";
+      show(
+        "This reset link is invalid or has expired.\n\n" +
+        "Click “Send new reset link” below (enter your email first),\n" +
+        "then open the NEWEST email and click the link once.",
+        false
+      );
+      return;
+    }
+
     try{
       const session = await establishRecoverySession();
 
       if (!session) {
-        saveBtn.disabled = true;
+        setFormEnabled(false);
         hint.textContent = "";
         show(
-          "This reset link is missing a valid session.\n\n" +
-          "Go back to login.html → click Forgot Password again, then open the NEWEST email link.\n" +
+          "No valid reset session found.\n\n" +
+          "Please click “Send new reset link” below and use the newest email.\n\n" +
           "Also confirm Supabase URL Configuration allows:\n" +
           "https://qfsnesaragesara.org/reset.html",
           false
@@ -154,49 +241,85 @@
         return;
       }
 
-      saveBtn.disabled = false;
-      hint.textContent = "✅ Verified reset session. You can set a new password now.";
-      msg.className = "msg"; // hide any old message
+      setFormEnabled(true);
+      hint.textContent = "✅ Verified reset session. You can update your password now.";
+      msg.className = "msg"; // hide
     } catch (e) {
-      saveBtn.disabled = true;
+      setFormEnabled(false);
       hint.textContent = "";
       show("Reset session error: " + (e?.message || "Unknown error"), false);
     }
   }
 
+  // ✅ Update password (only enabled when session is valid)
   saveBtn.addEventListener("click", async () => {
     const a = (p1.value || "");
     const b = (p2.value || "");
 
-    if(a.length < 6) return show("Password must be at least 6 characters.", false);
-    if(a !== b) return show("Passwords do not match.", false);
+    if (a.length < 6) return show("Password must be at least 6 characters.", false);
+    if (a !== b) return show("Passwords do not match.", false);
 
     saveBtn.disabled = true;
+    resendBtn.disabled = true;
     hint.textContent = "Updating password…";
 
     try{
       const { error } = await supabase.auth.updateUser({ password: a });
-      if(error) {
+      if (error) {
         saveBtn.disabled = false;
+        resendBtn.disabled = false;
         hint.textContent = "";
         return show("Update failed: " + error.message, false);
       }
 
       show("✅ Password updated. Redirecting to login…", true);
 
-      // Optional: sign out after reset (clean)
       try { await supabase.auth.signOut(); } catch {}
 
       setTimeout(() => window.location.replace("login.html?msg=reset_ok"), 1200);
     } catch (e) {
       saveBtn.disabled = false;
+      resendBtn.disabled = false;
       hint.textContent = "";
       show("Update failed: " + (e?.message || "Unknown error"), false);
     }
   });
 
+  // ✅ Resend reset link from this page
+  resendBtn.addEventListener("click", async () => {
+    const email = (emailEl.value || "").trim();
+    if (!email) return show("Enter your email first, then click Send new reset link.", false);
+
+    resendBtn.disabled = true;
+    hint.textContent = "Sending a new reset email…";
+
+    try{
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: "https://qfsnesaragesara.org/reset.html"
+      });
+
+      resendBtn.disabled = false;
+
+      if (error) {
+        hint.textContent = "";
+        return show("Reset email failed: " + error.message, false);
+      }
+
+      hint.textContent = "";
+      show(
+        "✅ New reset email sent.\n\n" +
+        "Open the NEWEST email and click the link once.\n" +
+        "Do not reuse older reset emails.",
+        true
+      );
+    } catch (e) {
+      resendBtn.disabled = false;
+      hint.textContent = "";
+      show("Reset email failed.", false);
+    }
+  });
+
   boot();
 </script>
-
 </body>
 </html>
