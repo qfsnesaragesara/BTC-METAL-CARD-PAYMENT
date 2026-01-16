@@ -45,14 +45,16 @@
       border:none; cursor:pointer; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; font-size:12px;
       background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff;
     }
+    button:disabled{opacity:.6;cursor:not-allowed}
     .msg{
       margin-top:14px; padding:10px 12px; border-radius:14px;
       border:1px solid rgba(148,163,184,0.35); background:rgba(2,6,23,0.4);
-      font-size:13px; display:none; line-height:1.4; white-space:pre-wrap;
+      font-size:13px; display:none; line-height:1.45; white-space:pre-wrap;
     }
     .msg.show{display:block}
     .msg.error{border-color:rgba(239,68,68,0.45)}
     .msg.ok{border-color:rgba(34,197,94,0.45)}
+    .tiny{margin-top:10px;color:var(--muted);font-size:12px}
   </style>
 </head>
 
@@ -67,38 +69,133 @@
     <label for="p2">Confirm Password</label>
     <input id="p2" type="password" placeholder="Confirm password" />
 
-    <button id="saveBtn" type="button">Update Password</button>
+    <button id="saveBtn" type="button" disabled>Update Password</button>
 
     <div id="msg" class="msg"></div>
+    <div class="tiny" id="hint">Preparing secure reset session…</div>
   </div>
 
 <script>
   const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  });
 
   const msg = document.getElementById("msg");
+  const hint = document.getElementById("hint");
   const p1 = document.getElementById("p1");
   const p2 = document.getElementById("p2");
+  const saveBtn = document.getElementById("saveBtn");
 
   function show(text, ok){
     msg.textContent = text || "";
     msg.className = "msg show " + (ok ? "ok" : "error");
   }
 
-  document.getElementById("saveBtn").addEventListener("click", async () => {
+  function getParam(name){
+    return new URLSearchParams(window.location.search).get(name);
+  }
+
+  function parseHashTokens(){
+    // Supports older recovery links that use URL hash tokens
+    const h = (window.location.hash || "").replace(/^#/, "");
+    const params = new URLSearchParams(h);
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+    return { access_token, refresh_token };
+  }
+
+  async function establishRecoverySession(){
+    // Newer Supabase reset links (PKCE) include ?code=...
+    const code = getParam("code");
+
+    if (code) {
+      hint.textContent = "Exchanging recovery code…";
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+      return data?.session || null;
+    }
+
+    // Older links may include #access_token=...&refresh_token=...
+    const { access_token, refresh_token } = parseHashTokens();
+    if (access_token && refresh_token) {
+      hint.textContent = "Restoring secure session…";
+      const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
+      if (error) throw error;
+      return data?.session || null;
+    }
+
+    // Fallback: maybe session already exists (detectSessionInUrl)
+    hint.textContent = "Checking session…";
+    const { data } = await supabase.auth.getSession();
+    return data?.session || null;
+  }
+
+  async function boot(){
+    try{
+      const session = await establishRecoverySession();
+
+      if (!session) {
+        saveBtn.disabled = true;
+        hint.textContent = "";
+        show(
+          "This reset link is missing a valid session.\n\n" +
+          "Go back to login.html → click Forgot Password again, then open the NEWEST email link.\n" +
+          "Also confirm Supabase URL Configuration allows:\n" +
+          "https://qfsnesaragesara.org/reset.html",
+          false
+        );
+        return;
+      }
+
+      saveBtn.disabled = false;
+      hint.textContent = "✅ Verified reset session. You can set a new password now.";
+      msg.className = "msg"; // hide any old message
+    } catch (e) {
+      saveBtn.disabled = true;
+      hint.textContent = "";
+      show("Reset session error: " + (e?.message || "Unknown error"), false);
+    }
+  }
+
+  saveBtn.addEventListener("click", async () => {
     const a = (p1.value || "");
     const b = (p2.value || "");
 
     if(a.length < 6) return show("Password must be at least 6 characters.", false);
     if(a !== b) return show("Passwords do not match.", false);
 
-    const { error } = await supabase.auth.updateUser({ password: a });
-    if(error) return show("Update failed: " + error.message, false);
+    saveBtn.disabled = true;
+    hint.textContent = "Updating password…";
 
-    show("✅ Password updated. Redirecting to login…", true);
-    setTimeout(() => window.location.replace("login.html"), 1200);
+    try{
+      const { error } = await supabase.auth.updateUser({ password: a });
+      if(error) {
+        saveBtn.disabled = false;
+        hint.textContent = "";
+        return show("Update failed: " + error.message, false);
+      }
+
+      show("✅ Password updated. Redirecting to login…", true);
+
+      // Optional: sign out after reset (clean)
+      try { await supabase.auth.signOut(); } catch {}
+
+      setTimeout(() => window.location.replace("login.html?msg=reset_ok"), 1200);
+    } catch (e) {
+      saveBtn.disabled = false;
+      hint.textContent = "";
+      show("Update failed: " + (e?.message || "Unknown error"), false);
+    }
   });
+
+  boot();
 </script>
 
 </body>
