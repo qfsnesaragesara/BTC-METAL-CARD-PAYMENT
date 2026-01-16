@@ -11,7 +11,11 @@
 
 <style>
   body{
-    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
     background:
       radial-gradient(circle at top, rgba(56,189,248,.28), transparent 55%),
@@ -20,30 +24,54 @@
     color:#e5e7eb;
   }
   .card{
-    width:100%; max-width:420px; padding:26px; border-radius:24px;
-    background:rgba(15,23,42,.88); border:1px solid rgba(148,163,184,.45);
+    width:100%;
+    max-width:420px;
+    padding:26px;
+    border-radius:24px;
+    background:rgba(15,23,42,.88);
+    border:1px solid rgba(148,163,184,.45);
     box-shadow:0 30px 90px rgba(0,0,0,.55);
   }
   h1{margin:0 0 6px;font-size:20px;font-weight:900}
   p{margin:0 0 14px;color:#94a3b8;font-size:13px}
   label{display:block;margin-top:12px;font-size:12px;color:#94a3b8}
   input{
-    width:100%; padding:12px 14px; border-radius:14px;
-    border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06);
-    color:#e5e7eb; outline:none; font-size:14px;
+    width:100%;
+    padding:12px 14px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.06);
+    color:#e5e7eb;
+    outline:none;
+    font-size:14px;
   }
   .row{display:flex;gap:10px;margin-top:14px}
   button{
-    flex:1; padding:12px; border-radius:999px; border:none; cursor:pointer;
-    font-weight:800; font-size:12px; letter-spacing:.05em;
+    flex:1;
+    padding:12px;
+    border-radius:999px;
+    border:none;
+    cursor:pointer;
+    font-weight:800;
+    font-size:12px;
+    letter-spacing:.05em;
   }
   .primary{background:linear-gradient(135deg,#38bdf8,#a855f7);color:#fff}
-  .secondary{background:rgba(255,255,255,.06); border:1px solid rgba(148,163,184,.45); color:#e5e7eb}
+  .secondary{
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(148,163,184,.45);
+    color:#e5e7eb
+  }
   button:disabled{opacity:.55;cursor:not-allowed}
   .msg{
-    margin-top:14px; padding:10px 12px; border-radius:14px;
-    border:1px solid rgba(148,163,184,.35); background:rgba(2,6,23,.45);
-    font-size:13px; display:none; white-space:pre-wrap;
+    margin-top:14px;
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid rgba(148,163,184,.35);
+    background:rgba(2,6,23,.45);
+    font-size:13px;
+    display:none;
+    white-space:pre-wrap;
   }
   .msg.show{display:block}
   .msg.ok{border-color:rgba(34,197,94,.45)}
@@ -54,11 +82,12 @@
 </head>
 
 <body>
+
 <div class="card">
   <h1>Reset Password</h1>
   <p>Enter your new password below.</p>
 
-  <label>Email (only for resend)</label>
+  <label>Email (for resend only)</label>
   <input id="email" type="email" placeholder="you@example.com">
 
   <label>New Password</label>
@@ -78,8 +107,17 @@
 <script>
 (() => {
   const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  const qs = new URLSearchParams(window.location.search);
+  const code = qs.get("code");
+  const err = qs.get("error");
 
   const emailEl = document.getElementById("email");
   const pw1 = document.getElementById("pw1");
@@ -93,58 +131,42 @@
     msg.className = "msg show " + (ok ? "ok" : "err");
   }
 
-  // ---- 1) Detect invalid/expired from Supabase error params
-  const qs = new URLSearchParams(location.search);
-  const err = qs.get("error");
-  const errDesc = qs.get("error_description");
+  // 🔴 If Supabase already says error
   if (err) {
-    updateBtn.disabled = true;
     show(
       "This reset link is invalid or has expired.\n\n" +
-      (errDesc ? decodeURIComponent(errDesc) + "\n\n" : "") +
-      "Enter your email and click “Send new reset link”.\n\n" +
-      "Tip: Some inboxes auto-open links for scanning. If it keeps expiring, copy the link address and paste into an Incognito window.",
+      "Enter your email and click “Send new reset link”.",
       false
     );
   }
 
-  // ---- 2) Correct flow: exchange code for session (PKCE)
-  // Supabase recovery links typically include ?code=...
-  const code = qs.get("code");
+  // ✅ CORRECT: exchange code immediately
   if (code) {
     show("Preparing secure reset session…");
     supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
       if (error) {
         updateBtn.disabled = true;
         show(
-          "This reset link is invalid or has expired.\n\n" +
+          "This reset link has expired.\n\n" +
           "Please request a new reset email.",
           false
         );
       } else {
         updateBtn.disabled = false;
-        show("Session ready ✅ Enter your new password and click Update Password.");
+        show("Session ready ✅ Enter a new password.");
       }
     });
-  } else {
-    // If no code and no error, still keep disabled and instruct
-    if (!err) {
-      updateBtn.disabled = true;
-      show(
-        "Open the reset link from your email to continue.\n\n" +
-        "If it keeps expiring instantly, copy the link address and paste it into an Incognito window.",
-        false
-      );
-    }
   }
 
-  // ---- 3) Update password (only works after session is exchanged)
+  // ✅ Update password
   updateBtn.addEventListener("click", async () => {
     const p1 = pw1.value || "";
     const p2 = pw2.value || "";
 
-    if (p1.length < 8) return show("Password must be at least 8 characters.", false);
-    if (p1 !== p2) return show("Passwords do not match.", false);
+    if (p1.length < 8)
+      return show("Password must be at least 8 characters.", false);
+    if (p1 !== p2)
+      return show("Passwords do not match.", false);
 
     updateBtn.disabled = true;
     show("Updating password…");
@@ -155,11 +177,11 @@
       return show(error.message, false);
     }
 
-    show("Password updated ✅ Redirecting to login…");
+    show("Password updated successfully ✅ Redirecting…");
     setTimeout(() => location.href = "login.html", 900);
   });
 
-  // ---- 4) Resend reset link (one trigger only)
+  // ✅ Resend reset (single trigger)
   let resendBusy = false;
   resendBtn.addEventListener("click", async () => {
     if (resendBusy) return;
@@ -168,7 +190,7 @@
     const email = (emailEl.value || "").trim();
     if (!email) {
       resendBusy = false;
-      return show("Enter your email to send a new reset link.", false);
+      return show("Enter your email to resend reset link.", false);
     }
 
     show("Sending reset email…");
@@ -179,13 +201,14 @@
 
     if (error) {
       resendBusy = false;
-      return show("Failed: " + error.message, false);
+      return show(error.message, false);
     }
 
     show("New reset email sent ✅ Check inbox/spam.");
-    setTimeout(() => { resendBusy = false; }, 3000);
+    setTimeout(() => resendBusy = false, 3000);
   });
 })();
 </script>
+
 </body>
 </html>
