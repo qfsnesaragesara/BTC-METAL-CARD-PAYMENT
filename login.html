@@ -77,14 +77,12 @@
     }
 
     /* ✅ Password field with clickable eye icon */
-    .pw-wrap{
-      position:relative;
-      z-index:20; /* keep above */
-    }
-    .pw-wrap input{
-      padding-right:52px; /* room for icon */
-    }
-    .pw-toggle{
+    .pw-wrap{ position:relative; z-index:20; }
+    .pw-wrap input{ padding-right:54px; }
+
+    /* IMPORTANT: override global button styles */
+    #pwToggle{
+      all: unset;                 /* ✅ reset global button styles */
       position:absolute;
       right:10px;
       top:50%;
@@ -98,17 +96,13 @@
       align-items:center;
       justify-content:center;
       cursor:pointer;
-      z-index:999;          /* ✅ ensure it stays clickable */
-      pointer-events:auto;  /* ✅ ensure clicks work */
-      padding:0;
+      z-index:999;
+      pointer-events:auto;
     }
-    .pw-toggle:hover{
-      background:rgba(2,6,23,0.55);
-    }
-    .pw-toggle:active{
-      transform:translateY(-50%) scale(0.98);
-    }
-    .pw-toggle svg{
+    #pwToggle:hover{ background:rgba(2,6,23,0.55); }
+    #pwToggle:active{ transform:translateY(-50%) scale(0.98); }
+
+    #pwToggle svg{
       width:18px;height:18px;
       fill:none;
       stroke:#cbd5e1;
@@ -117,12 +111,8 @@
       stroke-linejoin:round;
       pointer-events:none;
     }
-    .pw-toggle .slash{
-      display:none;
-    }
-    .pw-toggle.is-showing .slash{
-      display:block;
-    }
+    #pwToggle .slash{ display:none; }
+    #pwToggle.is-showing .slash{ display:block; }
 
     .row{
       display:flex;
@@ -131,7 +121,9 @@
       position:relative;
       z-index:10;
     }
-    button{
+
+    /* Keep your existing button styling for the big buttons */
+    .row button{
       flex:1;
       padding:12px 14px;
       border-radius:999px;
@@ -145,7 +137,7 @@
       z-index:10;
       pointer-events:auto;
     }
-    button:disabled{opacity:0.65;cursor:not-allowed}
+    .row button:disabled{opacity:0.65;cursor:not-allowed}
     .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
     .btn-secondary{background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.5);color:var(--text)}
 
@@ -186,7 +178,7 @@
   <!-- ✅ ONE Supabase library (ONLY) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- ✅ One controller file (creates ONE Supabase client) -->
+  <!-- ✅ Your auth controller -->
   <script src="/login.js" defer></script>
 </head>
 
@@ -207,12 +199,10 @@
     <label for="password">Password</label>
     <div class="pw-wrap">
       <input id="password" type="password" placeholder="Your password" autocomplete="current-password">
-      <button id="pwToggle" class="pw-toggle" type="button" aria-label="Show or hide password" title="Show/Hide password">
-        <!-- Eye -->
+      <button id="pwToggle" type="button" aria-label="Show or hide password" title="Show/Hide password">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
           <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path>
-          <!-- Slash (only when showing) -->
           <path class="slash" d="M4 20L20 4"></path>
         </svg>
       </button>
@@ -228,9 +218,7 @@
     </div>
 
     <div class="row" style="margin-top:10px;">
-      <button id="resendBtn" type="button" class="btn-secondary">
-        Resend Verification Email
-      </button>
+      <button id="resendBtn" type="button" class="btn-secondary">Resend Verification Email</button>
     </div>
 
     <div id="msg" class="msg"></div>
@@ -238,17 +226,19 @@
 
   <div class="debug-badge" id="dbg">dbg: loading…</div>
 
-  <!-- ✅ Tiny isolated toggle (no Supabase, no conflicts) -->
+  <!-- ✅ Toggle logic (no Supabase, no conflicts) -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const passEl = document.getElementById("password");
       const toggle = document.getElementById("pwToggle");
+      const dbg = document.getElementById("dbg");
       if (!passEl || !toggle) return;
 
       toggle.addEventListener("click", () => {
         const isHidden = passEl.type === "password";
         passEl.type = isHidden ? "text" : "password";
         toggle.classList.toggle("is-showing", isHidden);
+        if (dbg) dbg.textContent = "dbg: PW toggle ✅ " + new Date().toLocaleTimeString();
       });
     });
   </script>
