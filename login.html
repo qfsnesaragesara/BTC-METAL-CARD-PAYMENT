@@ -172,7 +172,7 @@
 
   <div class="debug-badge" id="dbg">dbg: loading…</div>
 
-  <!-- ✅ NEW JS (safe, isolated, does not affect existing logic) -->
+  <!-- ✅ Resend handler (your existing block, unchanged) -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const resendBtn = document.getElementById("resendBtn");
@@ -215,6 +215,80 @@
     });
   </script>
 
+  <!-- ✅ NEW: Post-login router for flow C (email verified + admin activated) -->
+  <script>
+    (function () {
+      const SUPABASE_URL_FALLBACK = "https://qagktukzxtwbjrdgiben.supabase.co";
+      const SUPABASE_ANON_KEY_FALLBACK = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
+      function showMsg(text, type) {
+        const el = document.getElementById("msg");
+        if (!el) return;
+        el.textContent = text || "";
+        el.className = "msg show " + (type || "");
+      }
+
+      function getClient() {
+        if (!window.supabase || !window.supabase.createClient) return null;
+        const url = (window.SUPABASE_URL || "").trim() || SUPABASE_URL_FALLBACK;
+        const key = (window.SUPABASE_ANON_KEY || "").trim() || SUPABASE_ANON_KEY_FALLBACK;
+        return window.supabase.createClient(url, key);
+      }
+
+      async function routeIfAlreadyLoggedIn() {
+        const params = new URLSearchParams(location.search);
+        const msg = params.get("msg") || "";
+
+        if (msg === "verify_email") {
+          showMsg("⚠️ Please verify your email, then return here to login.", "error");
+        } else if (msg === "profile_missing") {
+          showMsg("⚠️ Profile not found. Please contact support.", "error");
+        }
+
+        const client = getClient();
+        if (!client) return;
+
+        const { data, error } = await client.auth.getSession();
+        const session = data?.session || null;
+
+        if (error || !session) return;
+
+        const user = session.user || {};
+        const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
+
+        if (!verifiedAt) {
+          // logged in but not verified — keep them on login page
+          showMsg("⚠️ Your email is not verified yet. Please check your inbox and verify.", "error");
+          return;
+        }
+
+        // Check admin activation (flow C)
+        const { data: profile, error: profErr } = await client
+          .from("portal_users")
+          .select("is_activated")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (profErr || !profile) {
+          // If profile missing, keep user here and show message
+          showMsg("⚠️ Profile not found. Please contact support.", "error");
+          return;
+        }
+
+        if (!profile.is_activated) {
+          window.location.replace("pending.html");
+          return;
+        }
+
+        window.location.replace("portal.html");
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        // Try to route if already logged in (does not interfere with your existing login.js)
+        routeIfAlreadyLoggedIn().catch(() => {});
+      });
+    })();
+  </script>
+
 </body>
 </html>
-
