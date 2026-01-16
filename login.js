@@ -1,105 +1,118 @@
 (() => {
+  // =========================
+  // ✅ CONFIG (single source)
+  // =========================
   const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-  const dbg = document.getElementById("dbg");
-  const msgEl = document.getElementById("msg");
+  // ✅ Hardcode your live domain redirects (prevents null/file origins)
+  const RESET_REDIRECT = "https://qfsnesaragesara.org/reset.html";
+  const SIGNUP_REDIRECT = "https://qfsnesaragesara.org/login.html";
 
-  const loginBtn = document.getElementById("loginBtn");
-  const signupBtn = document.getElementById("signupBtn");
-  const forgotBtn = document.getElementById("forgotBtn"); // ✅ optional
-  const resendBtn = document.getElementById("resendBtn"); // ✅ optional
+  const $ = (id) => document.getElementById(id);
 
-  const togglePasswordBtn = document.getElementById("togglePassword"); // ✅ optional
-  const eyeOpen = document.getElementById("eyeOpen"); // ✅ optional
-  const eyeClosed = document.getElementById("eyeClosed"); // ✅ optional
+  const dbg = $("dbg");
+  const msgEl = $("msg");
 
-  const emailEl = document.getElementById("email");
-  const passEl = document.getElementById("password");
+  const loginBtn = $("loginBtn");
+  const signupBtn = $("signupBtn");
+  const forgotBtn = $("forgotBtn");
+  const resendBtn = $("resendBtn");
+
+  const emailEl = $("email");
+  const passEl = $("password");
+
+  const pwToggle = $("pwToggle");
+  const eyeIcon = $("eyeIcon");
 
   const stamp = () => new Date().toLocaleTimeString();
 
   function setDbg(t){
     if (dbg) dbg.textContent = "dbg: " + t;
   }
+
   function showMsg(text, type=""){
     if(!msgEl) return alert(text);
     msgEl.className = "msg show " + type;
     msgEl.textContent = text;
   }
-  function setBusy(b){
+
+  function setBusyAll(b){
     if (loginBtn) loginBtn.disabled = b;
     if (signupBtn) signupBtn.disabled = b;
     if (forgotBtn) forgotBtn.disabled = b;
     if (resendBtn) resendBtn.disabled = b;
   }
 
-  setDbg("login.js loaded ✅ " + stamp());
-  // keep your existing message behavior
-  showMsg("Auth loading…", "");
-
-  if (!loginBtn || !signupBtn) {
-    setDbg("buttons not found ❌");
-    showMsg("Buttons not found in HTML. Check ids loginBtn/signupBtn.", "error");
-    return;
-  }
-
-  // Click proof (even before supabase)
-  loginBtn.addEventListener("click", () => setDbg("LOGIN clicked ✅ " + stamp()));
-  signupBtn.addEventListener("click", () => setDbg("SIGNUP clicked ✅ " + stamp()));
-  if (forgotBtn) forgotBtn.addEventListener("click", () => setDbg("FORGOT clicked ✅ " + stamp()));
-  if (resendBtn) resendBtn.addEventListener("click", () => setDbg("RESEND clicked ✅ " + stamp()));
-
+  // =========================
+  // ✅ ONE Supabase client
+  // =========================
   if (!window.supabase || typeof window.supabase.createClient !== "function") {
-    setDbg("supabase missing ❌");
-    showMsg("❌ Supabase not loaded. Make sure /supabase.min.js exists.", "error");
+    setDbg("supabase-js not loaded ❌");
+    showMsg("❌ Supabase library not loaded.", "error");
     return;
   }
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  setDbg("supabase ready ✅ " + stamp());
-  showMsg("Auth ready ✅", "");
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
 
-  // ✅ Optional: read msg= from query (nice UX; no layout changes)
-  try{
-    const params = new URLSearchParams(location.search);
-    const m = params.get("msg");
-    if (m === "verify_email") showMsg("Please verify your email, then login again.", "error");
-    if (m === "profile_missing") showMsg("Account profile not found. Contact support.", "error");
-  } catch {}
+  setDbg("ready ✅ " + stamp());
 
-  // ✅ Password visibility toggle (if the eye button exists in HTML)
-  if (togglePasswordBtn && passEl) {
-    togglePasswordBtn.addEventListener("click", () => {
-      const showing = passEl.type === "text";
-      passEl.type = showing ? "password" : "text";
+  // =========================
+  // Password visibility toggle
+  // =========================
+  if (pwToggle && passEl) {
+    pwToggle.addEventListener("click", () => {
+      const isPw = passEl.type === "password";
+      passEl.type = isPw ? "text" : "password";
 
-      if (eyeOpen && eyeClosed) {
-        eyeOpen.style.display = showing ? "block" : "none";
-        eyeClosed.style.display = showing ? "none" : "block";
-      }
-
-      togglePasswordBtn.setAttribute("aria-pressed", String(!showing));
-      togglePasswordBtn.setAttribute("aria-label", showing ? "Show password" : "Hide password");
-      setDbg("TOGGLE PASS ✅ " + stamp());
+      // Optional small visual cue: slash the eye by changing icon paths
+      // (kept minimal: we just change opacity slightly)
+      if (eyeIcon) eyeIcon.style.opacity = isPw ? "0.75" : "1";
     });
   }
 
+  // =========================
+  // Single-fire guards
+  // =========================
+  let busy = false;
+  function guard() {
+    if (busy) return false;
+    busy = true;
+    setBusyAll(true);
+    return true;
+  }
+  function unguard(delayMs = 400) {
+    setTimeout(() => {
+      busy = false;
+      setBusyAll(false);
+    }, delayMs);
+  }
+
+  // =========================
+  // Actions (ONE handler each)
+  // =========================
   async function doLogin(){
     const email = (emailEl?.value || "").trim();
     const password = passEl?.value || "";
     if (!email || !password) return showMsg("Please enter email and password.", "error");
 
-    setBusy(true);
     showMsg("Signing in…", "");
+    setDbg("login… " + stamp());
+
     try{
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return showMsg("Login failed: " + error.message, "error");
 
+      // Save for portal fallback usage
+      localStorage.setItem("qfsEmail", email);
+      localStorage.setItem("memberEmail", email);
+
       showMsg("Login successful ✅ Redirecting…", "ok");
-      setTimeout(()=>location.href="portal.html", 700);
-    } finally {
-      setBusy(false);
+      setTimeout(() => (window.location.href = "portal.html"), 500);
+    } catch (e) {
+      showMsg("Login failed.", "error");
     }
   }
 
@@ -108,60 +121,104 @@
     const password = passEl?.value || "";
     if (!email || !password) return showMsg("Please enter email and password.", "error");
 
-    setBusy(true);
     showMsg("Creating account…", "");
+    setDbg("signup… " + stamp());
+
     try{
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: location.origin + "/login.html" }
+        options: { emailRedirectTo: SIGNUP_REDIRECT }
       });
 
       if (error) return showMsg("Signup failed: " + error.message, "error");
+
+      localStorage.setItem("qfsEmail", email);
+      localStorage.setItem("memberEmail", email);
+
       showMsg("Account created ✅ Check your email to confirm.", "ok");
-    } finally {
-      setBusy(false);
+    } catch (e) {
+      showMsg("Signup failed.", "error");
     }
   }
 
-  // ✅ Forgot password: sends reset link that lands on reset.html
   async function doForgotPassword(){
     const email = (emailEl?.value || "").trim();
     if (!email) return showMsg("Enter your email first.", "error");
 
-    setBusy(true);
     showMsg("Sending password reset email…", "");
+    setDbg("forgot… " + stamp());
+
     try{
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: location.origin + "/reset.html"
+        redirectTo: RESET_REDIRECT
       });
 
       if (error) return showMsg("Reset failed: " + error.message, "error");
+
       showMsg("Password reset email sent ✅ Check inbox/spam.", "ok");
-    } finally {
-      setBusy(false);
+    } catch (e) {
+      showMsg("Reset failed.", "error");
     }
   }
 
-  // ✅ Resend verification email (if button exists)
   async function doResendVerification(){
     const email = (emailEl?.value || "").trim();
     if (!email) return showMsg("Enter your email first.", "error");
 
-    setBusy(true);
     showMsg("Resending verification email…", "");
+    setDbg("resend… " + stamp());
+
     try{
       const { error } = await supabase.auth.resend({ type: "signup", email });
       if (error) return showMsg("Resend failed: " + error.message, "error");
+
       showMsg("Verification email resent ✅ Check inbox/spam.", "ok");
-    } finally {
-      setBusy(false);
+    } catch (e) {
+      showMsg("Resend failed.", "error");
     }
   }
 
-  // Real actions
-  loginBtn.addEventListener("click", (e) => { e.preventDefault(); doLogin(); });
-  signupBtn.addEventListener("click", (e) => { e.preventDefault(); doSignup(); });
-  if (forgotBtn) forgotBtn.addEventListener("click", (e) => { e.preventDefault(); doForgotPassword(); });
-  if (resendBtn) resendBtn.addEventListener("click", (e) => { e.preventDefault(); doResendVerification(); });
+  // =========================
+  // Wire buttons (ONCE)
+  // =========================
+  if (!loginBtn || !signupBtn || !forgotBtn || !resendBtn) {
+    setDbg("missing buttons ❌");
+    showMsg("Buttons not found in HTML. Check ids.", "error");
+    return;
+  }
+
+  loginBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    if (!guard()) return;
+    try { await doLogin(); } finally { unguard(); }
+  });
+
+  signupBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    if (!guard()) return;
+    try { await doSignup(); } finally { unguard(); }
+  });
+
+  forgotBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    if (!guard()) return;
+    try { await doForgotPassword(); } finally { unguard(1200); } // longer guard prevents double emails
+  });
+
+  resendBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    if (!guard()) return;
+    try { await doResendVerification(); } finally { unguard(1200); }
+  });
+
+  // Helpful: if redirected back with a success flag
+  const url = new URL(window.location.href);
+  if (url.searchParams.get("msg") === "reset_ok") {
+    showMsg("✅ Password updated. You can log in now.", "ok");
+  } else {
+    // Only show a subtle boot message once
+    showMsg("Auth ready ✅", "");
+  }
+
 })();
