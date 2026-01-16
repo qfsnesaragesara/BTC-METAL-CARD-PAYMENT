@@ -1,224 +1,215 @@
 (() => {
   // =========================
-  // ✅ CONFIG (single source)
+  // CONFIG
   // =========================
   const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-
-  // ✅ Hardcode your live domain redirects (prevents null/file origins)
-  const RESET_REDIRECT = "https://qfsnesaragesara.org/reset.html";
-  const SIGNUP_REDIRECT = "https://qfsnesaragesara.org/login.html";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
   const $ = (id) => document.getElementById(id);
 
   const dbg = $("dbg");
   const msgEl = $("msg");
 
-  const loginBtn = $("loginBtn");
-  const signupBtn = $("signupBtn");
-  const forgotBtn = $("forgotBtn");
-  const resendBtn = $("resendBtn");
-
   const emailEl = $("email");
   const passEl = $("password");
 
-  const pwToggle = $("pwToggle");
-  const eyeIcon = $("eyeIcon");
+  const loginBtn = $("loginBtn");
+  const signupBtn = $("signupBtn");
+  const resendBtn = $("resendBtn");
+
+  // OPTIONAL (only if your HTML has it)
+  const forgotBtn = $("forgotBtn"); // <button id="forgotBtn">
+  const togglePwBtn = $("togglePw"); // <button id="togglePw">
 
   const stamp = () => new Date().toLocaleTimeString();
 
-  function setDbg(t){
+  function setDbg(t) {
     if (dbg) dbg.textContent = "dbg: " + t;
   }
 
-  function showMsg(text, type=""){
-    if(!msgEl) return alert(text);
+  function showMsg(text, type = "") {
+    if (!msgEl) return alert(text);
     msgEl.className = "msg show " + type;
     msgEl.textContent = text;
   }
 
-  function setBusyAll(b){
+  function setBusy(b) {
     if (loginBtn) loginBtn.disabled = b;
     if (signupBtn) signupBtn.disabled = b;
-    if (forgotBtn) forgotBtn.disabled = b;
     if (resendBtn) resendBtn.disabled = b;
+    if (forgotBtn) forgotBtn.disabled = b;
   }
 
   // =========================
-  // ✅ ONE Supabase client
+  // Boot
   // =========================
+  setDbg("login.js loaded ✅ " + stamp());
+
   if (!window.supabase || typeof window.supabase.createClient !== "function") {
-    setDbg("supabase-js not loaded ❌");
-    showMsg("❌ Supabase library not loaded.", "error");
+    setDbg("supabase missing ❌");
+    showMsg("❌ Supabase not loaded. Make sure /supabase.min.js exists.", "error");
     return;
   }
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-  });
-
-  setDbg("ready ✅ " + stamp());
+  // ✅ ONE client only
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // =========================
-  // Password visibility toggle
+  // Helpers
   // =========================
-  if (pwToggle && passEl) {
-    pwToggle.addEventListener("click", () => {
-      const isPw = passEl.type === "password";
-      passEl.type = isPw ? "text" : "password";
+  function normalizeTier(x) {
+    return String(x || "").trim().toLowerCase();
+  }
 
-      // Optional small visual cue: slash the eye by changing icon paths
-      // (kept minimal: we just change opacity slightly)
-      if (eyeIcon) eyeIcon.style.opacity = isPw ? "0.75" : "1";
-    });
+  async function getUserTierFromSubmissions(email) {
+    // Reads latest submission (source of truth)
+    // Table: payment_submissions
+    // Columns used: email, card_type, created_at
+    try {
+      const { data, error } = await supabase
+        .from("payment_submissions")
+        .select("card_type, created_at")
+        .ilike("email", email)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (error) return null;
+      const row = data && data[0] ? data[0] : null;
+      return normalizeTier(row?.card_type);
+    } catch {
+      return null;
+    }
+  }
+
+  async function routeUser(email) {
+    // GOLD -> portal-gold.html
+    // SILVER/BLACK/anything -> portal.html
+    const tier = await getUserTierFromSubmissions(email);
+
+    if (tier === "gold") {
+      window.location.href = "portal-gold.html";
+      return;
+    }
+    window.location.href = "portal.html";
   }
 
   // =========================
-  // Single-fire guards
+  // Auth Actions
   // =========================
-  let busy = false;
-  function guard() {
-    if (busy) return false;
-    busy = true;
-    setBusyAll(true);
-    return true;
-  }
-  function unguard(delayMs = 400) {
-    setTimeout(() => {
-      busy = false;
-      setBusyAll(false);
-    }, delayMs);
-  }
-
-  // =========================
-  // Actions (ONE handler each)
-  // =========================
-  async function doLogin(){
+  async function doLogin() {
     const email = (emailEl?.value || "").trim();
     const password = passEl?.value || "";
     if (!email || !password) return showMsg("Please enter email and password.", "error");
 
+    setBusy(true);
     showMsg("Signing in…", "");
-    setDbg("login… " + stamp());
-
-    try{
+    try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return showMsg("Login failed: " + error.message, "error");
 
-      // Save for portal fallback usage
+      // store email for portal pages
       localStorage.setItem("qfsEmail", email);
       localStorage.setItem("memberEmail", email);
 
+      // If email not verified, block access and help user
+      const user = data?.user;
+      const verifiedAt = user?.email_confirmed_at || user?.confirmed_at || null;
+      if (!verifiedAt) {
+        showMsg("⚠️ Please verify your email first. Use ‘Resend Verification Email’.", "error");
+        await supabase.auth.signOut();
+        return;
+      }
+
       showMsg("Login successful ✅ Redirecting…", "ok");
-      setTimeout(() => (window.location.href = "portal.html"), 500);
-    } catch (e) {
-      showMsg("Login failed.", "error");
+      setTimeout(() => routeUser(email), 450);
+    } finally {
+      setBusy(false);
     }
   }
 
-  async function doSignup(){
+  async function doSignup() {
     const email = (emailEl?.value || "").trim();
     const password = passEl?.value || "";
     if (!email || !password) return showMsg("Please enter email and password.", "error");
 
+    setBusy(true);
     showMsg("Creating account…", "");
-    setDbg("signup… " + stamp());
+    try {
+      // IMPORTANT: emailRedirectTo should point back to your site
+      const redirectTo = window.location.origin + "/login.html";
 
-    try{
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: SIGNUP_REDIRECT }
+        options: { emailRedirectTo: redirectTo },
       });
 
       if (error) return showMsg("Signup failed: " + error.message, "error");
-
-      localStorage.setItem("qfsEmail", email);
-      localStorage.setItem("memberEmail", email);
-
       showMsg("Account created ✅ Check your email to confirm.", "ok");
-    } catch (e) {
-      showMsg("Signup failed.", "error");
+    } finally {
+      setBusy(false);
     }
   }
 
-  async function doForgotPassword(){
+  async function doResendVerification() {
     const email = (emailEl?.value || "").trim();
     if (!email) return showMsg("Enter your email first.", "error");
 
-    showMsg("Sending password reset email…", "");
-    setDbg("forgot… " + stamp());
+    setBusy(true);
+    showMsg("Resending verification email…", "");
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email });
+      if (error) return showMsg("Resend failed: " + error.message, "error");
+      showMsg("Verification email resent ✅ Check inbox/spam.", "ok");
+    } finally {
+      setBusy(false);
+    }
+  }
 
-    try{
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: RESET_REDIRECT
-      });
+  async function doForgotPassword() {
+    const email = (emailEl?.value || "").trim();
+    if (!email) return showMsg("Enter your email first.", "error");
 
+    setBusy(true);
+    showMsg("Sending reset email…", "");
+    try {
+      // This must match the page you host
+      const redirectTo = window.location.origin + "/reset.html";
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) return showMsg("Reset failed: " + error.message, "error");
 
       showMsg("Password reset email sent ✅ Check inbox/spam.", "ok");
-    } catch (e) {
-      showMsg("Reset failed.", "error");
-    }
-  }
-
-  async function doResendVerification(){
-    const email = (emailEl?.value || "").trim();
-    if (!email) return showMsg("Enter your email first.", "error");
-
-    showMsg("Resending verification email…", "");
-    setDbg("resend… " + stamp());
-
-    try{
-      const { error } = await supabase.auth.resend({ type: "signup", email });
-      if (error) return showMsg("Resend failed: " + error.message, "error");
-
-      showMsg("Verification email resent ✅ Check inbox/spam.", "ok");
-    } catch (e) {
-      showMsg("Resend failed.", "error");
+    } finally {
+      setBusy(false);
     }
   }
 
   // =========================
-  // Wire buttons (ONCE)
+  // Wire buttons (ONE handler each)
   // =========================
-  if (!loginBtn || !signupBtn || !forgotBtn || !resendBtn) {
-    setDbg("missing buttons ❌");
-    showMsg("Buttons not found in HTML. Check ids.", "error");
-    return;
+  if (loginBtn) loginBtn.addEventListener("click", (e) => { e.preventDefault(); setDbg("LOGIN clicked ✅ " + stamp()); doLogin(); });
+  if (signupBtn) signupBtn.addEventListener("click", (e) => { e.preventDefault(); setDbg("SIGNUP clicked ✅ " + stamp()); doSignup(); });
+  if (resendBtn) resendBtn.addEventListener("click", (e) => { e.preventDefault(); setDbg("RESEND clicked ✅ " + stamp()); doResendVerification(); });
+
+  if (forgotBtn) {
+    forgotBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      setDbg("FORGOT clicked ✅ " + stamp());
+      doForgotPassword();
+    });
   }
 
-  loginBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    if (!guard()) return;
-    try { await doLogin(); } finally { unguard(); }
-  });
-
-  signupBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    if (!guard()) return;
-    try { await doSignup(); } finally { unguard(); }
-  });
-
-  forgotBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    if (!guard()) return;
-    try { await doForgotPassword(); } finally { unguard(1200); } // longer guard prevents double emails
-  });
-
-  resendBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    if (!guard()) return;
-    try { await doResendVerification(); } finally { unguard(1200); }
-  });
-
-  // Helpful: if redirected back with a success flag
-  const url = new URL(window.location.href);
-  if (url.searchParams.get("msg") === "reset_ok") {
-    showMsg("✅ Password updated. You can log in now.", "ok");
-  } else {
-    // Only show a subtle boot message once
-    showMsg("Auth ready ✅", "");
+  // Optional: password eye toggle if you have #togglePw
+  if (togglePwBtn && passEl) {
+    togglePwBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const now = passEl.type === "password" ? "text" : "password";
+      passEl.type = now;
+      togglePwBtn.setAttribute("aria-pressed", now === "text" ? "true" : "false");
+    });
   }
 
+  setDbg("supabase ready ✅ " + stamp());
 })();
