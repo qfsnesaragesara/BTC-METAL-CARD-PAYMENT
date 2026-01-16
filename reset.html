@@ -27,7 +27,7 @@
     padding:24px;
   }
   .card{
-    width:100%; max-width:440px;
+    width:100%; max-width:460px;
     padding:26px; border-radius:24px;
     background:rgba(15,23,42,.88);
     border:1px solid var(--border);
@@ -63,29 +63,32 @@
   .msg.show{display:block}
   .msg.ok{border-color:rgba(34,197,94,.45)}
   .msg.err{border-color:rgba(239,68,68,.45)}
-  .hint{margin-top:10px;color:var(--muted);font-size:12px}
+
+  .hint{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.45}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
 </style>
 
+<!-- ✅ ONE Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
 <div class="card">
   <h1>Reset Password</h1>
-  <p id="subtitle">Enter your new password below.</p>
+  <p id="subtitle">Preparing secure reset session…</p>
 
   <label>Email (for resend only)</label>
   <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
 
   <label>New Password</label>
-  <input id="pw1" type="password" autocomplete="new-password">
+  <input id="pw1" type="password" autocomplete="new-password" placeholder="At least 8 characters">
 
   <label>Confirm Password</label>
-  <input id="pw2" type="password" autocomplete="new-password">
+  <input id="pw2" type="password" autocomplete="new-password" placeholder="Repeat password">
 
   <div class="row">
     <button id="updateBtn" class="primary" disabled>Update Password</button>
-    <button id="resendBtn" class="secondary">Send new reset link</button>
+    <button id="resendBtn" class="secondary" type="button">Send new reset link</button>
   </div>
 
   <div id="msg" class="msg"></div>
@@ -94,6 +97,9 @@
 
 <script>
 (() => {
+  // =========================
+  // ✅ ONE Supabase client
+  // =========================
   const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
   const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
@@ -114,77 +120,104 @@
     msg.className = "msg show " + (ok ? "ok" : "err");
   }
 
-  // Read params from ?query and also #hash (Supabase sometimes uses hash tokens)
+  function decodePlus(s){
+    try { return decodeURIComponent(String(s || "").replace(/\+/g, " ")); }
+    catch { return String(s || ""); }
+  }
+
+  // Read params from both ?query and #hash
   const qs = new URLSearchParams(location.search);
   const hs = new URLSearchParams((location.hash || "").replace(/^#/, ""));
 
+  // Supabase may send these:
+  const code = qs.get("code"); // PKCE flow
+  const type = hs.get("type") || qs.get("type"); // often "recovery"
+  const access_token = hs.get("access_token") || qs.get("access_token"); // legacy
+  const refresh_token = hs.get("refresh_token") || qs.get("refresh_token");
+
+  // Errors from Supabase redirect
   const error = qs.get("error") || hs.get("error");
   const errorCode = qs.get("error_code") || hs.get("error_code");
   const errorDesc = qs.get("error_description") || hs.get("error_description");
 
-  const code = qs.get("code"); // PKCE flow (preferred)
-  const access_token = hs.get("access_token") || qs.get("access_token"); // legacy flow
-  const refresh_token = hs.get("refresh_token") || qs.get("refresh_token");
+  // Helpful hint always visible
+  hint.innerHTML =
+    "If your link keeps expiring instantly, it’s usually because of one of these:\n" +
+    "• Supabase Auth URL config does not include your live domain.\n" +
+    "• Email scanners/preview bots open the link first.\n\n" +
+    "Best practice: open the reset link ONCE in an Incognito window.\n" +
+    "If it fails, use “Send new reset link”.";
 
-  // 1) If Supabase already tells us it's expired/invalid, we MUST disable Update
+  // Hard error state
   if (error || errorCode) {
     subtitle.textContent = "Your reset link is no longer valid.";
     show(
       "Reset link invalid/expired.\n\n" +
-      (errorDesc ? decodeURIComponent(errorDesc.replace(/\+/g, " ")) + "\n\n" : "") +
+      (errorDesc ? decodePlus(errorDesc) + "\n\n" : "") +
       "Enter your email and click “Send new reset link”.",
       false
     );
-    hint.textContent =
-      "Tip: Some inboxes auto-open links for scanning. To avoid instant expiry, copy the link address and paste into an Incognito window, then open it once.";
   }
 
-  // 2) Establish a reset session (enables Update button)
+  // =========================
+  // Prepare a recovery session
+  // =========================
   async function prepareSession(){
     try{
-      // PKCE: exchange code for session (best / modern)
+      subtitle.textContent = "Preparing secure reset session…";
+
+      // 1) PKCE flow: exchange ?code= for session
       if (code) {
-        show("Preparing secure reset session…");
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) throw error;
+
         updateBtn.disabled = false;
+        subtitle.textContent = "Session ready ✅ Enter your new password.";
         show("Session ready ✅ Enter a new password and click Update Password.");
         return;
       }
 
-      // Legacy hash tokens (some setups)
-      if (access_token) {
-        show("Preparing secure reset session…");
+      // 2) Legacy flow: #access_token with type=recovery
+      if (access_token && (type === "recovery" || type === "signup" || type === "magiclink" || type)) {
         const { error } = await supabase.auth.setSession({
           access_token,
           refresh_token: refresh_token || access_token
         });
         if (error) throw error;
+
         updateBtn.disabled = false;
+        subtitle.textContent = "Session ready ✅ Enter your new password.";
         show("Session ready ✅ Enter a new password and click Update Password.");
         return;
       }
 
-      // No usable token → keep disabled
-      if (!error && !errorCode) {
-        show(
-          "Open the reset link from your email to continue.\n\n" +
-          "If your link keeps expiring, request a new one using the button below.",
-          false
-        );
-      }
-    } catch (e){
+      // 3) Nothing usable in URL
       updateBtn.disabled = true;
+      subtitle.textContent = "Open the reset link from your email to continue.";
+      show(
+        "No valid reset token found in this page URL.\n\n" +
+        "Open the reset link from your email.\n" +
+        "Or request a new reset link below.",
+        false
+      );
+    } catch(e){
+      updateBtn.disabled = true;
+      subtitle.textContent = "This reset link is invalid or expired.";
       show(
         "This reset link is invalid or has expired.\n\n" +
+        (e?.message ? ("Reason: " + e.message + "\n\n") : "") +
         "Please request a new reset email.",
         false
       );
     }
   }
 
-  // 3) Update password
-  updateBtn.addEventListener("click", async () => {
+  // =========================
+  // Update password
+  // =========================
+  updateBtn.addEventListener("click", async (ev) => {
+    ev.preventDefault();
+
     const p1 = (pw1.value || "").trim();
     const p2 = (pw2.value || "").trim();
 
@@ -195,22 +228,26 @@
     show("Updating password…");
 
     const { error } = await supabase.auth.updateUser({ password: p1 });
+
     if (error) {
       updateBtn.disabled = false;
-      return show(error.message, false);
+      return show("Update failed: " + error.message, false);
     }
 
     show("Password updated ✅ Redirecting to login…");
-    setTimeout(() => location.href = "login.html", 900);
+    setTimeout(() => (location.href = "login.html"), 900);
   });
 
-  // 4) Resend reset link (single trigger)
+  // =========================
+  // Resend reset email (ONE trigger)
+  // =========================
   let resendBusy = false;
-  resendBtn.addEventListener("click", async () => {
+  resendBtn.addEventListener("click", async (ev) => {
+    ev.preventDefault();
     if (resendBusy) return;
     resendBusy = true;
 
-    const email = (emailEl.value || "").trim();
+    const email = (emailEl.value || "").trim().toLowerCase();
     if (!email) {
       resendBusy = false;
       return show("Enter your email to send a new reset link.", false);
@@ -218,20 +255,21 @@
 
     show("Sending reset email…");
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: location.origin + "/reset.html"
-    });
+    // IMPORTANT: use your live domain reset page
+    const redirectTo = "https://qfsnesaragesara.org/reset.html";
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
 
     if (error) {
       resendBusy = false;
-      return show(error.message, false);
+      return show("Reset email failed: " + error.message, false);
     }
 
     show("New reset email sent ✅ Check inbox/spam.");
-    setTimeout(() => { resendBusy = false; }, 3000);
+    setTimeout(() => { resendBusy = false; }, 2500);
   });
 
-  // boot
+  // Boot
   prepareSession();
 })();
 </script>
