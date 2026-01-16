@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Member Login — QFS</title>
   <meta name="robots" content="noindex, nofollow">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
 
   <link rel="icon" type="image/png"
     href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
@@ -46,40 +43,52 @@
       border:1px solid var(--border);
       box-shadow:0 28px 90px rgba(0,0,0,0.55);
       backdrop-filter: blur(22px);
-      position:relative;
-      z-index:1;
     }
 
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:14px;
-    }
-    .brand img{
-      width:44px;height:44px;border-radius:12px;
-      border:1px solid rgba(255,255,255,0.18);
-    }
-    h1{margin:0;font-size:20px;font-weight:850;letter-spacing:0.02em}
-    p{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    .brand img{width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,0.18)}
+    h1{margin:0;font-size:20px;font-weight:850}
+    p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
     label{display:block;margin-top:14px;margin-bottom:6px;color:var(--muted);font-size:12px}
+
+    .input-wrap{position:relative}
+
     input{
       width:100%;
-      padding:12px 14px;
+      padding:12px 44px 12px 14px;
       border-radius:14px;
       border:1px solid rgba(255,255,255,0.16);
       background:rgba(255,255,255,0.06);
       color:var(--text);
-      outline:none;
       font-size:14px;
+      outline:none;
     }
-    .row{
+
+    /* 👁️ icon button */
+    .eye-btn{
+      position:absolute;
+      right:12px;
+      top:50%;
+      transform:translateY(-50%);
+      background:none;
+      border:none;
+      padding:0;
+      cursor:pointer;
+      color:var(--muted);
       display:flex;
-      gap:10px;
-      margin-top:16px;
-      position:relative;
-      z-index:10;
+      align-items:center;
+      justify-content:center;
     }
+    .eye-btn:hover{color:#e5e7eb}
+
+    .eye-btn svg{
+      width:18px;
+      height:18px;
+    }
+
+    .row{display:flex;gap:10px;margin-top:16px}
+
     button{
       flex:1;
       padding:12px 14px;
@@ -90,13 +99,19 @@
       letter-spacing:0.06em;
       text-transform:uppercase;
       font-size:12px;
-      position:relative;
-      z-index:10;
-      pointer-events:auto;
     }
-    button:disabled{opacity:0.65;cursor:not-allowed}
     .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
     .btn-secondary{background:rgba(255,255,255,0.06);border:1px solid rgba(148,163,184,0.5);color:var(--text)}
+
+    .link-btn{
+      background:none;
+      border:none;
+      color:var(--accent);
+      font-size:12px;
+      cursor:pointer;
+      padding:0;
+      margin-top:10px;
+    }
 
     .msg{
       margin-top:14px;
@@ -104,191 +119,84 @@
       border-radius:14px;
       border:1px solid rgba(148,163,184,0.35);
       background:rgba(2,6,23,0.4);
-      color:var(--text);
       font-size:13px;
       display:none;
-      line-height:1.4;
-      white-space:pre-wrap;
-      position:relative;
-      z-index:10;
     }
     .msg.show{display:block}
     .msg.error{border-color:rgba(239,68,68,0.45)}
     .msg.ok{border-color:rgba(34,197,94,0.45)}
-    .tiny{margin-top:10px;color:var(--muted);font-size:12px}
-
-    .debug-badge{
-      position:fixed;
-      left:12px;
-      bottom:12px;
-      z-index:99999;
-      background:rgba(2,6,23,0.7);
-      border:1px solid rgba(148,163,184,0.35);
-      color:#cbd5e1;
-      padding:8px 10px;
-      border-radius:12px;
-      font-size:12px;
-      user-select:none;
-      pointer-events:none;
-    }
   </style>
 
-  <!-- existing scripts -->
-  <script src="/supabase.min.js" defer></script>
-  <script src="/login.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
-
-  <div class="card">
-    <div class="brand">
-      <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="Logo">
-      <div>
-        <h1>Member Login</h1>
-        <p>Sign in to view your portal balance and status.</p>
-      </div>
+<div class="card">
+  <div class="brand">
+    <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
+    <div>
+      <h1>Member Login</h1>
+      <p>Sign in to your portal</p>
     </div>
-
-    <label for="email">Email</label>
-    <input id="email" type="email" placeholder="you@example.com" autocomplete="username">
-
-    <label for="password">Password</label>
-    <input id="password" type="password" placeholder="Your password" autocomplete="current-password">
-
-    <div class="row">
-      <button id="loginBtn" type="button" class="btn-primary">Login</button>
-      <button id="signupBtn" type="button" class="btn-secondary">Create Account</button>
-    </div>
-
-    <!-- ✅ NEW BUTTON (added, nothing else touched) -->
-    <div class="row" style="margin-top:10px;">
-      <button id="resendBtn" type="button" class="btn-secondary">
-        Resend Verification Email
-      </button>
-    </div>
-
-    <div id="msg" class="msg"></div>
   </div>
 
-  <div class="debug-badge" id="dbg">dbg: loading…</div>
+  <label>Email</label>
+  <input id="email" type="email" autocomplete="username">
 
-  <!-- ✅ Resend handler (your existing block, unchanged) -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const resendBtn = document.getElementById("resendBtn");
-      const msg = document.getElementById("msg");
-      const emailInput = document.getElementById("email");
+  <label>Password</label>
+  <div class="input-wrap">
+    <input id="password" type="password" autocomplete="current-password">
 
-      if (!resendBtn || !window.supabase) return;
+    <!-- 👁️ Professional eye icon -->
+    <button
+      type="button"
+      id="togglePassword"
+      class="eye-btn"
+      aria-label="Show password"
+      aria-pressed="false"
+    >
+      <!-- eye icon -->
+      <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      <!-- eye-off icon -->
+      <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.77 21.77 0 0 1 5.06-6.94"/>
+        <path d="M1 1l22 22"/>
+        <path d="M9.53 9.53A3.5 3.5 0 0 0 12 15.5"/>
+        <path d="M14.47 14.47A3.5 3.5 0 0 0 12 8.5"/>
+      </svg>
+    </button>
+  </div>
 
-      resendBtn.addEventListener("click", async () => {
-        const email = emailInput.value.trim();
-        if (!email) {
-          msg.textContent = "Enter your email first.";
-          msg.className = "msg show error";
-          return;
-        }
+  <div class="row">
+    <button id="loginBtn" class="btn-primary">Login</button>
+    <button id="signupBtn" class="btn-secondary">Create Account</button>
+  </div>
 
-        try {
-          const supabase = window.supabase.createClient(
-            window.SUPABASE_URL || "",
-            window.SUPABASE_ANON_KEY || ""
-          );
+  <button id="forgotBtn" class="link-btn">Forgot password?</button>
 
-          const { error } = await supabase.auth.resend({
-            type: "signup",
-            email
-          });
+  <div id="msg" class="msg"></div>
+</div>
 
-          if (error) {
-            msg.textContent = "Resend failed: " + error.message;
-            msg.className = "msg show error";
-          } else {
-            msg.textContent = "Verification email resent. Check your inbox and spam folder.";
-            msg.className = "msg show ok";
-          }
-        } catch (e) {
-          msg.textContent = "Unable to resend verification email.";
-          msg.className = "msg show error";
-        }
-      });
-    });
-  </script>
+<script>
+  const passwordInput = document.getElementById("password");
+  const toggleBtn = document.getElementById("togglePassword");
+  const eyeOpen = document.getElementById("eyeOpen");
+  const eyeClosed = document.getElementById("eyeClosed");
 
-  <!-- ✅ NEW: Post-login router for flow C (email verified + admin activated) -->
-  <script>
-    (function () {
-      const SUPABASE_URL_FALLBACK = "https://qagktukzxtwbjrdgiben.supabase.co";
-      const SUPABASE_ANON_KEY_FALLBACK = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+  toggleBtn.addEventListener("click", () => {
+    const showing = passwordInput.type === "text";
+    passwordInput.type = showing ? "password" : "text";
 
-      function showMsg(text, type) {
-        const el = document.getElementById("msg");
-        if (!el) return;
-        el.textContent = text || "";
-        el.className = "msg show " + (type || "");
-      }
+    eyeOpen.style.display = showing ? "block" : "none";
+    eyeClosed.style.display = showing ? "none" : "block";
 
-      function getClient() {
-        if (!window.supabase || !window.supabase.createClient) return null;
-        const url = (window.SUPABASE_URL || "").trim() || SUPABASE_URL_FALLBACK;
-        const key = (window.SUPABASE_ANON_KEY || "").trim() || SUPABASE_ANON_KEY_FALLBACK;
-        return window.supabase.createClient(url, key);
-      }
-
-      async function routeIfAlreadyLoggedIn() {
-        const params = new URLSearchParams(location.search);
-        const msg = params.get("msg") || "";
-
-        if (msg === "verify_email") {
-          showMsg("⚠️ Please verify your email, then return here to login.", "error");
-        } else if (msg === "profile_missing") {
-          showMsg("⚠️ Profile not found. Please contact support.", "error");
-        }
-
-        const client = getClient();
-        if (!client) return;
-
-        const { data, error } = await client.auth.getSession();
-        const session = data?.session || null;
-
-        if (error || !session) return;
-
-        const user = session.user || {};
-        const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
-
-        if (!verifiedAt) {
-          // logged in but not verified — keep them on login page
-          showMsg("⚠️ Your email is not verified yet. Please check your inbox and verify.", "error");
-          return;
-        }
-
-        // Check admin activation (flow C)
-        const { data: profile, error: profErr } = await client
-          .from("portal_users")
-          .select("is_activated")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (profErr || !profile) {
-          // If profile missing, keep user here and show message
-          showMsg("⚠️ Profile not found. Please contact support.", "error");
-          return;
-        }
-
-        if (!profile.is_activated) {
-          window.location.replace("pending.html");
-          return;
-        }
-
-        window.location.replace("portal.html");
-      }
-
-      document.addEventListener("DOMContentLoaded", () => {
-        // Try to route if already logged in (does not interfere with your existing login.js)
-        routeIfAlreadyLoggedIn().catch(() => {});
-      });
-    })();
-  </script>
+    toggleBtn.setAttribute("aria-pressed", String(!showing));
+    toggleBtn.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+  });
+</script>
 
 </body>
 </html>
