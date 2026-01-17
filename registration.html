@@ -239,7 +239,8 @@
 (() => {
   const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const supabase = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
 
   const form = document.getElementById("regForm");
   const emailEl = document.getElementById("regEmail");
@@ -267,19 +268,6 @@
     return "silver";
   }
 
-  function inferQtyForTier(tier){
-    const t = String(tier || "").toLowerCase();
-    // black always 1, gold always 1, silver default 1 (admin/payment can update later)
-    if(t === "black") return 1;
-    if(t === "gold") return 1;
-    return 1;
-  }
-
-  function buildFullName(first, middle, last){
-    const parts = [first, middle, last].map(x => String(x || "").trim()).filter(Boolean);
-    return parts.join(" ").replace(/\s+/g, " ").trim();
-  }
-
   let busy = false;
 
   form.addEventListener("submit", async (e) => {
@@ -291,10 +279,10 @@
     const pwB = (p2.value || "").trim();
     const registering_for = (regFor.value || "").trim();
 
-    const first_name = (firstNameEl?.value || "").trim();
-    const middle_name = (middleNameEl?.value || "").trim();
-    const last_name = (lastNameEl?.value || "").trim();
-    const full_name = buildFullName(first_name, middle_name, last_name);
+    const first = String(firstNameEl?.value || "").trim();
+    const middle = String(middleNameEl?.value || "").trim();
+    const last = String(lastNameEl?.value || "").trim();
+    const full_name = [first, middle, last].filter(Boolean).join(" ").trim();
 
     if (pwA.length < 8) {
       e.preventDefault();
@@ -306,39 +294,34 @@
       busy = false;
       return show("Passwords do not match.", false);
     }
-    if (!email || !registering_for || !first_name || !last_name) {
+    if (!email || !registering_for) {
       e.preventDefault();
       busy = false;
       return show("Please complete required fields.", false);
     }
 
     const selectedTier = inferTierFromRegisteringFor(registering_for);
-    const qty = inferQtyForTier(selectedTier);
 
-    // Save choice locally (helps routing)
     try {
       localStorage.setItem("qfs_registering_for", registering_for);
       localStorage.setItem("qfs_selected_tier", selectedTier);
-      localStorage.setItem("memberEmail", email);
-      localStorage.setItem("qfsEmail", email);
-      localStorage.setItem("qfs_full_name", full_name);
     } catch {}
 
     btn.disabled = true;
     show("Creating your portal account…");
 
-    // ✅ Create Supabase auth user + store FULL NAME in metadata
     const { data, error } = await supabase.auth.signUp({
       email,
       password: pwA,
       options: {
+        // ✅ SAVE REGISTERED NAME INTO AUTH METADATA (so portals can display it)
         data: {
-          full_name,
-          first_name,
-          middle_name,
-          last_name,
           registering_for,
-          selected_tier: selectedTier
+          selected_tier: selectedTier,
+          first_name: first || null,
+          middle_name: middle || null,
+          last_name: last || null,
+          full_name: full_name || null
         },
         emailRedirectTo: "https://qfsnesaragesara.org/login.html"
       }
@@ -351,30 +334,33 @@
       return show("Signup failed: " + error.message, false);
     }
 
-    // ✅ Best-effort: create/update portal_users by EMAIL (stable)
-    // This avoids "user_id column does not exist" and avoids relying on auth user id.
+    // Best-effort: create/update portal_users now
     try {
-      const payload = {
-        email: email,
-        selected_tier: selectedTier,
-        tier: selectedTier,
-        is_active: false,
-        qty: qty
-      };
+      const newUserId = data?.user?.id;
+      if (newUserId) {
+        const payload = {
+          id: newUserId,
+          email: email,
+          selected_tier: selectedTier,
+          tier: selectedTier,
+          is_active: false,
+          qty: 0
+        };
 
-      const { error: upsertErr } = await supabase
-        .from("portal_users")
-        .upsert(payload, { onConflict: "email" });
+        const { error: upsertErr } = await supabase
+          .from("portal_users")
+          .upsert(payload, { onConflict: "id" });
 
-      if (upsertErr) {
-        console.warn("portal_users upsert warning:", upsertErr.message);
+        if (upsertErr) {
+          console.warn("portal_users upsert warning:", upsertErr.message);
+        }
       }
     } catch (err) {
       console.warn("portal_users upsert exception:", err);
     }
 
     show("Account created ✅ Submitting your registration…");
-    // Let FormSubmit continue normally (sends your email + redirects)
+    // allow FormSubmit to proceed
   });
 })();
 </script>
