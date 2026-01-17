@@ -385,7 +385,7 @@
     const session = data?.session || null;
 
     if(error || !session){
-      window.location.replace("login.html");
+      window.location.replace("login.html?logged_out=1");
       return null;
     }
 
@@ -550,3 +550,4 @@
 </script>
 </body>
 </html>
+
