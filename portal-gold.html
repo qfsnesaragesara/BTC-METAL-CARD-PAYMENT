@@ -6,6 +6,10 @@
   <title>Gold Portal — QFS</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
+
+  <!-- Central config (recommended) -->
+  <script src="./config.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -97,7 +101,6 @@
     .dot{ width:8px; height:8px; border-radius:50%; background:var(--muted); }
     .dot.ok{ background: var(--emerald); box-shadow:0 0 0 4px rgba(34,197,94,0.14); }
     .dot.lock{ background: var(--gold); box-shadow:0 0 0 4px rgba(251,191,36,0.12); }
-    .dot.bad{ background: var(--rose); box-shadow:0 0 0 4px rgba(251,113,133,0.12); }
 
     .actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; position:relative; z-index:1; }
     .btn{
@@ -217,6 +220,25 @@
     .kv .v{ font-weight:900; font-size:12px; color:rgba(226,232,240,0.92); }
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
     .note{ margin-top:10px; color:rgba(148,163,184,0.95); font-size:12px; line-height:1.5; }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+      font-size:12px;
+    }
+    th, td{
+      padding:10px 8px;
+      border-bottom:1px solid rgba(148,163,184,0.2);
+      text-align:left;
+    }
+    th{
+      color:rgba(148,163,184,0.95);
+      font-weight:700;
+      text-transform:uppercase;
+      font-size:11px;
+      letter-spacing:0.10em;
+    }
   </style>
 </head>
 
@@ -232,8 +254,8 @@
         <div>
           <div class="t1">Gold Portal</div>
           <div class="t2">
-            <span class="pill"><span class="dot ok"></span> Ready</span>
-            <span class="pill" id="pillLock"><span class="dot lock"></span> Locked Steps</span>
+            <span class="pill" id="readyPill"><span class="dot lock" id="readyDot"></span> Pending</span>
+            <span class="pill" id="lockedPill"><span class="dot lock"></span> Locked Steps</span>
           </div>
         </div>
       </div>
@@ -256,7 +278,7 @@
         </div>
 
         <div class="heroStripe">
-          <div class="big"><span class="dot ok"></span> Gold Pathway</div>
+          <div class="big"><span class="dot ok" id="heroDot"></span> Gold Pathway</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
             <span class="badge">Processing: $15,000</span>
             <span class="badge">Gift: $1,000,000</span>
@@ -267,7 +289,7 @@
           <div class="step">
             <div class="left">
               <div class="t">Step 1 — Processing</div>
-              <div class="s" id="step1Sub">Fixed amount</div>
+              <div class="s">Fixed amount</div>
             </div>
             <div class="right">
               <div class="price">$15,000</div>
@@ -281,11 +303,10 @@
           <div class="step">
             <div class="left">
               <div class="t">Step 2 — Required Form</div>
-              <div class="s" id="step2Sub">Unlocks after Step 1 confirmation</div>
+              <div class="s">Unlocks after activation</div>
             </div>
             <div class="right">
-              <a class="btn btn-secondary btn-disabled"
-                 id="step2Link"
+              <a id="step2Btn" class="btn btn-secondary btn-disabled"
                  href="https://www.uscis.gov/i-140g"
                  target="_blank" rel="noopener">
                 Open Form
@@ -296,12 +317,11 @@
           <div class="step">
             <div class="left">
               <div class="t">Step 3 — Gift</div>
-              <div class="s" id="step3Sub">Unlocks after approval</div>
+              <div class="s">Unlocks after activation</div>
             </div>
             <div class="right">
               <div class="price">$1,000,000</div>
-              <a class="btn btn-primary btn-disabled"
-                 id="step3Pay"
+              <a id="step3Btn" class="btn btn-primary btn-disabled"
                  href="wallet.html?type=gold&purpose=gift&qty=1&usd=1000000&addr=bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8">
                 Pay
               </a>
@@ -312,12 +332,12 @@
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
               <div class="left" style="min-width:220px">
                 <div class="t" style="font-weight:950;">Bridge Plan</div>
-                <div class="s" id="bridgeSub">2× / 4× / 10× (locked)</div>
+                <div class="s">2× / 4× / 10× (locked)</div>
               </div>
 
               <div class="right">
-                <span class="pill" id="bridgePill"><span class="dot lock"></span> Locked</span>
-                <select id="bridgeSelect" disabled>
+                <span class="pill"><span class="dot lock"></span> Locked</span>
+                <select disabled>
                   <option>2 payments</option>
                   <option>4 payments</option>
                   <option>10 payments</option>
@@ -325,8 +345,8 @@
               </div>
             </div>
 
-            <div class="note" id="bridgeNote">
-              Bridge payments will activate automatically once your processing payment is confirmed and your application is approved.
+            <div class="note">
+              Bridge payments will activate automatically once your account is activated.
             </div>
           </div>
 
@@ -340,18 +360,18 @@
         </div>
 
         <div class="kv">
-          <div class="k">Signed in</div>
-          <div class="v mono" id="acctName">Gold Member</div>
+          <div class="k">Name</div>
+          <div class="v mono" id="nameCell">—</div>
         </div>
 
         <div class="kv">
           <div class="k">Email</div>
-          <div class="v mono" id="acctEmail">—</div>
+          <div class="v mono" id="emailCell">—</div>
         </div>
 
         <div class="kv">
-          <div class="k">Next</div>
-          <div class="v" id="acctNext">Pay processing fee</div>
+          <div class="k">Status</div>
+          <div class="v" id="statusCell">Pending</div>
         </div>
 
         <div class="kv">
@@ -362,16 +382,38 @@
         </div>
       </div>
     </div>
+
+    <div class="card">
+      <div class="sectionTitle">
+        <div class="name">My Orders</div>
+        <div class="badge">Recent</div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Card</th>
+            <th>Qty</th>
+            <th>Status</th>
+            <th class="mono">TXID</th>
+          </tr>
+        </thead>
+        <tbody id="ordersBody">
+          <tr><td colspan="5" style="color:rgba(148,163,184,0.95);">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
   </div>
 
-  <!-- ✅ DB-TRUTH GOLD GATE (by email) + SMART unlock + FIXED logout -->
   <script>
     (async () => {
-      const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+      const CFG = window.__QFS_CONFIG || {};
+      const SUPABASE_URL = CFG.SUPABASE_URL || "https://qagktukzxtwbjrdgiben.supabase.co";
+      const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "PASTE_ANON_KEY_HERE_IF_NO_CONFIG_JS";
 
       const supabase = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
-      const $ = (id) => document.getElementById(id);
 
       function normTier(v){
         const s = String(v || "").trim().toLowerCase();
@@ -380,19 +422,13 @@
 
       function pickNameFromUser(user){
         const md = user?.user_metadata || {};
-        const first = String(md.first_name || "").trim();
-        const middle = String(md.middle_name || "").trim();
-        const last = String(md.last_name || "").trim();
-        const fullFromParts = [first, middle, last].filter(Boolean).join(" ").trim();
-
         const raw =
           md.full_name ||
           md.name ||
-          fullFromParts ||
+          md.first_name ||
           md.username ||
           md.display_name ||
           "";
-
         const cleaned = String(raw || "").trim();
         if(cleaned) return cleaned;
 
@@ -408,61 +444,87 @@
         return "Gold Member";
       }
 
-      async function getLatestSubmissionStatus(email){
-        try{
-          const { data, error } = await supabase
-            .from("payment_submissions")
-            .select("status, created_at")
-            .ilike("email", email)
-            .order("created_at", { ascending:false })
-            .limit(1);
+      function esc(s){
+        return String(s ?? "")
+          .replaceAll("&","&amp;")
+          .replaceAll("<","&lt;")
+          .replaceAll(">","&gt;")
+          .replaceAll('"',"&quot;")
+          .replaceAll("'","&#039;");
+      }
 
-          if(error || !data || !data[0]) return null;
-          const s = String(data[0].status || "").toLowerCase();
-          if(s === "confirmed" || s === "rejected" || s === "pending") return s;
-          return "pending";
-        } catch {
-          return null;
+      async function loadOrders(email){
+        const body = document.getElementById("ordersBody");
+        if(!body) return;
+
+        body.innerHTML = `<tr><td colspan="5" style="color:rgba(148,163,184,0.95);">Loading…</td></tr>`;
+
+        const { data, error } = await supabase
+          .from("payment_submissions")
+          .select("created_at, card_type, qty, status, txid")
+          .eq("email", email)
+          .order("created_at", { ascending:false })
+          .limit(25);
+
+        if(error){
+          body.innerHTML = `<tr><td colspan="5" style="color:rgba(148,163,184,0.95);">Orders blocked (RLS): ${esc(error.message)}</td></tr>`;
+          return;
+        }
+        if(!data || data.length === 0){
+          body.innerHTML = `<tr><td colspan="5" style="color:rgba(148,163,184,0.95);">No orders yet.</td></tr>`;
+          return;
+        }
+
+        body.innerHTML = "";
+        data.forEach(r => {
+          const dt = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
+          const card = String(r.card_type || "—").toUpperCase();
+          const qty = Number(r.qty || 1);
+          const status = String(r.status || "pending").toLowerCase();
+          const txid = String(r.txid || "");
+          const shortTx = txid ? (txid.length > 16 ? (txid.slice(0,8) + "…" + txid.slice(-6)) : txid) : "—";
+
+          body.insertAdjacentHTML("beforeend", `
+            <tr>
+              <td>${esc(dt)}</td>
+              <td>${esc(card)}</td>
+              <td>${esc(String(qty))}</td>
+              <td>${esc(status)}</td>
+              <td class="mono" title="${esc(txid)}">${esc(shortTx)}</td>
+            </tr>
+          `);
+        });
+      }
+
+      function setActiveUI(isActive){
+        const readyPill = document.getElementById("readyPill");
+        const readyDot = document.getElementById("readyDot");
+        const lockedPill = document.getElementById("lockedPill");
+        const statusCell = document.getElementById("statusCell");
+        const step2Btn = document.getElementById("step2Btn");
+        const step3Btn = document.getElementById("step3Btn");
+
+        if(isActive){
+          if(readyPill) readyPill.innerHTML = `<span class="dot ok"></span> Active`;
+          if(readyDot) readyDot.className = "dot ok";
+          if(statusCell) statusCell.textContent = "Active";
+
+          // Smart: hide locked pill when active
+          if(lockedPill) lockedPill.style.display = "none";
+
+          // Unlock Step 2/3 buttons
+          if(step2Btn) step2Btn.classList.remove("btn-disabled");
+          if(step3Btn) step3Btn.classList.remove("btn-disabled");
+        } else {
+          if(readyPill) readyPill.innerHTML = `<span class="dot lock"></span> Pending`;
+          if(readyDot) readyDot.className = "dot lock";
+          if(statusCell) statusCell.textContent = "Pending";
+          if(lockedPill) lockedPill.style.display = "inline-flex";
+          if(step2Btn) step2Btn.classList.add("btn-disabled");
+          if(step3Btn) step3Btn.classList.add("btn-disabled");
         }
       }
 
-      function unlockGoldSteps(){
-        const step2 = $("step2Link");
-        const step3 = $("step3Pay");
-        const bridgeSelect = $("bridgeSelect");
-
-        if(step2) step2.classList.remove("btn-disabled");
-        if(step3) step3.classList.remove("btn-disabled");
-        if(bridgeSelect) bridgeSelect.disabled = false;
-
-        const pillLock = $("pillLock");
-        if(pillLock){
-          pillLock.innerHTML = `<span class="dot ok"></span> Active`;
-        }
-
-        const bridgePill = $("bridgePill");
-        if(bridgePill){
-          bridgePill.innerHTML = `<span class="dot ok"></span> Active`;
-        }
-
-        if($("step1Sub")) $("step1Sub").textContent = "Confirmed ✅";
-        if($("step2Sub")) $("step2Sub").textContent = "Unlocked ✅";
-        if($("step3Sub")) $("step3Sub").textContent = "Unlocked ✅";
-        if($("bridgeSub")) $("bridgeSub").textContent = "Available";
-        if($("bridgeNote")) $("bridgeNote").textContent = "✅ Your processing payment is confirmed. You can proceed to the next steps.";
-        if($("acctNext")) $("acctNext").textContent = "Complete Step 2 form";
-      }
-
-      function rejectedGoldSteps(){
-        const pillLock = $("pillLock");
-        if(pillLock){
-          pillLock.innerHTML = `<span class="dot bad"></span> Rejected`;
-        }
-        if($("step1Sub")) $("step1Sub").textContent = "Rejected — please resubmit";
-        if($("acctNext")) $("acctNext").textContent = "Resubmit payment confirmation";
-      }
-
-      // Logout
       const logoutBtn = document.getElementById("logoutBtn");
       if (logoutBtn) {
         logoutBtn.addEventListener("click", async (e) => {
@@ -472,6 +534,7 @@
             localStorage.removeItem("qfsEmail");
             localStorage.removeItem("memberEmail");
             localStorage.removeItem("qfs_registering_for");
+            localStorage.removeItem("qfs_selected_tier");
           } catch {}
           window.location.replace("login.html?logged_out=1");
         });
@@ -500,16 +563,18 @@
         return;
       }
 
-      // show account info
       const name = pickNameFromUser(user);
-      if($("acctName")) $("acctName").textContent = name;
-      if($("acctEmail")) $("acctEmail").textContent = email;
+      document.getElementById("nameCell").textContent = name;
+      document.getElementById("emailCell").textContent = email;
+
+      localStorage.setItem("qfsEmail", email);
+      localStorage.setItem("memberEmail", email);
 
       // ✅ DB truth: portal_users by email
       const { data: profile, error: pErr } = await supabase
         .from("portal_users")
-        .select("email, tier, selected_tier")
-        .ilike("email", email)
+        .select("email, tier, selected_tier, is_active")
+        .eq("email", email)
         .maybeSingle();
 
       if (pErr || !profile) {
@@ -518,18 +583,32 @@
       }
 
       const t = normTier(profile.tier) || normTier(profile.selected_tier);
+
+      // ✅ MUST be gold to stay here
       if (t !== "gold") {
         window.location.replace("portal.html");
         return;
       }
 
-      // Smart unlock by latest submission status
-      const s = await getLatestSubmissionStatus(email);
-      if (s === "confirmed") unlockGoldSteps();
-      else if (s === "rejected") rejectedGoldSteps();
+      const isActive = profile.is_active === true;
+      setActiveUI(isActive);
+      await loadOrders(email);
 
-      localStorage.setItem("qfsEmail", email);
-      localStorage.setItem("memberEmail", email);
+      setInterval(async () => {
+        const { data: p2 } = await supabase
+          .from("portal_users")
+          .select("tier, selected_tier, is_active")
+          .eq("email", email)
+          .maybeSingle();
+
+        if(p2){
+          const t2 = normTier(p2.tier) || normTier(p2.selected_tier);
+          if(t2 !== "gold") return window.location.replace("portal.html");
+          setActiveUI(p2.is_active === true);
+          await loadOrders(email);
+        }
+      }, 20000);
+
     })();
   </script>
 </body>
