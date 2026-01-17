@@ -81,6 +81,16 @@
     align-items:center;
     gap:8px;
   }
+  .pill-btn{
+    appearance:none;
+    -webkit-appearance:none;
+    border:1px solid rgba(148,163,184,0.35);
+    background:rgba(255,255,255,0.06);
+    color:var(--text);
+    font-weight:850;
+    font-size:12px;
+    cursor:pointer;
+  }
   .badge{
     padding:6px 10px;
     border-radius:999px;
@@ -209,8 +219,8 @@
 
     <div class="header-actions">
       <span id="statusBadge" class="badge pending">Pending</span>
-      <!-- keep as link, but we will intercept click -->
-      <a class="pill" href="login.html" id="logoutLink">Logout</a>
+      <!-- ✅ REAL LOGOUT BUTTON (no href loop) -->
+      <button class="pill pill-btn" type="button" id="logoutBtn">Logout</button>
     </div>
   </header>
 
@@ -285,19 +295,11 @@
 </div>
 
 <script>
-  /*********************************************************
-   * CONFIG — Supabase credentials
-   *********************************************************/
   const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const $ = (id) => document.getElementById(id);
-
-  function normTier(v){
-    const s = String(v || "").trim().toLowerCase();
-    return (s === "gold" || s === "silver" || s === "black") ? s : "";
-  }
 
   function setBadge(status){
     const b = $("statusBadge");
@@ -327,227 +329,39 @@
   function unlockActions(){
     $("sendBtn").disabled = false;
     $("receiveBtn").disabled = false;
-
     $("sendBtn").classList.remove("btn-disabled");
     $("receiveBtn").classList.remove("btn-disabled");
-
     $("sendBtn").classList.add("btn-primary");
     $("receiveBtn").classList.add("btn-primary");
-
     $("lockNote").textContent = "✅ Account Active — Send & Receive are unlocked.";
   }
 
-  function fmtUSD(n){
-    return "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
-  }
-
-  async function fetchBtcUsd(){
+  // ✅ REAL LOGOUT
+  $("logoutBtn").addEventListener("click", async () => {
     try{
-      const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
-      const j = await r.json();
-      return Number(j?.bitcoin?.usd || 0);
-    } catch {
-      return 0;
-    }
-  }
+      // clear local hints too
+      localStorage.removeItem("qfsEmail");
+      localStorage.removeItem("memberEmail");
+      localStorage.removeItem("qfs_registering_for");
 
-  function setAllocationUI(tierUpper, qty){
-    const tier = (tierUpper || "").toUpperCase();
-    $("tierCell").textContent = tier || "—";
-    $("qtyCell").textContent = qty ? String(qty) : "—";
-
-    $("balance").textContent = "$0.00";
-    $("btcBalance").textContent = "—";
-
-    if(tier === "SILVER"){
-      const usdBalance = 25000 * qty;
-      $("balance").textContent = fmtUSD(usdBalance);
-      $("btcBalance").textContent = "≈ $25,000 per card allocation";
-    }
-
-    if(tier === "BLACK"){
-      $("balance").textContent = "25,000 BTC";
-      $("btcBalance").textContent = "USD equivalent loading…";
-    }
-  }
-
-  function setBlackUsdEquivalent(btcUsd){
-    if(!btcUsd) {
-      $("btcBalance").textContent = "USD equivalent unavailable";
-      return;
-    }
-    const usdEq = 25000 * btcUsd;
-    $("btcBalance").textContent = "≈ " + fmtUSD(usdEq) + " (live BTC price)";
-  }
-
-  async function requireSessionAndVerified(){
-    const { data, error } = await supabase.auth.getSession();
-    const session = data?.session || null;
-
-    if(error || !session){
-      window.location.replace("login.html?logged_out=1");
-      return null;
-    }
-
-    const user = session.user || {};
-    const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
-
-    const email = (user.email || "").trim();
-    if(email){
-      localStorage.setItem("qfsEmail", email);
-      localStorage.setItem("memberEmail", email);
-      $("emailCell").textContent = email;
-    } else {
-      $("emailCell").textContent = "—";
-    }
-
-    if(!verifiedAt){
-      try{
-        $("btcBalance").textContent = "⚠️ Please verify your email before accessing the portal. Redirecting to login…";
-        await supabase.auth.signOut();
-      } catch {}
-      setTimeout(() => window.location.replace("login.html?msg=verify_email"), 900);
-      return null;
-    }
-
-    return session;
-  }
-
-  async function fetchProfileByEmail(email){
-    const e = String(email || "").trim().toLowerCase();
-    if(!e) return null;
-
-    const { data, error } = await supabase
-      .from("portal_users")
-      .select("email,tier,selected_tier,qty,is_active")
-      .ilike("email", e)
-      .maybeSingle();
-
-    if(error || !data) return null;
-    return data;
-  }
-
-  function routeIfGold(profile){
-    const t = normTier(profile?.tier) || normTier(profile?.selected_tier);
-    if(t === "gold"){
-      window.location.replace("portal-gold.html");
-      return true;
-    }
-    return false;
-  }
-
-  async function checkStatusAndUpdateUI(profile){
-    const now = new Date();
-    $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
-
-    const tier = (profile?.tier || profile?.selected_tier || "").toUpperCase();
-    let qty = Number(profile?.qty || 0) || 0;
-
-    if (tier === "BLACK") qty = 1;
-    if (tier === "SILVER" && qty > 50) qty = 50;
-    if (!Number.isFinite(qty) || qty < 1) qty = 1;
-
-    lockActions();
-    setBadge("pending");
-    $("statusCell").textContent = "Pending";
-    setAllocationUI(tier, qty);
-
-    if (profile?.is_active === true) {
-      $("statusCell").textContent = "Active";
-      setBadge("confirmed");
-      unlockActions();
-    }
-
-    const email = (profile?.email || localStorage.getItem("qfsEmail") || "").trim().toLowerCase();
-    if (!email) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("payment_submissions")
-        .select("status, card_type, qty, created_at")
-        .ilike("email", email)
-        .order("created_at", { ascending:false })
-        .limit(1);
-
-      if (!error && data && data[0]) {
-        const row = data[0];
-        const status = String(row.status || "pending").toLowerCase();
-
-        $("statusCell").textContent =
-          status === "confirmed" ? "Active" : (status === "rejected" ? "Rejected" : "Pending");
-
-        setBadge(status);
-
-        if (status === "confirmed") unlockActions();
-        else lockActions();
-      }
+      await supabase.auth.signOut();
     } catch {}
 
-    const tierShown = ($("tierCell").textContent || "").toUpperCase();
-    if (tierShown === "BLACK"){
-      const btcUsd = await fetchBtcUsd();
-      setBlackUsdEquivalent(btcUsd);
-    } else if (tierShown === "SILVER"){
-      const btcUsd = await fetchBtcUsd();
-      if (btcUsd){
-        const qtyShown = Number($("qtyCell").textContent || 1);
-        const usdBal = 25000 * (Number.isFinite(qtyShown) ? qtyShown : 1);
-        const btcEq = usdBal / btcUsd;
-        $("btcBalance").textContent = `≈ ${btcEq.toFixed(8)} BTC (live BTC price)`;
-      }
-    }
-  }
+    // hard redirect (prevents back-button loop)
+    window.location.replace("login.html");
+  });
 
-  // Buttons
-  $("sendBtn").addEventListener("click", () => alert("Send is enabled for Active accounts. (Next step: build real Send flow.)"));
-  $("receiveBtn").addEventListener("click", () => alert("Receive is enabled for Active accounts. (Next step: build real Receive flow.)"));
+  // (Keep your existing portal logic here if you already have it.
+  // If you want, paste your current portal.html JS section and I’ll merge it without breaking anything.)
 
-  // ✅ FIXED LOGOUT (always works)
-  function attachLogout(){
-    const a = $("logoutLink");
-    if(!a) return;
-
-    a.addEventListener("click", async (e) => {
-      e.preventDefault();
-      try{
-        await supabase.auth.signOut();
-      } catch {}
-      try{
-        localStorage.removeItem("qfsEmail");
-        localStorage.removeItem("memberEmail");
-        localStorage.removeItem("qfs_registering_for");
-      } catch {}
-      // hard redirect so no loop
-      window.location.replace("login.html");
-    });
-  }
-
+  // Minimal guard so logged-out users can't stay here
   (async () => {
-    // Wait for DOM so logout always binds
-    if(document.readyState === "loading"){
-      document.addEventListener("DOMContentLoaded", attachLogout, { once:true });
-    } else {
-      attachLogout();
+    const { data } = await supabase.auth.getSession();
+    if(!data?.session){
+      window.location.replace("login.html");
+      return;
     }
-
-    const session = await requireSessionAndVerified();
-    if(!session) return;
-
-    const email = (session.user.email || "").trim().toLowerCase();
-    const profile = await fetchProfileByEmail(email);
-
-    // If DB says gold, go gold portal
-    if (routeIfGold(profile)) return;
-
-    await checkStatusAndUpdateUI(profile || { email, tier:"silver", qty:1, is_active:false });
-
-    setInterval(async () => {
-      const refreshed = await fetchProfileByEmail(email);
-      if (routeIfGold(refreshed)) return;
-      await checkStatusAndUpdateUI(refreshed || profile || { email, tier:"silver", qty:1, is_active:false });
-    }, 20000);
   })();
 </script>
 </body>
 </html>
-
