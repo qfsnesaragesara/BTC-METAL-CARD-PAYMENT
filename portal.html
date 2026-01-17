@@ -268,7 +268,7 @@
 
     <div class="card">
       <h2>Available Balance</h2>
-      <!-- ✅ this line will auto-hide when Active -->
+      <!-- ✅ auto-hide when Active -->
       <div class="sub" id="balanceHelp">Balance becomes active after you order your access card</div>
 
       <div class="balance" id="balance">$0.00</div>
@@ -317,7 +317,7 @@
 
     <div class="card" style="grid-column:1 / -1;">
       <h2>Recent Activity</h2>
-      <div class="sub">Transactions will appear after activation</div>
+      <div class="sub" id="activityHelp">Transactions will appear after activation</div>
 
       <table>
         <thead>
@@ -349,6 +349,9 @@
   const toast = $("toast");
   const say = (t) => { if(toast) toast.textContent = String(t || ""); };
 
+  // ✅ ONE shared client (prevents "supabase already declared" issues)
+  const sb = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
+
   function normTier(v){
     const s = String(v || "").trim().toLowerCase();
     return (s === "gold" || s === "silver" || s === "black") ? s : "";
@@ -356,13 +359,19 @@
 
   function pickNameFromUser(user){
     const md = user?.user_metadata || {};
+    const first = String(md.first_name || "").trim();
+    const middle = String(md.middle_name || "").trim();
+    const last = String(md.last_name || "").trim();
+    const fullFromParts = [first, middle, last].filter(Boolean).join(" ").trim();
+
     const raw =
       md.full_name ||
       md.name ||
-      md.first_name ||
+      fullFromParts ||
       md.username ||
       md.display_name ||
       "";
+
     const cleaned = String(raw || "").trim();
     if(cleaned) return cleaned;
 
@@ -393,16 +402,27 @@
     }
   }
 
-  function lockActions(){
+  function lockActions(reason){
     $("sendBtn").disabled = true;
     $("receiveBtn").disabled = true;
+
     $("sendBtn").classList.add("btn-disabled");
     $("receiveBtn").classList.add("btn-disabled");
+
     $("sendBtn").classList.remove("btn-primary");
     $("receiveBtn").classList.remove("btn-primary");
+
     $("lockNote").style.display = "block";
-    $("lockNote").textContent = "🔒 Send & Receive are locked until you activate your access card.";
+
+    if(reason === "rejected"){
+      $("lockNote").textContent = "❌ Payment rejected — please resubmit your payment confirmation.";
+    } else {
+      $("lockNote").textContent = "🔒 Send & Receive are locked until you activate your access card.";
+    }
+
+    // help is relevant when not active
     $("balanceHelp").style.display = "block";
+    $("activityHelp").style.display = "block";
   }
 
   function unlockActions(){
@@ -417,6 +437,8 @@
 
     // ✅ Smart UI: remove “order your access card” help when active
     $("balanceHelp").style.display = "none";
+    $("activityHelp").style.display = "none";
+
     $("lockNote").style.display = "block";
     $("lockNote").textContent = "✅ Account Active — Send & Receive are unlocked.";
   }
@@ -473,8 +495,6 @@
     window.location.replace("login.html");
   }
 
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
   async function getSessionOrKick(){
     const { data, error } = await sb.auth.getSession();
     if(error || !data?.session) return null;
@@ -489,55 +509,64 @@
       .maybeSingle();
   }
 
-  async function checkStatusAndUpdateUI(profile){
-    const now = new Date();
-    $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
+  async function getLatestSubmissionStatus(email){
+    try{
+      const { data, error } = await sb
+        .from("payment_submissions")
+        .select("status, card_type, qty, created_at")
+        .ilike("email", email)
+        .order("created_at", { ascending:false })
+        .limit(1);
 
-    const tier = (profile?.tier || profile?.selected_tier || "").toUpperCase();
-    let qty = Number(profile?.qty || 0) || 0;
+      if(error || !data || !data[0]) return null;
+      const s = String(data[0].status || "").toLowerCase();
+      if(s === "confirmed" || s === "rejected" || s === "pending") return s;
+      return "pending";
+    } catch {
+      return null;
+    }
+  }
+
+  function sanitizeQty(tierUpper, qtyRaw){
+    const tier = (tierUpper || "").toUpperCase();
+    let qty = Number(qtyRaw || 0) || 0;
 
     if (tier === "BLACK") qty = 1;
     if (tier === "SILVER" && qty > 50) qty = 50;
     if (!Number.isFinite(qty) || qty < 1) qty = 1;
 
-    // default pending UI
-    lockActions();
-    setBadge("pending");
-    $("statusCell").textContent = "Pending";
-    setAllocationUI(tier, qty);
+    return qty;
+  }
 
-    // Activation from DB
+  async function applyStatusUI(profile){
+    const now = new Date();
+    $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
+
+    const tierUpper = (profile?.tier || profile?.selected_tier || "").toUpperCase();
+    const qty = sanitizeQty(tierUpper, profile?.qty);
+
+    // Always show allocation based on tier/qty (independent of activation)
+    setAllocationUI(tierUpper, qty);
+
+    // Decide final status once (prevents “flip-flop” UI)
+    const email = String(profile?.email || "").trim().toLowerCase();
+    let finalStatus = "pending";
+
     if (profile?.is_active === true) {
-      $("statusCell").textContent = "Active";
-      setBadge("confirmed");
-      unlockActions();
+      finalStatus = "confirmed";
+    } else if (email) {
+      const s = await getLatestSubmissionStatus(email);
+      if (s === "confirmed" || s === "rejected" || s === "pending") finalStatus = s;
     }
 
-    // Also reflect latest payment_submissions status by email (doesn’t override tier routing)
-    const email = (profile?.email || "").trim().toLowerCase();
-    if (email) {
-      try {
-        const { data, error } = await sb
-          .from("payment_submissions")
-          .select("status, card_type, qty, created_at")
-          .ilike("email", email)
-          .order("created_at", { ascending:false })
-          .limit(1);
+    $("statusCell").textContent =
+      finalStatus === "confirmed" ? "Active" :
+      finalStatus === "rejected" ? "Rejected" : "Pending";
 
-        if (!error && data && data[0]) {
-          const row = data[0];
-          const status = String(row.status || "pending").toLowerCase();
+    setBadge(finalStatus);
 
-          $("statusCell").textContent =
-            status === "confirmed" ? "Active" : (status === "rejected" ? "Rejected" : "Pending");
-
-          setBadge(status);
-
-          if (status === "confirmed") unlockActions();
-          else lockActions();
-        }
-      } catch {}
-    }
+    if (finalStatus === "confirmed") unlockActions();
+    else lockActions(finalStatus === "rejected" ? "rejected" : "pending");
 
     // BTC equivalent
     const tierShown = ($("tierCell").textContent || "").toUpperCase();
@@ -580,6 +609,7 @@
 
       const name = pickNameFromUser(user);
       $("nameCell").textContent = name;
+
       const hello = $("helloName");
       if(hello){
         hello.style.display = "inline-flex";
@@ -597,7 +627,7 @@
 
       if(error){
         say("Profile SELECT blocked (RLS). portal_users read policy must allow this email.");
-        lockActions();
+        lockActions("pending");
         return;
       }
 
@@ -613,14 +643,14 @@
       }
 
       say("Loaded ✅");
-      await checkStatusAndUpdateUI(profile);
+      await applyStatusUI(profile);
 
       setInterval(async () => {
         const { data: p2 } = await getDbProfileByEmail(email);
         if(p2){
           const t2 = normTier(p2.tier) || normTier(p2.selected_tier);
           if(t2 === "gold") return window.location.replace("portal-gold.html");
-          await checkStatusAndUpdateUI(p2);
+          await applyStatusUI(p2);
         }
       }, 20000);
 
