@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Gold Portal — QFS</title>
   <meta name="robots" content="noindex, nofollow">
-  <!-- Website logo -->
   <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
-
-  <!-- ✅ Supabase JS (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -218,7 +215,6 @@
     .kv .k{ color:rgba(148,163,184,0.95); font-size:11px; letter-spacing:0.12em; text-transform:uppercase; font-weight:900; }
     .kv .v{ font-weight:900; font-size:12px; color:rgba(226,232,240,0.92); }
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-
     .note{ margin-top:10px; color:rgba(148,163,184,0.95); font-size:12px; line-height:1.5; }
   </style>
 </head>
@@ -229,17 +225,6 @@
   <div class="blob b3"></div>
 
   <div class="page">
-
-    <!-- CONFIG (links only, no JS required) -->
-    <!-- IMPORTANT: these are plain links so they work even if JS breaks -->
-    <script>
-      // Only used for scrolling; payment links below do not depend on JS.
-      function scrollToPayments(){
-        const el = document.getElementById("paymentsCard");
-        if(el) el.scrollIntoView({ behavior:"smooth", block:"start" });
-      }
-    </script>
-
     <div class="topbar">
       <div class="brand">
         <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="QFS Logo">
@@ -254,21 +239,15 @@
 
       <div class="actions">
         <a class="btn btn-secondary" href="index.html">Home</a>
-
-        <!-- ✅ ALWAYS WORKS -->
         <a class="btn btn-gold"
            href="wallet.html?type=gold&purpose=processing&qty=1&usd=15000&addr=bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8">
           Make Payment
         </a>
-
-        <!-- ✅ Real logout now -->
-        <a class="btn btn-primary" href="login.html" id="logoutBtn">Logout</a>
+        <a class="btn btn-primary" href="#" id="logoutBtn">Logout</a>
       </div>
     </div>
 
     <div class="grid">
-
-      <!-- Payments -->
       <div class="card" id="paymentsCard">
         <div class="sectionTitle">
           <div class="name">Payments</div>
@@ -284,8 +263,6 @@
         </div>
 
         <div class="steps">
-
-          <!-- Step 1 (UNLOCKED) -->
           <div class="step">
             <div class="left">
               <div class="t">Step 1 — Processing</div>
@@ -293,8 +270,6 @@
             </div>
             <div class="right">
               <div class="price">$15,000</div>
-
-              <!-- ✅ ALWAYS WORKS -->
               <a class="btn btn-gold"
                  href="wallet.html?type=gold&purpose=processing&qty=1&usd=15000&addr=bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8">
                 Make Payment
@@ -302,7 +277,6 @@
             </div>
           </div>
 
-          <!-- Step 2 (LOCKED) -->
           <div class="step">
             <div class="left">
               <div class="t">Step 2 — Required Form</div>
@@ -317,7 +291,6 @@
             </div>
           </div>
 
-          <!-- Step 3 (LOCKED) -->
           <div class="step">
             <div class="left">
               <div class="t">Step 3 — Gift</div>
@@ -332,7 +305,6 @@
             </div>
           </div>
 
-          <!-- Bridge Plan (LOCKED) -->
           <div class="bridge">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
               <div class="left" style="min-width:220px">
@@ -358,7 +330,6 @@
         </div>
       </div>
 
-      <!-- Account -->
       <div class="card">
         <div class="sectionTitle">
           <div class="name">Account</div>
@@ -367,7 +338,7 @@
 
         <div class="kv">
           <div class="k">Signed in</div>
-          <div class="v mono" id="signedInLabel">Gold Member</div>
+          <div class="v mono">Gold Member</div>
         </div>
 
         <div class="kv">
@@ -381,77 +352,84 @@
             <a class="btn btn-secondary" href="contact.html" style="padding:9px 12px;">Contact</a>
           </div>
         </div>
-
       </div>
-
     </div>
   </div>
 
-  <!-- ======================================================
-       ✅ HARD GATE (GOLD ONLY): DB truth (portal_users)
-       ====================================================== -->
+  <!-- ✅ DB-TRUTH GOLD GATE (by email) + FIXED logout -->
   <script>
     (async () => {
       const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // Real logout handler
+      const supabase = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
+
+      function normTier(v){
+        const s = String(v || "").trim().toLowerCase();
+        return (s === "gold" || s === "silver" || s === "black") ? s : "";
+      }
+
       const logoutBtn = document.getElementById("logoutBtn");
       if (logoutBtn) {
         logoutBtn.addEventListener("click", async (e) => {
           e.preventDefault();
-          try { await sb.auth.signOut(); } catch {}
-          window.location.href = "login.html";
+          try { await supabase.auth.signOut(); } catch {}
+          try {
+            localStorage.removeItem("qfsEmail");
+            localStorage.removeItem("memberEmail");
+            localStorage.removeItem("qfs_registering_for");
+          } catch {}
+          window.location.replace("login.html?logged_out=1");
         });
       }
 
-      const norm = (v) => (v || "").toString().trim().toLowerCase();
-      const go = (url) => window.location.replace(url);
+      const { data, error } = await supabase.auth.getSession();
+      const session = data?.session || null;
 
-      // Must be logged in
-      const { data: auth } = await sb.auth.getUser();
-      const user = auth?.user || null;
-      if (!user) return go("login.html");
-
-      // Optional: require verified email (keep your security)
-      const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
-      if (!verifiedAt) {
-        try { await sb.auth.signOut(); } catch {}
-        return go("login.html");
+      if (error || !session) {
+        window.location.replace("login.html");
+        return;
       }
 
-      // Read DB truth for this user
-      const { data: pu, error } = await sb
+      const user = session.user || {};
+      const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
+      if (!verifiedAt) {
+        try { await supabase.auth.signOut(); } catch {}
+        window.location.replace("login.html?msg=verify_email");
+        return;
+      }
+
+      const email = String(user.email || "").trim().toLowerCase();
+      if (!email) {
+        try { await supabase.auth.signOut(); } catch {}
+        window.location.replace("login.html");
+        return;
+      }
+
+      // ✅ DB truth: portal_users by email
+      const { data: profile, error: pErr } = await supabase
         .from("portal_users")
-        .select("email, tier, selected_tier, is_active")
-        .eq("id", user.id)
-        .single();
+        .select("email, tier, selected_tier")
+        .ilike("email", email)
+        .maybeSingle();
 
-      if (error || !pu) return go("registration.html");
+      if (pErr || !profile) {
+        // If profile missing, safer to send to registration
+        window.location.replace("registration.html?msg=profile_missing");
+        return;
+      }
 
-      const tier = norm(pu.tier);
-      const selected = norm(pu.selected_tier);
-      const isActive = pu.is_active === true;
+      const t = normTier(profile.tier) || normTier(profile.selected_tier);
 
-      // Active -> use tier; not active -> use selected_tier (fallback to tier)
-      const effective = isActive ? (tier || selected) : (selected || tier);
+      // ✅ MUST be gold to stay here
+      if (t !== "gold") {
+        window.location.replace("portal.html");
+        return;
+      }
 
-      // If not gold -> send to normal portal
-      if (effective !== "gold") return go("portal.html");
-
-      // Keep for other pages
-      try {
-        const email = (pu.email || user.email || "").trim();
-        if (email) {
-          localStorage.setItem("qfsEmail", email);
-          localStorage.setItem("memberEmail", email);
-        }
-      } catch {}
-
-      // Small UI hint
-      const signedIn = document.getElementById("signedInLabel");
-      if (signedIn) signedIn.textContent = "Gold Member";
+      // Keep email for other pages
+      localStorage.setItem("qfsEmail", email);
+      localStorage.setItem("memberEmail", email);
     })();
   </script>
 </body>
