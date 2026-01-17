@@ -172,6 +172,7 @@
     }
   </style>
 
+  <!-- Supabase JS (v2) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -220,141 +221,200 @@
   <div class="debug-badge" id="dbg">dbg: booting…</div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const dbg = document.getElementById("dbg");
-      const msg = document.getElementById("msg");
-      const setDbg = (t) => { if (dbg) dbg.textContent = "dbg: " + t; };
-      const show = (text, kind) => {
-        if (!msg) return;
-        msg.textContent = text || "";
-        msg.classList.remove("show","error","ok");
-        msg.classList.add("show");
-        if (kind === "error") msg.classList.add("error");
-        if (kind === "ok") msg.classList.add("ok");
-      };
+    // ===== Debug helpers =====
+    const dbg = document.getElementById("dbg");
+    const msg = document.getElementById("msg");
+    function setDbg(t){ if(dbg) dbg.textContent = "dbg: " + t; }
+    function show(text, kind){
+      if(!msg) return;
+      msg.textContent = text || "";
+      msg.classList.remove("show","error","ok");
+      msg.classList.add("show");
+      if(kind==="error") msg.classList.add("error");
+      if(kind==="ok") msg.classList.add("ok");
+    }
+    window.addEventListener("error", (e) => {
+      show("JS Error: " + (e?.message || "unknown"), "error");
+      setDbg("JS error");
+    });
+    window.addEventListener("unhandledrejection", (e) => {
+      show("Promise Error: " + (e?.reason?.message || e?.reason || "unknown"), "error");
+      setDbg("promise error");
+    });
 
-      window.addEventListener("error", (e) => {
-        show("JS Error: " + (e?.message || "unknown"), "error");
-        setDbg("JS error");
-      });
-      window.addEventListener("unhandledrejection", (e) => {
-        const r = e?.reason;
-        show("Promise Error: " + (r?.message || String(r || "unknown")), "error");
-        setDbg("promise error");
-      });
+    // ===== Supabase config =====
+    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-      const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+    if(!window.supabase){
+      show("Supabase library failed to load (CDN blocked).", "error");
+      setDbg("no supabase lib");
+    }
 
-      if (!window.supabase) {
-        show("Supabase library failed to load (CDN blocked).", "error");
-        setDbg("no supabase lib");
+    // IMPORTANT: avoid global name conflicts
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const elEmail = document.getElementById("email");
+    const elPass = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const signupBtn = document.getElementById("signupBtn");
+    const forgotBtn = document.getElementById("forgotBtn");
+    const resendBtn = document.getElementById("resendBtn");
+
+    function setLoading(on, label){
+      [loginBtn, signupBtn, forgotBtn, resendBtn].forEach(b => { if(b) b.disabled = !!on; });
+      if(loginBtn) loginBtn.textContent = on ? (label || "Working...") : "Login";
+    }
+
+    function normTier(v){
+      const s = String(v || "").trim().toLowerCase();
+      return (s === "gold" || s === "silver" || s === "black") ? s : "";
+    }
+
+    function routeByTier(tier){
+      return normTier(tier) === "gold" ? "portal-gold.html" : "portal.html";
+    }
+
+    async function routeAfterLoginByDbEmail(){
+      setDbg("getUser…");
+      const { data: u, error: uErr } = await sb.auth.getUser();
+      if(uErr || !u?.user){
+        setDbg("no user -> login");
+        window.location.href = "login.html";
         return;
       }
 
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-      const elEmail = document.getElementById("email");
-      const elPass = document.getElementById("password");
-      const loginBtn = document.getElementById("loginBtn");
-      const signupBtn = document.getElementById("signupBtn");
-      const forgotBtn = document.getElementById("forgotBtn");
-      const resendBtn = document.getElementById("resendBtn");
-      const toggle = document.getElementById("pwToggle");
-
-      const setLoading = (on, label) => {
-        [loginBtn, signupBtn, forgotBtn, resendBtn].forEach(b => { if (b) b.disabled = !!on; });
-        if (loginBtn) loginBtn.textContent = on ? (label || "Working...") : "Login";
-      };
-
-      async function doLogin() {
-        setDbg("login click ✅");
-
-        const email = (elEmail?.value || "").trim().toLowerCase();
-        const password = (elPass?.value || "");
-
-        if (!email || !password) {
-          show("Please enter your email and password.", "error");
-          return;
-        }
-
-        setLoading(true, "Logging in...");
-        show("", "");
-        setDbg("signInWithPassword…");
-
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-        if (error) {
-          setLoading(false);
-          setDbg("login failed");
-          show("Login failed: " + error.message, "error");
-          return;
-        }
-
-        // Store email for portal pages
-        try {
-          const uEmail = (data?.user?.email || email).trim().toLowerCase();
-          localStorage.setItem("qfsEmail", uEmail);
-          localStorage.setItem("memberEmail", uEmail);
-        } catch {}
-
-        show("Login successful. Redirecting…", "ok");
-        setDbg("login ok -> portal.html");
-
-        // ✅ IMPORTANT: Never send to registration from login
-        window.location.href = "portal.html";
+      const email = (u.user.email || "").trim().toLowerCase();
+      if(!email){
+        setDbg("no email -> login");
+        window.location.href = "login.html";
+        return;
       }
 
-      async function doForgot() {
-        const email = (elEmail?.value || "").trim().toLowerCase();
-        if (!email) { show("Enter your email first, then click Forgot Password.", "error"); return; }
+      localStorage.setItem("qfsEmail", email);
+      localStorage.setItem("memberEmail", email);
 
-        setLoading(true, "Sending…");
-        setDbg("reset email…");
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + "/reset-password.html"
-        });
+      setDbg("fetch portal_users by email…");
+
+      // ✅ DB TRUTH: query by email
+      const { data: pu, error: pErr } = await sb
+        .from("portal_users")
+        .select("email, tier, selected_tier, is_active, qty")
+        .eq("email", email)
+        .maybeSingle();
+
+      if(pErr){
+        setDbg("portal_users blocked (RLS?)");
+        show("Profile lookup blocked. Check your portal_users SELECT policy (by email).", "error");
+        return;
+      }
+
+      if(!pu){
+        setDbg("no profile -> registration");
+        window.location.href = "registration.html";
+        return;
+      }
+
+      const effectiveTier = normTier(pu.tier) || normTier(pu.selected_tier) || "silver";
+      const dest = routeByTier(effectiveTier);
+
+      setDbg("route -> " + dest + " (tier=" + effectiveTier + ")");
+      window.location.href = dest;
+    }
+
+    async function doLogin(){
+      setDbg("login click ✅");
+      const email = (elEmail.value || "").trim().toLowerCase();
+      const password = (elPass.value || "");
+
+      if(!email || !password){
+        return show("Please enter your email and password.", "error");
+      }
+
+      setLoading(true, "Logging in...");
+      show("", "");
+      setDbg("signInWithPassword…");
+
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+
+      if(error){
         setLoading(false);
-
-        if (error) { show("Failed: " + error.message, "error"); return; }
-        show("Password reset email sent. Check your inbox.", "ok");
-        setDbg("reset sent");
+        setDbg("login failed");
+        return show("Login failed: " + error.message, "error");
       }
 
-      async function doResend() {
-        const email = (elEmail?.value || "").trim().toLowerCase();
-        if (!email) { show("Enter your email first, then click Resend Verification Email.", "error"); return; }
+      show("Login successful. Redirecting…", "ok");
+      setDbg("login ok -> route by DB");
+      await routeAfterLoginByDbEmail();
+    }
 
-        setLoading(true, "Sending…");
-        setDbg("resend email…");
-        const { error } = await supabase.auth.resend({ type: "signup", email });
-        setLoading(false);
+    async function doForgot(){
+      const email = (elEmail.value || "").trim().toLowerCase();
+      if(!email) return show("Enter your email first, then click Forgot Password.", "error");
 
-        if (error) { show("Failed: " + error.message, "error"); return; }
-        show("Verification email resent. Check your inbox (and spam).", "ok");
-        setDbg("resend sent");
-      }
-
-      if (toggle && elPass) {
-        toggle.addEventListener("click", () => {
-          const isHidden = elPass.type === "password";
-          elPass.type = isHidden ? "text" : "password";
-          toggle.classList.toggle("is-showing", isHidden);
-          setDbg("PW toggle ✅");
-        });
-      }
-
-      if (loginBtn) loginBtn.addEventListener("click", doLogin);
-      if (signupBtn) signupBtn.addEventListener("click", () => window.location.href = "registration.html");
-      if (forgotBtn) forgotBtn.addEventListener("click", doForgot);
-      if (resendBtn) resendBtn.addEventListener("click", doResend);
-
-      document.addEventListener("keydown", (e) => {
-        if (e?.key === "Enter") doLogin();
+      setLoading(true, "Sending…");
+      setDbg("reset email…");
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/reset-password.html"
       });
+      setLoading(false);
 
-      setDbg("ready ✅");
+      if(error) return show("Failed: " + error.message, "error");
+      show("Password reset email sent. Check your inbox.", "ok");
+      setDbg("reset sent");
+    }
+
+    async function doResend(){
+      const email = (elEmail.value || "").trim().toLowerCase();
+      if(!email) return show("Enter your email first, then click Resend Verification Email.", "error");
+
+      setLoading(true, "Sending…");
+      setDbg("resend email…");
+      const { error } = await sb.auth.resend({ type: "signup", email });
+      setLoading(false);
+
+      if(error) return show("Failed: " + error.message, "error");
+      show("Verification email resent. Check your inbox (and spam).", "ok");
+      setDbg("resend sent");
+    }
+
+    // Password toggle
+    const passEl = document.getElementById("password");
+    const toggle = document.getElementById("pwToggle");
+    if (passEl && toggle){
+      toggle.addEventListener("click", () => {
+        const isHidden = passEl.type === "password";
+        passEl.type = isHidden ? "text" : "password";
+        toggle.classList.toggle("is-showing", isHidden);
+        setDbg("PW toggle ✅");
+      });
+    }
+
+    // Buttons
+    if(loginBtn) loginBtn.addEventListener("click", doLogin);
+    if(signupBtn) signupBtn.addEventListener("click", () => window.location.href = "registration.html");
+    if(forgotBtn) forgotBtn.addEventListener("click", doForgot);
+    if(resendBtn) resendBtn.addEventListener("click", doResend);
+
+    // Enter key
+    document.addEventListener("keydown", (e) => {
+      if(e.key === "Enter") doLogin();
     });
+
+    // If already logged in, route immediately (DB truth)
+    (async () => {
+      try{
+        const { data } = await sb.auth.getSession();
+        if(data?.session){
+          setDbg("session exists -> auto-route");
+          await routeAfterLoginByDbEmail();
+        } else {
+          setDbg("ready ✅");
+        }
+      } catch {
+        setDbg("ready ✅");
+      }
+    })();
   </script>
 
 </body>
