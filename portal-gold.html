@@ -1,391 +1,436 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Gold Portal — QFS</title>
-<meta name="robots" content="noindex, nofollow">
-<link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gold Portal — QFS</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{
+      --bg:#020617;
+      --glass1:rgba(15,23,42,0.78);
+      --glass2:rgba(15,23,42,0.92);
+      --border:rgba(148,163,184,0.42);
+      --muted:#94a3b8;
+      --text:#e5e7eb;
+      --accent:#38bdf8;
+      --accent2:#a855f7;
+      --gold:#fbbf24;
+      --emerald:#22c55e;
+      --rose:#fb7185;
+      --shadow: 0 28px 90px rgba(2,6,23,0.70);
+      --radius:26px;
+      --maxw:1120px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 480px at 15% 8%, rgba(56,189,248,0.22), transparent 55%),
+        radial-gradient(900px 480px at 85% 85%, rgba(168,85,247,0.22), transparent 55%),
+        radial-gradient(700px 360px at 75% 10%, rgba(251,191,36,0.10), transparent 55%),
+        var(--bg);
+      padding:22px;
+      display:flex;
+      justify-content:center;
+      overflow-x:hidden;
+    }
+    .blob{
+      position:fixed;
+      width:560px; height:560px;
+      filter: blur(42px);
+      opacity:.35;
+      z-index:-1;
+      border-radius:999px;
+      pointer-events:none;
+      animation: floaty 9s ease-in-out infinite;
+    }
+    .blob.b1{ left:-240px; top:-260px; background: radial-gradient(circle at 30% 30%, rgba(56,189,248,.95), transparent 60%); }
+    .blob.b2{ right:-260px; bottom:-280px; background: radial-gradient(circle at 30% 30%, rgba(168,85,247,.95), transparent 60%); animation-delay: -2s; }
+    .blob.b3{ right:10%; top:-260px; width:420px; height:420px; opacity:.22; background: radial-gradient(circle at 30% 30%, rgba(251,191,36,.95), transparent 60%); animation-delay: -4s; }
+    @keyframes floaty{
+      0%,100%{ transform: translate(0,0) scale(1); }
+      50%{ transform: translate(10px,18px) scale(1.02); }
+    }
 
-<style>
-  :root{
-    --bg:#020617;
-    --text:#e5e7eb;
-    --muted:#9ca3af;
-    --gold:#fbbf24;
-    --gold2:#f59e0b;
-    --border:rgba(148,163,184,0.45);
-    --shadow:rgba(2,6,23,0.9);
-    --maxw:1100px;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    min-height:100vh;
-    padding:24px;
-    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    color:var(--text);
-    background:
-      radial-gradient(circle at top, rgba(251,191,36,0.18), transparent 55%),
-      radial-gradient(circle at bottom, rgba(245,158,11,0.16), transparent 60%),
-      var(--bg);
-  }
+    .page{ width:100%; max-width:var(--maxw); display:flex; flex-direction:column; gap:14px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:14px 14px;
+      border:1px solid var(--border);
+      border-radius:22px;
+      background: linear-gradient(145deg, rgba(15,23,42,0.90), rgba(15,23,42,0.72));
+      backdrop-filter: blur(26px);
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .topbar:before{
+      content:""; position:absolute; inset:-2px;
+      background: linear-gradient(90deg, rgba(56,189,248,0.0), rgba(56,189,248,0.18), rgba(168,85,247,0.18), rgba(251,191,36,0.10), rgba(56,189,248,0.0));
+      filter: blur(14px);
+      opacity:.9;
+      pointer-events:none;
+    }
+    .brand{ display:flex; gap:12px; align-items:center; min-width: 240px; position:relative; z-index:1; }
+    .brand img{
+      width:46px; height:46px; border-radius:14px; object-fit:cover;
+      border:1px solid rgba(255,255,255,0.16);
+      box-shadow:0 18px 38px rgba(56,189,248,0.18);
+    }
+    .brand .t1{ font-weight:950; letter-spacing:0.08em; font-size:12px; text-transform:uppercase; color: rgba(226,232,240,0.92); }
+    .brand .t2{ margin-top:2px; display:flex; gap:8px; align-items:center; color:rgba(148,163,184,0.95); font-size:12px; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 11px; border-radius:999px;
+      border:1px solid rgba(148,163,184,0.42);
+      background: rgba(255,255,255,0.06);
+      font-weight:900; font-size:11px; letter-spacing:0.10em; text-transform:uppercase;
+      color: rgba(226,232,240,0.92);
+      white-space:nowrap;
+    }
+    .dot{ width:8px; height:8px; border-radius:50%; background:var(--muted); }
+    .dot.ok{ background: var(--emerald); box-shadow:0 0 0 4px rgba(34,197,94,0.14); }
+    .dot.lock{ background: var(--gold); box-shadow:0 0 0 4px rgba(251,191,36,0.12); }
 
-  .wrap{ max-width:var(--maxw); margin:0 auto; position:relative; z-index:1; }
+    .actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; position:relative; z-index:1; }
+    .btn{
+      padding:10px 14px; border-radius:999px; border:none; cursor:pointer;
+      font-weight:900; letter-spacing:0.10em; text-transform:uppercase;
+      font-size:11px; display:inline-flex; gap:8px; align-items:center; justify-content:center;
+      text-decoration:none; white-space:nowrap; user-select:none;
+      transition: transform .15s ease, filter .15s ease, opacity .15s ease;
+    }
+    .btn:active{ transform: translateY(1px) scale(0.99); }
+    .btn-secondary{ background:rgba(255,255,255,0.07); border:1px solid rgba(148,163,184,0.40); color:var(--text); }
+    .btn-secondary:hover{ filter: brightness(1.10); }
+    .btn-primary{ background: linear-gradient(135deg, var(--accent), var(--accent2)); color:#fff; box-shadow: 0 18px 40px rgba(56,189,248,0.16); }
+    .btn-primary:hover{ filter: brightness(1.06); }
+    .btn-gold{ background: linear-gradient(135deg, rgba(251,191,36,1), rgba(245,158,11,1)); color:#0b1020; box-shadow: 0 18px 40px rgba(251,191,36,0.14); }
+    .btn-gold:hover{ filter: brightness(1.04); }
 
-  .header, .header *{
-    position:relative;
-    z-index:999999;
-    pointer-events:auto !important;
-  }
+    .btn-disabled{
+      opacity:.50 !important;
+      cursor:not-allowed !important;
+      pointer-events:none !important;
+      filter:saturate(.8);
+    }
 
-  .header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:14px;
-    margin-bottom:18px;
-  }
-  .brand{ display:flex; align-items:center; gap:12px; }
-  .logo{
-    width:54px; height:54px;
-    border-radius:14px;
-    object-fit:cover;
-    box-shadow:
-      0 14px 44px rgba(2,6,23,0.95),
-      0 0 0 1px rgba(148,163,184,0.35);
-  }
-  .brand h1{ margin:0; font-size:18px; font-weight:900; letter-spacing:-0.02em; }
-  .subline{
-    font-size:12px;
-    color:var(--muted);
-    display:flex;
-    gap:8px;
-    align-items:center;
-    flex-wrap:wrap;
-    margin-top:2px;
-  }
-  .hello{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:4px 10px;
-    border-radius:999px;
-    border:1px solid rgba(148,163,184,0.25);
-    background:rgba(255,255,255,0.05);
-    color:#fde68a;
-    font-weight:850;
-    font-size:12px;
-  }
+    .grid{ display:grid; grid-template-columns: 1.12fr 0.88fr; gap:14px; align-items:start; }
+    @media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
 
-  .actions{
-    display:flex;
-    gap:10px;
-    align-items:center;
-    flex-wrap:wrap;
-    justify-content:flex-end;
-  }
+    .card{
+      border:1px solid rgba(148,163,184,0.35);
+      border-radius:var(--radius);
+      background: linear-gradient(145deg, var(--glass2), var(--glass1));
+      backdrop-filter: blur(28px);
+      box-shadow: var(--shadow);
+      padding:16px;
+      position:relative;
+      overflow:hidden;
+    }
+    .card:before{
+      content:""; position:absolute; inset:0;
+      background:
+        radial-gradient(600px 260px at 20% 0%, rgba(56,189,248,0.10), transparent 60%),
+        radial-gradient(520px 240px at 85% 85%, rgba(168,85,247,0.10), transparent 60%);
+      pointer-events:none;
+    }
+    .card > *{ position:relative; z-index:1; }
 
-  .badge{
-    padding:6px 10px;
-    border-radius:999px;
-    font-size:11px;
-    font-weight:900;
-    letter-spacing:0.06em;
-    text-transform:uppercase;
-    border:1px solid rgba(251,191,36,0.30);
-    background:rgba(2,6,23,0.40);
-    color:#fde68a;
-  }
-  .badge.active{ border-color: rgba(34,197,94,0.35); color:#bbf7d0; }
-  .badge.rejected{ border-color: rgba(244,63,94,0.35); color:#fecdd3; }
+    .sectionTitle{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .sectionTitle .name{ font-weight:950; letter-spacing:0.12em; text-transform:uppercase; font-size:12px; color: rgba(226,232,240,0.92); }
 
-  #logoutBtn{
-    padding:8px 12px;
-    border-radius:999px;
-    border:1px solid rgba(148,163,184,0.35);
-    background:rgba(255,255,255,0.06);
-    color:var(--text);
-    font-weight:900;
-    font-size:12px;
-    cursor:pointer;
-  }
+    .heroStripe{
+      border-radius:22px;
+      padding:14px;
+      border:1px solid rgba(148,163,184,0.30);
+      background: linear-gradient(135deg, rgba(56,189,248,0.10), rgba(168,85,247,0.10)), rgba(255,255,255,0.04);
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
+    .heroStripe .big{ font-weight:950; font-size:18px; letter-spacing:0.02em; display:flex; align-items:center; gap:10px; }
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px; border-radius:999px;
+      border:1px solid rgba(148,163,184,0.38);
+      background: rgba(0,0,0,0.18);
+      font-size:11px; letter-spacing:0.10em; text-transform:uppercase;
+      font-weight:900; color: rgba(226,232,240,0.92);
+      white-space:nowrap;
+    }
 
-  .grid{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:18px;
-  }
-  @media (max-width:860px){ .grid{ grid-template-columns:1fr; } }
+    .steps{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
+    .step{
+      border-radius:22px;
+      border:1px solid rgba(148,163,184,0.30);
+      background: rgba(255,255,255,0.04);
+      padding:12px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
+    .left{ display:flex; flex-direction:column; gap:4px; min-width:220px; }
+    .step .t{ font-weight:950; }
+    .step .s{ color:rgba(148,163,184,0.95); font-size:12px; }
+    .right{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
 
-  .card{
-    background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.84));
-    border:1px solid var(--border);
-    border-radius:28px;
-    padding:20px;
-    box-shadow: 0 28px 110px var(--shadow);
-    backdrop-filter: blur(26px);
-    position:relative;
-    overflow:hidden;
-    z-index:1;
-  }
-  .card:before{
-    content:"";
-    position:absolute;
-    inset:-120px -120px auto auto;
-    width:320px;
-    height:320px;
-    background: radial-gradient(circle at center, rgba(251,191,36,0.14), transparent 60%);
-    pointer-events:none;
-  }
+    .price{
+      font-weight:950;
+      letter-spacing:0.02em;
+      font-size:13px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,0.34);
+      background: rgba(0,0,0,0.16);
+      white-space:nowrap;
+    }
 
-  .card h2{ margin:0 0 6px; font-size:16px; font-weight:900; }
-  .sub{ font-size:12px; color:var(--muted); }
+    .bridge{
+      margin-top:10px;
+      border-radius:22px;
+      border:1px solid rgba(148,163,184,0.30);
+      background: rgba(255,255,255,0.04);
+      padding:12px;
+    }
+    select{
+      background:#0b1220;
+      color:var(--text);
+      border:1px solid rgba(148,163,184,0.40);
+      border-radius:999px;
+      padding:10px 12px;
+      outline:none;
+      font-weight:800;
+    }
 
-  .hero{
-    font-size:30px;
-    font-weight:950;
-    margin:10px 0 6px;
-    background:linear-gradient(135deg, var(--gold), var(--gold2));
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-  }
-
-  .statusBox{
-    margin-top:10px;
-    padding:10px 12px;
-    border-radius:14px;
-    background:rgba(2,6,23,0.45);
-    border:1px solid rgba(148,163,184,0.35);
-    font-size:12px;
-  }
-
-  table{ width:100%; border-collapse:collapse; margin-top:10px; font-size:12px; }
-  th, td{ padding:10px 8px; border-bottom:1px solid rgba(148,163,184,0.2); text-align:left; }
-  th{ color:var(--muted); font-weight:700; text-transform:uppercase; font-size:11px; }
-
-  #toast{
-    position:fixed;
-    left:12px;
-    bottom:12px;
-    z-index:9999999;
-    background:rgba(2,6,23,0.75);
-    border:1px solid rgba(148,163,184,0.35);
-    color:#cbd5e1;
-    padding:8px 10px;
-    border-radius:12px;
-    font-size:12px;
-    user-select:none;
-    max-width:min(520px, 92vw);
-    white-space:pre-wrap;
-  }
-</style>
+    .kv{
+      display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap;
+      padding:12px;
+      border-radius:22px;
+      border:1px solid rgba(148,163,184,0.30);
+      background: rgba(255,255,255,0.04);
+    }
+    .kv .k{ color:rgba(148,163,184,0.95); font-size:11px; letter-spacing:0.12em; text-transform:uppercase; font-weight:900; }
+    .kv .v{ font-weight:900; font-size:12px; color:rgba(226,232,240,0.92); }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .note{ margin-top:10px; color:rgba(148,163,184,0.95); font-size:12px; line-height:1.5; }
+  </style>
 </head>
 
 <body>
-<div class="wrap">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
 
-  <header class="header">
-    <div class="brand">
-      <img class="logo"
-        src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true"
-        alt="QFS NESARA GESARA" />
-      <div>
-        <h1>Gold Portal</h1>
-        <div class="subline">
-          <span>QFS NESARA GESARA</span>
-          <span class="hello" id="helloName">Hi, Member</span>
+  <div class="page">
+    <div class="topbar">
+      <div class="brand">
+        <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="QFS Logo">
+        <div>
+          <div class="t1">Gold Portal</div>
+          <div class="t2">
+            <span class="pill"><span class="dot ok"></span> Ready</span>
+            <span class="pill"><span class="dot lock"></span> Locked Steps</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-secondary" href="index.html">Home</a>
+        <a class="btn btn-gold"
+           href="wallet.html?type=gold&purpose=processing&qty=1&usd=15000&addr=bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8">
+          Make Payment
+        </a>
+        <a class="btn btn-primary" href="#" id="logoutBtn">Logout</a>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card" id="paymentsCard">
+        <div class="sectionTitle">
+          <div class="name">Payments</div>
+          <div class="badge">EB-1 / EB-2</div>
+        </div>
+
+        <div class="heroStripe">
+          <div class="big"><span class="dot ok"></span> Gold Pathway</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <span class="badge">Processing: $15,000</span>
+            <span class="badge">Gift: $1,000,000</span>
+          </div>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="left">
+              <div class="t">Step 1 — Processing</div>
+              <div class="s">Fixed amount</div>
+            </div>
+            <div class="right">
+              <div class="price">$15,000</div>
+              <a class="btn btn-gold"
+                 href="wallet.html?type=gold&purpose=processing&qty=1&usd=15000&addr=bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8">
+                Make Payment
+              </a>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="left">
+              <div class="t">Step 2 — Required Form</div>
+              <div class="s">Unlocks after Step 1 confirmation</div>
+            </div>
+            <div class="right">
+              <a class="btn btn-secondary btn-disabled"
+                 href="https://www.uscis.gov/i-140g"
+                 target="_blank" rel="noopener">
+                Open Form
+              </a>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="left">
+              <div class="t">Step 3 — Gift</div>
+              <div class="s">Unlocks after approval</div>
+            </div>
+            <div class="right">
+              <div class="price">$1,000,000</div>
+              <a class="btn btn-primary btn-disabled"
+                 href="wallet.html?type=gold&purpose=gift&qty=1&usd=1000000&addr=bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8">
+                Pay
+              </a>
+            </div>
+          </div>
+
+          <div class="bridge">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+              <div class="left" style="min-width:220px">
+                <div class="t" style="font-weight:950;">Bridge Plan</div>
+                <div class="s">2× / 4× / 10× (locked)</div>
+              </div>
+
+              <div class="right">
+                <span class="pill"><span class="dot lock"></span> Locked</span>
+                <select disabled>
+                  <option>2 payments</option>
+                  <option>4 payments</option>
+                  <option>10 payments</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="note">
+              Bridge payments will activate automatically once your processing payment is confirmed and your application is approved.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle">
+          <div class="name">Account</div>
+          <div class="badge">GOLD</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Signed in</div>
+          <div class="v mono">Gold Member</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Next</div>
+          <div class="v">Pay processing fee</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Support</div>
+          <div class="v">
+            <a class="btn btn-secondary" href="contact.html" style="padding:9px 12px;">Contact</a>
+          </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="actions">
-      <span id="statusBadge" class="badge">Pending</span>
-      <button id="logoutBtn" type="button">Logout</button>
-    </div>
-  </header>
+  <!-- ✅ DB-TRUTH GOLD GATE (by email) + FIXED logout -->
+  <script>
+    (async () => {
+      const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-  <section class="grid">
-    <div class="card">
-      <h2>Gold Membership</h2>
-      <!-- ✅ hide when active -->
-      <div class="sub" id="goldHelp">Your gold access becomes active after confirmation.</div>
-      <div class="hero">Gold Access</div>
-      <div class="statusBox" id="statusBox">🔒 Locked until activation.</div>
-      <div class="sub" style="margin-top:10px;" id="lastChecked">Checking status…</div>
-    </div>
+      const supabase = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
 
-    <div class="card">
-      <h2>Account Details</h2>
-      <div class="sub">Gold member profile</div>
+      function normTier(v){
+        const s = String(v || "").trim().toLowerCase();
+        return (s === "gold" || s === "silver" || s === "black") ? s : "";
+      }
 
-      <table>
-        <tr><th>Name</th><td id="nameCell">—</td></tr>
-        <tr><th>Email</th><td id="emailCell">—</td></tr>
-        <tr><th>Tier</th><td id="tierCell">GOLD</td></tr>
-        <tr><th>Status</th><td id="statusCell">Pending</td></tr>
-      </table>
-    </div>
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          try { await supabase.auth.signOut(); } catch {}
+          try {
+            localStorage.removeItem("qfsEmail");
+            localStorage.removeItem("memberEmail");
+            localStorage.removeItem("qfs_registering_for");
+          } catch {}
+          window.location.replace("login.html?logged_out=1");
+        });
+      }
 
-    <div class="card" style="grid-column:1 / -1;">
-      <h2>Gold Features</h2>
-      <div class="sub">This area can hold gold-only benefits (coming next).</div>
-      <div class="statusBox" style="margin-top:10px;">
-        ✅ Priority support • ✅ Enhanced access • ✅ Premium portal layout
-      </div>
-    </div>
-  </section>
-
-</div>
-
-<div id="toast">boot…</div>
-
-<script>
-  const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-
-  const $ = (id) => document.getElementById(id);
-  const toast = $("toast");
-  const say = (t) => { if(toast) toast.textContent = String(t || ""); };
-
-  function pickNameFromUser(user){
-    const md = user?.user_metadata || {};
-    const raw =
-      md.full_name ||
-      md.name ||
-      md.first_name ||
-      md.username ||
-      md.display_name ||
-      "";
-    const cleaned = String(raw || "").trim();
-    if(cleaned) return cleaned;
-
-    const email = String(user?.email || "").trim();
-    if(email && email.includes("@")){
-      const left = email.split("@")[0] || "";
-      const pretty = left.replace(/[._-]+/g, " ").replace(/\s+/g, " ").trim();
-      if(pretty) return pretty.charAt(0).toUpperCase() + pretty.slice(1);
-    }
-    return "Member";
-  }
-
-  function hardToLogin(){
-    try{
-      localStorage.removeItem("qfsEmail");
-      localStorage.removeItem("memberEmail");
-      localStorage.removeItem("qfs_registering_for");
-    } catch {}
-    window.location.replace("login.html");
-  }
-
-  function setBadge(status){
-    const b = $("statusBadge");
-    b.classList.remove("active","rejected");
-    if(status === "confirmed"){
-      b.textContent = "Active";
-      b.classList.add("active");
-    } else if(status === "rejected"){
-      b.textContent = "Rejected";
-      b.classList.add("rejected");
-    } else {
-      b.textContent = "Pending";
-    }
-  }
-
-  function setActiveUI(isActive){
-    const help = $("goldHelp");
-    const box = $("statusBox");
-    if(isActive){
-      help.style.display = "none";
-      box.textContent = "✅ Gold account active — premium access enabled.";
-    } else {
-      help.style.display = "block";
-      box.textContent = "🔒 Locked until activation.";
-    }
-  }
-
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  async function getDbProfileByEmail(email){
-    return await sb
-      .from("portal_users")
-      .select("email, tier, selected_tier, qty, is_active")
-      .eq("email", email)
-      .maybeSingle();
-  }
-
-  $("logoutBtn").addEventListener("click", async () => {
-    say("Signing out…");
-    try{ await sb.auth.signOut(); } catch {}
-    hardToLogin();
-  });
-
-  (async () => {
-    try{
-      say("Checking session…");
-      const { data } = await sb.auth.getSession();
+      const { data, error } = await supabase.auth.getSession();
       const session = data?.session || null;
-      if(!session) return hardToLogin();
 
-      const user = session.user || {};
-      const email = (user.email || "").trim().toLowerCase();
-      if(!email) return hardToLogin();
-
-      const name = pickNameFromUser(user);
-      $("helloName").textContent = "Hi, " + name;
-      $("nameCell").textContent = name;
-      $("emailCell").textContent = email;
-
-      say("Fetching profile by email…");
-      const { data: profile, error } = await getDbProfileByEmail(email);
-      if(error){
-        say("Profile SELECT blocked (RLS). portal_users read policy must allow this email.");
-        setActiveUI(false);
-        setBadge("pending");
+      if (error || !session) {
+        window.location.replace("login.html");
         return;
       }
-      if(!profile){
-        say("No profile row → registration");
-        return window.location.replace("registration.html");
+
+      const user = session.user || {};
+      const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
+      if (!verifiedAt) {
+        try { await supabase.auth.signOut(); } catch {}
+        window.location.replace("login.html?msg=verify_email");
+        return;
       }
 
-      const tier = String(profile.tier || profile.selected_tier || "gold").toLowerCase();
-      $("tierCell").textContent = tier.toUpperCase();
-
-      // Safety: if user is not gold anymore, route back to portal.html
-      if(tier !== "gold"){
-        say("Not gold → redirect portal.html");
-        return window.location.replace("portal.html");
+      const email = String(user.email || "").trim().toLowerCase();
+      if (!email) {
+        try { await supabase.auth.signOut(); } catch {}
+        window.location.replace("login.html");
+        return;
       }
 
-      const active = profile.is_active === true;
-      $("statusCell").textContent = active ? "Active" : "Pending";
-      setBadge(active ? "confirmed" : "pending");
-      setActiveUI(active);
+      // ✅ DB truth: portal_users by email
+      const { data: profile, error: pErr } = await supabase
+        .from("portal_users")
+        .select("email, tier, selected_tier")
+        .ilike("email", email)
+        .maybeSingle();
 
-      $("lastChecked").textContent = "Last checked: " + new Date().toLocaleString();
-      say("Loaded ✅");
+      if (pErr || !profile) {
+        // If profile missing, safer to send to registration
+        window.location.replace("registration.html?msg=profile_missing");
+        return;
+      }
 
-      setInterval(async () => {
-        const { data: p2 } = await getDbProfileByEmail(email);
-        if(p2){
-          const t2 = String(p2.tier || p2.selected_tier || "gold").toLowerCase();
-          if(t2 !== "gold") return window.location.replace("portal.html");
-          const a2 = p2.is_active === true;
-          $("statusCell").textContent = a2 ? "Active" : "Pending";
-          setBadge(a2 ? "confirmed" : "pending");
-          setActiveUI(a2);
-          $("lastChecked").textContent = "Last checked: " + new Date().toLocaleString();
-        }
-      }, 20000);
+      const t = normTier(profile.tier) || normTier(profile.selected_tier);
 
-    } catch(e){
-      say("Boot error: " + (e?.message || e));
-    }
-  })();
-</script>
+      // ✅ MUST be gold to stay here
+      if (t !== "gold") {
+        window.location.replace("portal.html");
+        return;
+      }
 
+      // Keep email for other pages
+      localStorage.setItem("qfsEmail", email);
+      localStorage.setItem("memberEmail", email);
+    })();
+  </script>
 </body>
 </html>
