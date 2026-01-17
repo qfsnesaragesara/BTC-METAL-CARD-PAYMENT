@@ -35,14 +35,13 @@
       var(--bg);
   }
 
-  /* ✅ “Force header above everything” + clickable */
+  /* ✅ Force header above everything + clickable */
   .wrap{ max-width:var(--maxw); margin:0 auto; position:relative; z-index:1; }
   .header,
   .header-actions,
   .pill,
   .badge,
-  #logoutBtn,
-  #logoutLink{
+  #logoutBtn{
     position:relative;
     z-index:999999;
     pointer-events:auto !important;
@@ -70,7 +69,27 @@
     font-weight:900;
     letter-spacing:-0.02em;
   }
-  .brand span{ font-size:12px; color:var(--muted); }
+  .brand .subline{
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-top:2px;
+  }
+  .hello{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 10px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,0.25);
+    background:rgba(255,255,255,0.05);
+    color:#dbeafe;
+    font-weight:850;
+    font-size:12px;
+  }
 
   .header-actions{
     display:flex;
@@ -79,22 +98,7 @@
     flex-wrap:wrap;
     justify-content:flex-end;
   }
-  .pill{
-    padding:8px 12px;
-    border-radius:999px;
-    border:1px solid rgba(148,163,184,0.35);
-    background:rgba(255,255,255,0.06);
-    color:var(--text);
-    font-weight:850;
-    font-size:12px;
-    text-decoration:none;
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    cursor:pointer;
-  }
 
-  /* ✅ Make logout a real button (no href loop) */
   #logoutBtn{
     padding:8px 12px;
     border-radius:999px;
@@ -146,7 +150,7 @@
     width:320px;
     height:320px;
     background: radial-gradient(circle at center, rgba(56,189,248,0.18), transparent 60%);
-    pointer-events:none; /* ✅ never block clicks */
+    pointer-events:none;
   }
 
   .card h2{ margin:0 0 6px; font-size:16px; font-weight:900; }
@@ -219,7 +223,6 @@
 
   .mutedline{ color:var(--muted); font-size:12px; margin-top:8px; }
 
-  /* Small toast (debug/status) */
   #toast{
     position:fixed;
     left:12px;
@@ -248,13 +251,15 @@
         alt="QFS NESARA GESARA" />
       <div>
         <h1>Member Portal</h1>
-        <span>QFS NESARA GESARA</span>
+        <div class="subline">
+          <span>QFS NESARA GESARA</span>
+          <span class="hello" id="helloName" style="display:none;">Hi, —</span>
+        </div>
       </div>
     </div>
 
     <div class="header-actions">
       <span id="statusBadge" class="badge pending">Pending</span>
-      <!-- ✅ real button, no href loop -->
       <button id="logoutBtn" type="button">Logout</button>
     </div>
   </header>
@@ -263,7 +268,8 @@
 
     <div class="card">
       <h2>Available Balance</h2>
-      <div class="sub">Balance becomes active after you order your access card</div>
+      <!-- ✅ this line will auto-hide when Active -->
+      <div class="sub" id="balanceHelp">Balance becomes active after you order your access card</div>
 
       <div class="balance" id="balance">$0.00</div>
       <div class="btc" id="btcBalance">—</div>
@@ -285,6 +291,10 @@
       <div class="sub">Your Membership Balance</div>
 
       <table>
+        <tr>
+          <th>Name</th>
+          <td id="nameCell">—</td>
+        </tr>
         <tr>
           <th>Email</th>
           <td id="emailCell">—</td>
@@ -331,11 +341,7 @@
 
 <div id="toast">boot…</div>
 
-<!-- ✅ IMPORTANT: only ONE app script, at the bottom -->
 <script>
-  /*********************************************************
-   * CONFIG — Supabase credentials
-   *********************************************************/
   const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
@@ -346,6 +352,30 @@
   function normTier(v){
     const s = String(v || "").trim().toLowerCase();
     return (s === "gold" || s === "silver" || s === "black") ? s : "";
+  }
+
+  function pickNameFromUser(user){
+    const md = user?.user_metadata || {};
+    const raw =
+      md.full_name ||
+      md.name ||
+      md.first_name ||
+      md.username ||
+      md.display_name ||
+      "";
+    const cleaned = String(raw || "").trim();
+    if(cleaned) return cleaned;
+
+    const email = String(user?.email || "").trim();
+    if(email && email.includes("@")){
+      const left = email.split("@")[0] || "";
+      const pretty = left
+        .replace(/[._-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      if(pretty) return pretty.charAt(0).toUpperCase() + pretty.slice(1);
+    }
+    return "Member";
   }
 
   function setBadge(status){
@@ -370,7 +400,9 @@
     $("receiveBtn").classList.add("btn-disabled");
     $("sendBtn").classList.remove("btn-primary");
     $("receiveBtn").classList.remove("btn-primary");
+    $("lockNote").style.display = "block";
     $("lockNote").textContent = "🔒 Send & Receive are locked until you activate your access card.";
+    $("balanceHelp").style.display = "block";
   }
 
   function unlockActions(){
@@ -383,6 +415,9 @@
     $("sendBtn").classList.add("btn-primary");
     $("receiveBtn").classList.add("btn-primary");
 
+    // ✅ Smart UI: remove “order your access card” help when active
+    $("balanceHelp").style.display = "none";
+    $("lockNote").style.display = "block";
     $("lockNote").textContent = "✅ Account Active — Send & Receive are unlocked.";
   }
 
@@ -430,7 +465,6 @@
   }
 
   function hardToLogin(){
-    // ✅ kill loops: clear storage + force navigate
     try{
       localStorage.removeItem("qfsEmail");
       localStorage.removeItem("memberEmail");
@@ -439,10 +473,6 @@
     window.location.replace("login.html");
   }
 
-  // ✅ Single Supabase client (avoid “already declared” + multiple clients)
-  if(!window.supabase || typeof window.supabase.createClient !== "function"){
-    say("Supabase CDN failed to load.");
-  }
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   async function getSessionOrKick(){
@@ -452,7 +482,6 @@
   }
 
   async function getDbProfileByEmail(email){
-    // ✅ DB truth by email
     return await sb
       .from("portal_users")
       .select("email, tier, selected_tier, qty, is_active")
@@ -467,25 +496,24 @@
     const tier = (profile?.tier || profile?.selected_tier || "").toUpperCase();
     let qty = Number(profile?.qty || 0) || 0;
 
-    // Normalize by tier rules
     if (tier === "BLACK") qty = 1;
     if (tier === "SILVER" && qty > 50) qty = 50;
     if (!Number.isFinite(qty) || qty < 1) qty = 1;
 
-    // Default UI
+    // default pending UI
     lockActions();
     setBadge("pending");
     $("statusCell").textContent = "Pending";
     setAllocationUI(tier, qty);
 
-    // Activation from DB truth
+    // Activation from DB
     if (profile?.is_active === true) {
       $("statusCell").textContent = "Active";
       setBadge("confirmed");
       unlockActions();
     }
 
-    // Optional: reflect latest payment_submissions status by email
+    // Also reflect latest payment_submissions status by email (doesn’t override tier routing)
     const email = (profile?.email || "").trim().toLowerCase();
     if (email) {
       try {
@@ -527,7 +555,6 @@
     }
   }
 
-  // Buttons
   $("sendBtn").addEventListener("click", () => {
     alert("Send is enabled for Active accounts. (Next step: build real Send flow.)");
   });
@@ -535,28 +562,28 @@
     alert("Receive is enabled for Active accounts. (Next step: build real Receive flow.)");
   });
 
-  // ✅ Logout that cannot loop
   $("logoutBtn").addEventListener("click", async () => {
     say("Signing out…");
     try{ await sb.auth.signOut(); } catch {}
     hardToLogin();
   });
 
-  // Boot
   (async () => {
     try{
       say("Checking session…");
       const session = await getSessionOrKick();
-      if(!session){
-        say("No session → login");
-        return hardToLogin();
-      }
+      if(!session) return hardToLogin();
 
       const user = session.user || {};
       const email = (user.email || "").trim().toLowerCase();
-      if(!email){
-        say("No email → login");
-        return hardToLogin();
+      if(!email) return hardToLogin();
+
+      const name = pickNameFromUser(user);
+      $("nameCell").textContent = name;
+      const hello = $("helloName");
+      if(hello){
+        hello.style.display = "inline-flex";
+        hello.textContent = "Hi, " + name;
       }
 
       $("emailCell").textContent = email;
@@ -565,12 +592,11 @@
         localStorage.setItem("memberEmail", email);
       } catch {}
 
-      say("Fetching profile (portal_users) by email…");
+      say("Fetching profile by email…");
       const { data: profile, error } = await getDbProfileByEmail(email);
 
       if(error){
-        // This is the “RLS blocking SELECT” case
-        say("Profile SELECT blocked (RLS). Fix portal_users read policy by email.");
+        say("Profile SELECT blocked (RLS). portal_users read policy must allow this email.");
         lockActions();
         return;
       }
@@ -582,19 +608,16 @@
 
       const effectiveTier = normTier(profile.tier) || normTier(profile.selected_tier);
       if(effectiveTier === "gold"){
-        // ✅ Gold NEVER stays here
         say("Gold detected → redirect portal-gold.html");
         return window.location.replace("portal-gold.html");
       }
 
-      say("Loaded: tier=" + (effectiveTier || "unknown") + " ✅");
+      say("Loaded ✅");
       await checkStatusAndUpdateUI(profile);
 
-      // Refresh profile periodically (still by email, not user.id)
       setInterval(async () => {
         const { data: p2 } = await getDbProfileByEmail(email);
         if(p2){
-          // If tier changed to gold later, redirect immediately
           const t2 = normTier(p2.tier) || normTier(p2.selected_tier);
           if(t2 === "gold") return window.location.replace("portal-gold.html");
           await checkStatusAndUpdateUI(p2);
