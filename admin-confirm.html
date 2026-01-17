@@ -6,8 +6,6 @@
   <title>Admin Confirm — QFS</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
-
-  <!-- Supabase JS (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -154,7 +152,7 @@
         <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="QFS Logo">
         <div>
           <div class="t1">Admin Confirm</div>
-          <div class="t2">Approve TXID + email in 1 click</div>
+          <div class="t2">Approve in 1 click (updates portal_users by email)</div>
         </div>
       </div>
 
@@ -187,8 +185,8 @@
     <div id="pendingCard" class="card" style="display:none;">
       <div class="row" style="justify-content:space-between;">
         <div>
-          <div class="pill"><span class="dot ok"></span> Pending Confirmations</div>
-          <div class="muted" style="margin-top:6px;">Approve matches by TXID + email.</div>
+          <div class="pill"><span class="dot ok"></span> Pending Submissions</div>
+          <div class="muted" style="margin-top:6px;">Approving sets status=confirmed + activates portal_users by email.</div>
         </div>
         <div class="row">
           <button id="refreshBtn" class="btn btn-secondary" type="button">Refresh</button>
@@ -203,10 +201,9 @@
             <tr>
               <th>Created</th>
               <th>Email</th>
-              <th>TXID</th>
               <th>Card</th>
               <th>Qty</th>
-              <th>USD</th>
+              <th>Note</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -218,11 +215,10 @@
   </div>
 
   <script>
-    // ✅ Your real Supabase project details
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Elements
     const loginCard = document.getElementById("loginCard");
     const pendingCard = document.getElementById("pendingCard");
     const sessionPill = document.getElementById("sessionPill");
@@ -263,148 +259,226 @@
     function fmtDate(ts){
       try { return new Date(ts).toLocaleString(); } catch { return ts; }
     }
-    function shortTxid(txid){
-      if(!txid) return "";
-      const t = String(txid);
-      return t.length > 18 ? (t.slice(0,10) + "…" + t.slice(-8)) : t;
+
+    function normTier(v){
+      const s = String(v || "").trim().toLowerCase();
+      if (s === "gold" || s === "silver" || s === "black") return s;
+      return "";
+    }
+    function normQty(tier, qty){
+      let q = Number(qty || 0);
+      if (!Number.isFinite(q) || q < 1) q = 1;
+      if (tier === "black") q = 1;
+      if (tier === "silver") q = Math.min(50, Math.max(1, q));
+      if (tier === "gold") q = Math.max(1, q);
+      return q;
     }
 
-    function supaReady(){
-      return (window.supabase && typeof window.supabase.createClient === "function");
+    async function requireAdmin(){
+      const { data, error } = await supabase.rpc("is_admin");
+      if(error) return { ok:false, reason:error.message };
+      if(data !== true) return { ok:false, reason:"Not an admin" };
+      return { ok:true };
     }
 
-    // ---- Boot + client creation with hard errors shown
-    if(!supaReady()){
-      setPill("Supabase JS failed to load", false);
-      showToast(loginToast, "Supabase library not found.\nIf you use strict CSP, allow cdn.jsdelivr.net.\nAlso hard refresh: Ctrl+Shift+R");
-      loginBtn.disabled = true;
-    } else {
-      // Create client
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    async function upsertPortalUserByEmail(emailRaw, tierRaw, qtyRaw, makeActive){
+      const email = String(emailRaw || "").trim().toLowerCase();
+      const tier = normTier(tierRaw) || "silver";
+      const qty = normQty(tier, qtyRaw);
 
-      async function loadPending(){
-        rowsEl.innerHTML = `<tr><td colspan="7" class="muted">Loading…</td></tr>`;
-        const { data, error } = await supabase.rpc("list_pending_confirmations");
+      if(!email) return { ok:false, error:"Missing email" };
 
-        if(error){
-          rowsEl.innerHTML = `<tr><td colspan="7" class="muted">Error: ${error.message}</td></tr>`;
-          showToast(pendingToast, "RPC error: " + error.message);
-          return;
-        }
-        if(!data || data.length === 0){
-          rowsEl.innerHTML = `<tr><td colspan="7" class="muted">No pending confirmations.</td></tr>`;
-          return;
-        }
+      const payload = {
+        email,
+        tier,
+        selected_tier: tier,
+        qty,
+        is_active: makeActive ? true : false,
+      };
 
-        rowsEl.innerHTML = "";
-        data.forEach((r) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="muted">${fmtDate(r.created_at)}</td>
-            <td class="mono">${r.email}</td>
-            <td class="mono" title="${r.txid}">${shortTxid(r.txid)}</td>
-            <td><span class="pill">${String(r.card_type).toUpperCase()}</span></td>
-            <td>${r.qty}</td>
-            <td>$${Number(r.amount_usd || 0).toLocaleString()}</td>
-            <td>
-              <button class="btn btn-primary" type="button"
-                data-email="${encodeURIComponent(r.email)}"
-                data-txid="${encodeURIComponent(r.txid)}">
-                Approve
-              </button>
-            </td>
-          `;
-          rowsEl.appendChild(tr);
-        });
+      const { error } = await supabase
+        .from("portal_users")
+        .upsert(payload, { onConflict: "email" });
 
-        rowsEl.querySelectorAll("button[data-email]").forEach(btn => {
-          btn.addEventListener("click", async () => {
-            const email = decodeURIComponent(btn.dataset.email || "");
-            const txid = decodeURIComponent(btn.dataset.txid || "");
+      if(error) return { ok:false, error:error.message };
+      return { ok:true, email, tier, qty };
+    }
 
-            btn.disabled = true;
-            btn.textContent = "Approving…";
+    async function loadPending(){
+      rowsEl.innerHTML = `<tr><td colspan="6" class="muted">Loading…</td></tr>`;
 
-            const { data, error } = await supabase.rpc("approve_payment_confirmation", {
-              p_email: email,
-              p_txid: txid
-            });
+      const { data, error } = await supabase
+        .from("payment_submissions")
+        .select("id,email,card_type,qty,status,created_at,note")
+        .eq("status","pending")
+        .order("created_at", { ascending:false })
+        .limit(50);
 
-            btn.disabled = false;
-            btn.textContent = "Approve";
-
-            if(error){
-              showToast(pendingToast, "Approve failed: " + error.message);
-              return;
-            }
-            if(!data?.ok){
-              showToast(pendingToast, data?.error || "Not approved.");
-              return;
-            }
-
-            showToast(pendingToast, `Approved: ${data.member_email} (${data.card_type})`);
-            await loadPending();
-          });
-        });
+      if(error){
+        rowsEl.innerHTML = `<tr><td colspan="6" class="muted">Error: ${error.message}</td></tr>`;
+        showToast(pendingToast, "Load error: " + error.message);
+        return;
       }
 
-      // Login click
-      loginBtn.addEventListener("click", async () => {
-        try{
-          const email = (emailEl.value || "").trim();
-          const password = passEl.value || "";
+      if(!data || data.length === 0){
+        rowsEl.innerHTML = `<tr><td colspan="6" class="muted">No pending submissions.</td></tr>`;
+        return;
+      }
 
-          if(!email || !password){
-            showToast(loginToast, "Enter email + password.");
-            return;
-          }
-
-          loginBtn.disabled = true;
-          showToast(loginToast, "Signing in…");
-
-          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-          loginBtn.disabled = false;
-
-          if(error){
-            showToast(loginToast, "Login failed: " + error.message);
-            return;
-          }
-
-          setPill("Signed in", true);
-          setSignedInUI(true);
-          showToast(loginToast, "Signed in ✅");
-          await loadPending();
-        } catch(e){
-          loginBtn.disabled = false;
-          showToast(loginToast, "JS error: " + (e?.message || e));
-        }
+      rowsEl.innerHTML = "";
+      data.forEach((r) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="muted">${fmtDate(r.created_at)}</td>
+          <td class="mono">${r.email || "—"}</td>
+          <td><span class="pill">${String(r.card_type || "—").toUpperCase()}</span></td>
+          <td>${Number(r.qty || 1)}</td>
+          <td class="muted">${r.note ? String(r.note) : "—"}</td>
+          <td>
+            <div class="row">
+              <button class="btn btn-primary" type="button" data-approve="${r.id}">Approve</button>
+              <button class="btn btn-danger" type="button" data-reject="${r.id}">Reject</button>
+            </div>
+          </td>
+        `;
+        rowsEl.appendChild(tr);
       });
 
-      // Logout
-      logoutBtn.addEventListener("click", async () => {
-        await supabase.auth.signOut();
-        setPill("Not signed in", false);
-        setSignedInUI(false);
+      rowsEl.querySelectorAll("button[data-approve]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-approve");
+          await actOn(id, "confirmed", btn);
+        });
       });
 
-      refreshBtn.addEventListener("click", loadPending);
-
-      // Initial session check
-      (async function boot(){
-        try{
-          const { data } = await supabase.auth.getSession();
-          const hasSession = !!data?.session;
-          setSignedInUI(hasSession);
-          setPill(hasSession ? "Signed in" : "Not signed in", hasSession);
-          if(hasSession) await loadPending();
-          else showToast(loginToast, "Ready ✅ Enter admin email + password.");
-        } catch(e){
-          setPill("Boot error", false);
-          showToast(loginToast, "Boot error: " + (e?.message || e));
-        }
-      })();
+      rowsEl.querySelectorAll("button[data-reject]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-reject");
+          await actOn(id, "rejected", btn);
+        });
+      });
     }
+
+    async function actOn(id, status, btn){
+      try{
+        btn.disabled = true;
+        const old = btn.textContent;
+        btn.textContent = "Working…";
+
+        const { data: row, error: getErr } = await supabase
+          .from("payment_submissions")
+          .select("id,email,card_type,qty,status")
+          .eq("id", id)
+          .maybeSingle();
+
+        if(getErr || !row) throw new Error(getErr?.message || "Submission not found");
+
+        const { error: updErr } = await supabase
+          .from("payment_submissions")
+          .update({ status })
+          .eq("id", id)
+          .eq("status","pending");
+
+        if(updErr) throw new Error(updErr.message);
+
+        if(status === "confirmed"){
+          const tier = normTier(row.card_type) || "silver";
+          const qty = normQty(tier, row.qty);
+          const up = await upsertPortalUserByEmail(row.email, tier, qty, true);
+          if(!up.ok) throw new Error("portal_users update failed: " + up.error);
+
+          showToast(pendingToast, `Approved ✅ ${up.email} → ${up.tier.toUpperCase()} x${up.qty} (active)`);
+        } else {
+          showToast(pendingToast, `Rejected ✅ ${String(row.email || "").toLowerCase()}`);
+        }
+
+        await loadPending();
+        btn.textContent = old;
+        btn.disabled = false;
+      } catch(e){
+        btn.disabled = false;
+        btn.textContent = (status === "confirmed") ? "Approve" : "Reject";
+        showToast(pendingToast, "Error: " + (e?.message || e));
+      }
+    }
+
+    loginBtn.addEventListener("click", async () => {
+      try{
+        const email = (emailEl.value || "").trim();
+        const password = passEl.value || "";
+
+        if(!email || !password){
+          showToast(loginToast, "Enter email + password.");
+          return;
+        }
+
+        loginBtn.disabled = true;
+        showToast(loginToast, "Signing in…");
+
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+        loginBtn.disabled = false;
+
+        if(error){
+          showToast(loginToast, "Login failed: " + error.message);
+          return;
+        }
+
+        const admin = await requireAdmin();
+        if(!admin.ok){
+          showToast(loginToast, "Not authorized: " + (admin.reason || "Not admin"));
+          await supabase.auth.signOut();
+          return;
+        }
+
+        setPill("Signed in", true);
+        setSignedInUI(true);
+        showToast(loginToast, "Signed in ✅");
+        await loadPending();
+      } catch(e){
+        loginBtn.disabled = false;
+        showToast(loginToast, "JS error: " + (e?.message || e));
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      try{ await supabase.auth.signOut(); } catch {}
+      setPill("Not signed in", false);
+      setSignedInUI(false);
+      showToast(loginToast, "Signed out ✅");
+    });
+
+    refreshBtn.addEventListener("click", loadPending);
+
+    (async function boot(){
+      try{
+        const { data } = await supabase.auth.getSession();
+        const hasSession = !!data?.session;
+
+        if(!hasSession){
+          setSignedInUI(false);
+          setPill("Not signed in", false);
+          showToast(loginToast, "Ready ✅ Enter admin email + password.");
+          return;
+        }
+
+        const admin = await requireAdmin();
+        if(!admin.ok){
+          await supabase.auth.signOut();
+          setSignedInUI(false);
+          setPill("Access denied", false);
+          showToast(loginToast, "Not authorized: " + (admin.reason || "Not admin"));
+          return;
+        }
+
+        setSignedInUI(true);
+        setPill("Signed in", true);
+        await loadPending();
+      } catch(e){
+        setPill("Boot error", false);
+        showToast(loginToast, "Boot error: " + (e?.message || e));
+      }
+    })();
   </script>
 </body>
 </html>
