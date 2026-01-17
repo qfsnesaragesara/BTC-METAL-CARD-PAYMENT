@@ -62,17 +62,17 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="font-semibold">First Name</label>
-          <input type="text" name="first_name" required class="w-full mt-1 p-3 border rounded-lg">
+          <input id="firstName" type="text" name="first_name" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <div>
           <label class="font-semibold">Middle Name</label>
-          <input type="text" name="middle_name" class="w-full mt-1 p-3 border rounded-lg">
+          <input id="middleName" type="text" name="middle_name" class="w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <div>
           <label class="font-semibold">Last Name</label>
-          <input type="text" name="last_name" required class="w-full mt-1 p-3 border rounded-lg">
+          <input id="lastName" type="text" name="last_name" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
       </div>
 
@@ -249,6 +249,10 @@
   const msg = document.getElementById("regMsg");
   const btn = document.getElementById("regSubmit");
 
+  const firstNameEl = document.getElementById("firstName");
+  const middleNameEl = document.getElementById("middleName");
+  const lastNameEl = document.getElementById("lastName");
+
   function show(text, ok=true){
     msg.className = "text-sm text-center " + (ok ? "text-emerald-600" : "text-red-600");
     msg.textContent = text;
@@ -260,8 +264,20 @@
     if (v.includes("gold")) return "gold";
     if (v.includes("black")) return "black";
     if (v.includes("silver")) return "silver";
-    // default for non-card registrations
     return "silver";
+  }
+
+  function inferQtyForTier(tier){
+    const t = String(tier || "").toLowerCase();
+    // black always 1, gold always 1, silver default 1 (admin/payment can update later)
+    if(t === "black") return 1;
+    if(t === "gold") return 1;
+    return 1;
+  }
+
+  function buildFullName(first, middle, last){
+    const parts = [first, middle, last].map(x => String(x || "").trim()).filter(Boolean);
+    return parts.join(" ").replace(/\s+/g, " ").trim();
   }
 
   let busy = false;
@@ -275,6 +291,11 @@
     const pwB = (p2.value || "").trim();
     const registering_for = (regFor.value || "").trim();
 
+    const first_name = (firstNameEl?.value || "").trim();
+    const middle_name = (middleNameEl?.value || "").trim();
+    const last_name = (lastNameEl?.value || "").trim();
+    const full_name = buildFullName(first_name, middle_name, last_name);
+
     if (pwA.length < 8) {
       e.preventDefault();
       busy = false;
@@ -285,29 +306,40 @@
       busy = false;
       return show("Passwords do not match.", false);
     }
-    if (!email || !registering_for) {
+    if (!email || !registering_for || !first_name || !last_name) {
       e.preventDefault();
       busy = false;
       return show("Please complete required fields.", false);
     }
 
     const selectedTier = inferTierFromRegisteringFor(registering_for);
+    const qty = inferQtyForTier(selectedTier);
 
-    // Save choice locally (helps routing even if portal_users row is created later)
+    // Save choice locally (helps routing)
     try {
       localStorage.setItem("qfs_registering_for", registering_for);
       localStorage.setItem("qfs_selected_tier", selectedTier);
+      localStorage.setItem("memberEmail", email);
+      localStorage.setItem("qfsEmail", email);
+      localStorage.setItem("qfs_full_name", full_name);
     } catch {}
 
     btn.disabled = true;
     show("Creating your portal account…");
 
-    // Create Supabase auth user (and store what they registered for)
+    // ✅ Create Supabase auth user + store FULL NAME in metadata
     const { data, error } = await supabase.auth.signUp({
       email,
       password: pwA,
       options: {
-        data: { registering_for, selected_tier: selectedTier },
+        data: {
+          full_name,
+          first_name,
+          middle_name,
+          last_name,
+          registering_for,
+          selected_tier: selectedTier
+        },
         emailRedirectTo: "https://qfsnesaragesara.org/login.html"
       }
     });
@@ -319,36 +351,30 @@
       return show("Signup failed: " + error.message, false);
     }
 
-    // Best-effort: create/update portal_users now (your portal_users.tier is NOT NULL)
-    // If data.user is null (some setups), we still let FormSubmit proceed; login will handle routing.
+    // ✅ Best-effort: create/update portal_users by EMAIL (stable)
+    // This avoids "user_id column does not exist" and avoids relying on auth user id.
     try {
-      const newUserId = data?.user?.id;
-      if (newUserId) {
-        const payload = {
-          id: newUserId,                 // portal_users.id = auth.users.id
-          email: email,
-          selected_tier: selectedTier,
-          tier: selectedTier,            // keep tier non-null before activation
-          is_active: false,
-          qty: 0
-        };
+      const payload = {
+        email: email,
+        selected_tier: selectedTier,
+        tier: selectedTier,
+        is_active: false,
+        qty: qty
+      };
 
-        const { error: upsertErr } = await supabase
-          .from("portal_users")
-          .upsert(payload, { onConflict: "id" });
+      const { error: upsertErr } = await supabase
+        .from("portal_users")
+        .upsert(payload, { onConflict: "email" });
 
-        if (upsertErr) {
-          // don't block the form submit; just show a hint
-          console.warn("portal_users upsert warning:", upsertErr.message);
-        }
+      if (upsertErr) {
+        console.warn("portal_users upsert warning:", upsertErr.message);
       }
     } catch (err) {
       console.warn("portal_users upsert exception:", err);
     }
 
-    // Let FormSubmit continue normally (sends your email + redirects)
     show("Account created ✅ Submitting your registration…");
-    // do not preventDefault here
+    // Let FormSubmit continue normally (sends your email + redirects)
   });
 })();
 </script>
