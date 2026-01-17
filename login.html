@@ -172,7 +172,6 @@
     }
   </style>
 
-  <!-- Supabase JS (v2) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -235,16 +234,15 @@
       };
 
       window.addEventListener("error", (e) => {
-        show("JS Error: " + (e && e.message ? e.message : "unknown"), "error");
+        show("JS Error: " + (e?.message || "unknown"), "error");
         setDbg("JS error");
       });
       window.addEventListener("unhandledrejection", (e) => {
-        const r = e && e.reason ? e.reason : null;
-        show("Promise Error: " + (r && r.message ? r.message : String(r || "unknown")), "error");
+        const r = e?.reason;
+        show("Promise Error: " + (r?.message || String(r || "unknown")), "error");
         setDbg("promise error");
       });
 
-      // ✅ Keys
       const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
@@ -269,80 +267,11 @@
         if (loginBtn) loginBtn.textContent = on ? (label || "Working...") : "Login";
       };
 
-      const normTier = (v) => {
-        const s = String(v || "").trim().toLowerCase();
-        return (s === "gold" || s === "silver" || s === "black") ? s : "";
-      };
-
-      const routeByTier = (tier) => (normTier(tier) === "gold" ? "portal-gold.html" : "portal.html");
-
-      async function getTierFromDb(email) {
-        const e = (email || "").trim().toLowerCase();
-        if (!e) return { tier: "", source: "no-email" };
-
-        // portal_users by email
-        try {
-          setDbg("portal_users by email…");
-          const { data: pu, error: puErr } = await supabase
-            .from("portal_users")
-            .select("tier, selected_tier")
-            .eq("email", e)
-            .maybeSingle();
-
-          if (!puErr && pu) {
-            const t = normTier(pu.tier) || normTier(pu.selected_tier);
-            if (t) return { tier: t, source: "portal_users" };
-          }
-        } catch (err) {
-          // keep going
-        }
-
-        // payment_submissions latest by email
-        try {
-          setDbg("payment_submissions by email…");
-          const { data: rows, error: psErr } = await supabase
-            .from("payment_submissions")
-            .select("card_type, created_at")
-            .ilike("email", e)
-            .order("created_at", { ascending: false })
-            .limit(1);
-
-          if (!psErr && rows && rows[0]) {
-            const t = normTier(rows[0].card_type);
-            if (t) return { tier: t, source: "payment_submissions" };
-          }
-        } catch (err) {
-          // keep going
-        }
-
-        return { tier: "", source: "none" };
-      }
-
-      async function routeAfterLogin(user) {
-        const email = (user && user.email ? user.email : "").trim().toLowerCase();
-        if (email) {
-          try {
-            localStorage.setItem("qfsEmail", email);
-            localStorage.setItem("memberEmail", email);
-          } catch {}
-        }
-
-        const res = await getTierFromDb(email);
-        setDbg("tier=" + (res.tier || "none") + " src=" + res.source);
-
-        if (res.tier) {
-          window.location.href = routeByTier(res.tier);
-          return;
-        }
-
-        window.location.href = "registration.html";
-      }
-
       async function doLogin() {
         setDbg("login click ✅");
 
-        const email = (elEmail && elEmail.value ? elEmail.value : "").trim().toLowerCase();
-        const password = (elPass && elPass.value ? elPass.value : "");
+        const email = (elEmail?.value || "").trim().toLowerCase();
+        const password = (elPass?.value || "");
 
         if (!email || !password) {
           show("Please enter your email and password.", "error");
@@ -362,13 +291,22 @@
           return;
         }
 
+        // Store email for portal pages
+        try {
+          const uEmail = (data?.user?.email || email).trim().toLowerCase();
+          localStorage.setItem("qfsEmail", uEmail);
+          localStorage.setItem("memberEmail", uEmail);
+        } catch {}
+
         show("Login successful. Redirecting…", "ok");
-        setDbg("login ok -> route");
-        await routeAfterLogin(data.user);
+        setDbg("login ok -> portal.html");
+
+        // ✅ IMPORTANT: Never send to registration from login
+        window.location.href = "portal.html";
       }
 
       async function doForgot() {
-        const email = (elEmail && elEmail.value ? elEmail.value : "").trim().toLowerCase();
+        const email = (elEmail?.value || "").trim().toLowerCase();
         if (!email) { show("Enter your email first, then click Forgot Password.", "error"); return; }
 
         setLoading(true, "Sending…");
@@ -384,7 +322,7 @@
       }
 
       async function doResend() {
-        const email = (elEmail && elEmail.value ? elEmail.value : "").trim().toLowerCase();
+        const email = (elEmail?.value || "").trim().toLowerCase();
         if (!email) { show("Enter your email first, then click Resend Verification Email.", "error"); return; }
 
         setLoading(true, "Sending…");
@@ -397,7 +335,6 @@
         setDbg("resend sent");
       }
 
-      // ✅ Password toggle (guaranteed to bind after DOM ready)
       if (toggle && elPass) {
         toggle.addEventListener("click", () => {
           const isHidden = elPass.type === "password";
@@ -407,15 +344,13 @@
         });
       }
 
-      // ✅ Buttons (guaranteed to bind after DOM ready)
       if (loginBtn) loginBtn.addEventListener("click", doLogin);
       if (signupBtn) signupBtn.addEventListener("click", () => window.location.href = "registration.html");
       if (forgotBtn) forgotBtn.addEventListener("click", doForgot);
       if (resendBtn) resendBtn.addEventListener("click", doResend);
 
-      // Enter key triggers login
       document.addEventListener("keydown", (e) => {
-        if (e && e.key === "Enter") doLogin();
+        if (e?.key === "Enter") doLogin();
       });
 
       setDbg("ready ✅");
