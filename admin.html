@@ -122,7 +122,7 @@
       <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-end;">
         <div>
           <div style="font-weight:900">Pending Submissions</div>
-          <div class="small">Confirming a submission sets status=confirmed so the portal unlocks.</div>
+          <div class="small">Confirming sets status=confirmed AND updates <code>portal_users</code> (tier/qty/is_active) by email.</div>
         </div>
 
         <div style="min-width:260px; max-width:380px; width:100%;">
@@ -187,6 +187,21 @@
         .replaceAll("'","&#039;");
     }
 
+    function normTier(v){
+      const s = String(v || "").trim().toLowerCase();
+      if (s === "gold" || s === "silver" || s === "black") return s;
+      return "";
+    }
+
+    function normQty(tier, qty){
+      let q = Number(qty || 0);
+      if (!Number.isFinite(q) || q < 1) q = 1;
+      if (tier === "black") q = 1;
+      if (tier === "silver") q = Math.min(50, Math.max(1, q));
+      if (tier === "gold") q = Math.max(1, q);
+      return q;
+    }
+
     async function requireSession(){
       const { data } = await supabase.auth.getSession();
       if(!data?.session){
@@ -208,7 +223,36 @@
     }
 
     // =========================
-    // ✅ LOAD FROM payment_submissions (NOT card_orders)
+    // ✅ Upsert portal_users by EMAIL (source of truth for portal routing)
+    // =========================
+    async function upsertPortalUserByEmail(emailRaw, tierRaw, qtyRaw, makeActive){
+      const email = String(emailRaw || "").trim().toLowerCase();
+      const tier = normTier(tierRaw) || "silver";
+      const qty = normQty(tier, qtyRaw);
+
+      if(!email) return { ok:false, error:"Missing email" };
+
+      // We do "upsert" by email, because your portal_users.id is NOT auth uid.
+      // Requires insert/update policies (you said you have them).
+      const payload = {
+        email,
+        tier,
+        selected_tier: tier,
+        qty,
+        is_active: makeActive ? true : false,
+        // balance_label optional; do not overwrite
+      };
+
+      const { error } = await supabase
+        .from("portal_users")
+        .upsert(payload, { onConflict: "email" });
+
+      if(error) return { ok:false, error:error.message };
+      return { ok:true, email, tier, qty };
+    }
+
+    // =========================
+    // ✅ LOAD FROM payment_submissions
     // =========================
     async function loadPending(){
       setMsg("", "");
@@ -256,12 +300,9 @@
           <td style="min-width:220px">
             <input data-note="${esc(o.id)}" placeholder="Optional note…" value="${esc(o.note || "")}">
           </td>
-          <td style="min-width:220px">
+          <td style="min-width:260px">
             <div class="row">
-              <button class="gold"
-                data-confirm="${esc(o.id)}"
-              >Confirm</button>
-
+              <button class="gold" data-confirm="${esc(o.id)}">Confirm</button>
               <button class="danger" data-reject="${esc(o.id)}">Reject</button>
             </div>
           </td>
@@ -290,25 +331,56 @@
       const oldText = btn.textContent;
       btn.textContent = "Working…";
 
-      const noteInput = rowsEl.querySelector(`input[data-note="${CSS.escape(id)}"]`);
-      const note = (noteInput?.value || "").trim() || null;
+      try{
+        // Pull the row (email/tier/qty) so we can update portal_users correctly
+        const { data: row, error: getErr } = await supabase
+          .from("payment_submissions")
+          .select("id,email,card_type,qty,status")
+          .eq("id", id)
+          .maybeSingle();
 
-      const { error } = await supabase
-        .from("payment_submissions")
-        .update({ status, note })
-        .eq("id", id)
-        .eq("status","pending");
+        if(getErr || !row){
+          throw new Error(getErr?.message || "Submission not found");
+        }
 
-      btn.disabled = false;
-      btn.textContent = oldText;
+        const noteInput = rowsEl.querySelector(`input[data-note="${CSS.escape(id)}"]`);
+        const note = (noteInput?.value || "").trim() || null;
 
-      if(error){
-        setMsg(error.message, "err");
-        return;
+        // 1) Update submission status (only if still pending)
+        const { error: updErr } = await supabase
+          .from("payment_submissions")
+          .update({ status, note })
+          .eq("id", id)
+          .eq("status","pending");
+
+        if(updErr){
+          throw new Error(updErr.message);
+        }
+
+        // 2) If confirmed -> DB truth for portal routing: upsert portal_users by email
+        if(status === "confirmed"){
+          const tier = normTier(row.card_type) || "silver";
+          const qty = normQty(tier, row.qty);
+
+          const up = await upsertPortalUserByEmail(row.email, tier, qty, true);
+          if(!up.ok){
+            // submission confirmed but portal_users update failed -> show loud error
+            setMsg("Confirmed submission, but portal_users update failed: " + up.error, "err");
+          } else {
+            setMsg(`Confirmed ✅ (portal_users set: ${up.email} → ${up.tier.toUpperCase()} x${up.qty}, is_active=true)`, "ok");
+          }
+        } else {
+          // rejected -> do NOT activate; keep portal_users as-is
+          setMsg("Rejected ✅", "ok");
+        }
+
+        await loadPending();
+      } catch(e){
+        setMsg(e?.message || String(e), "err");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = oldText;
       }
-
-      setMsg(status === "confirmed" ? "Confirmed ✅" : "Rejected ✅", "ok");
-      await loadPending();
     }
 
     refreshBtn.addEventListener("click", loadPending);
@@ -319,7 +391,7 @@
 
     logoutBtn.addEventListener("click", async () => {
       try{ await supabase.auth.signOut(); } catch {}
-      window.location.href = "./login.html";
+      window.location.replace("./login.html");
     });
 
     (async () => {
