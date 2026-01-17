@@ -76,13 +76,11 @@
       font-size:14px;
     }
 
-    /* ✅ Password field with clickable eye icon */
     .pw-wrap{ position:relative; z-index:20; }
     .pw-wrap input{ padding-right:54px; }
 
-    /* IMPORTANT: override global button styles */
     #pwToggle{
-      all: unset;                 /* ✅ reset global button styles */
+      all: unset;
       position:absolute;
       right:10px;
       top:50%;
@@ -122,7 +120,6 @@
       z-index:10;
     }
 
-    /* Keep your existing button styling for the big buttons */
     .row button{
       flex:1;
       padding:12px 14px;
@@ -175,7 +172,7 @@
     }
   </style>
 
-  <!-- ✅ ONE Supabase library (ONLY) -->
+  <!-- Supabase JS (v2) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -223,28 +220,8 @@
 
   <div class="debug-badge" id="dbg">dbg: loading…</div>
 
-  <!-- ✅ Toggle logic (no Supabase, no conflicts) -->
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const passEl = document.getElementById("password");
-      const toggle = document.getElementById("pwToggle");
-      const dbg = document.getElementById("dbg");
-      if (!passEl || !toggle) return;
-
-      toggle.addEventListener("click", () => {
-        const isHidden = passEl.type === "password";
-        passEl.type = isHidden ? "text" : "password";
-        toggle.classList.toggle("is-showing", isHidden);
-        if (dbg) dbg.textContent = "dbg: PW toggle ✅ " + new Date().toLocaleTimeString();
-      });
-    });
-  </script>
-
-  <!-- ✅ Auth + Routing logic -->
-  <script>
-    // ============
-    // IMPORTANT: paste your real values here
-    // ============
+    // ✅ Your real keys (from registration.html)
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
@@ -259,180 +236,135 @@
     const msg = document.getElementById("msg");
     const dbg = document.getElementById("dbg");
 
-    function setDbg(text) {
-      if (!dbg) return;
-      dbg.textContent = "dbg: " + text;
-    }
-
-    function showMsg(text, kind) {
-      if (!msg) return;
+    function setDbg(t){ if(dbg) dbg.textContent = "dbg: " + t; }
+    function show(text, kind){
       msg.textContent = text || "";
-      msg.classList.remove("error", "ok", "show");
+      msg.classList.remove("show","error","ok");
       msg.classList.add("show");
-      if (kind === "error") msg.classList.add("error");
-      if (kind === "ok") msg.classList.add("ok");
+      if(kind==="error") msg.classList.add("error");
+      if(kind==="ok") msg.classList.add("ok");
+    }
+    function setLoading(on, label){
+      [loginBtn, signupBtn, forgotBtn, resendBtn].forEach(b => { if(b) b.disabled = !!on; });
+      if(loginBtn) loginBtn.textContent = on ? (label || "Working...") : "Login";
     }
 
-    function normTier(v) {
-      const s = (v || "").toString().trim().toLowerCase();
-      if (s === "gold" || s === "silver" || s === "black") return s;
-      return "";
+    function normTier(v){
+      const s = (v||"").toString().trim().toLowerCase();
+      return (s==="gold"||s==="silver"||s==="black") ? s : "";
     }
 
-    function setLoading(isLoading, label) {
-      const buttons = [loginBtn, signupBtn, forgotBtn, resendBtn].filter(Boolean);
-      buttons.forEach((b) => (b.disabled = !!isLoading));
-      if (loginBtn) loginBtn.textContent = isLoading ? (label || "Working...") : "Login";
+    // Your routing rule:
+    // Gold -> portal-gold.html
+    // Silver + Black -> portal.html
+    function routeByTier(tier){
+      return normTier(tier) === "gold" ? "portal-gold.html" : "portal.html";
     }
 
-    // ✅ Your rule:
-    // - Gold → portal-gold.html
-    // - Silver + Black → portal.html
-    function routeByTierLikeYouWant(tierValue) {
-      const t = normTier(tierValue);
-      if (t === "gold") return "portal-gold.html";
-      return "portal.html"; // silver + black + fallback
-    }
-
-    async function routeAfterLogin(user) {
-      // 🔥 portal_users links by id = auth.users.id
+    async function routeAfterLogin(user){
       const { data: pu, error } = await supabase
         .from("portal_users")
         .select("tier, selected_tier, is_active")
         .eq("id", user.id)
         .single();
 
-      if (error || !pu) {
-        setDbg("no portal_users row → registration.html");
-        window.location.href = "registration.html";
-        return;
+      if(error || !pu){
+        setDbg("no portal_users row -> registration.html");
+        return window.location.href = "registration.html";
       }
 
       const tier = normTier(pu.tier);
-      const selectedTier = normTier(pu.selected_tier);
+      const selected = normTier(pu.selected_tier);
       const isActive = pu.is_active === true;
 
-      setDbg("route: active=" + isActive + " tier=" + tier + " sel=" + selectedTier);
+      // Active -> use tier; Not active -> use selected_tier (fallback to tier)
+      const effective = isActive ? (tier || selected) : (selected || tier);
 
-      // ✅ Activated: route by ACTIVATED tier
-      if (isActive) {
-        window.location.href = routeByTierLikeYouWant(tier);
-        return;
-      }
-
-      // ⛔ Not active yet: route by SELECTED tier (registration choice)
-      window.location.href = routeByTierLikeYouWant(selectedTier || tier);
+      setDbg("route active=" + isActive + " tier=" + tier + " sel=" + selected);
+      window.location.href = routeByTier(effective);
     }
 
-    async function doLogin() {
-      const email = (elEmail?.value || "").trim();
-      const password = elPass?.value || "";
+    async function doLogin(){
+      const email = (elEmail.value || "").trim().toLowerCase();
+      const password = (elPass.value || "");
 
-      if (!email || !password) {
-        showMsg("Please enter your email and password.", "error");
-        return;
-      }
+      if(!email || !password) return show("Please enter your email and password.", "error");
 
       setLoading(true, "Logging in...");
-      showMsg("", "");
-      setDbg("signInWithPassword…");
+      setDbg("signInWithPassword...");
+      show("", "");
 
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (error) {
+      if(error){
         setLoading(false);
-        showMsg(error.message || "Login failed.", "error");
         setDbg("login error");
-        return;
+        return show("Login failed: " + error.message, "error");
       }
 
-      setDbg("login ok → routing");
-      showMsg("Login successful. Redirecting…", "ok");
+      show("Login successful. Redirecting…", "ok");
+      setDbg("login ok -> routing");
       await routeAfterLogin(data.user);
     }
 
-    function goToSignup() {
-      window.location.href = "registration.html";
-    }
+    async function doForgot(){
+      const email = (elEmail.value || "").trim().toLowerCase();
+      if(!email) return show("Enter your email first, then click Forgot Password.", "error");
 
-    async function doForgot() {
-      const email = (elEmail?.value || "").trim();
-      if (!email) {
-        showMsg("Enter your email first, then click Forgot Password.", "error");
-        return;
-      }
       setLoading(true, "Sending…");
-      showMsg("", "");
-      setDbg("resetPasswordForEmail…");
-
+      setDbg("resetPasswordForEmail...");
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + "/reset-password.html"
       });
-
       setLoading(false);
-      if (error) {
-        showMsg(error.message || "Failed to send reset email.", "error");
-        setDbg("reset error");
-        return;
-      }
-      showMsg("Password reset email sent. Check your inbox.", "ok");
+
+      if(error) return show("Failed: " + error.message, "error");
+      show("Password reset email sent. Check your inbox.", "ok");
       setDbg("reset sent");
     }
 
-    async function doResendVerification() {
-      const email = (elEmail?.value || "").trim();
-      if (!email) {
-        showMsg("Enter your email first, then click Resend Verification Email.", "error");
-        return;
-      }
+    async function doResend(){
+      const email = (elEmail.value || "").trim().toLowerCase();
+      if(!email) return show("Enter your email first, then click Resend Verification Email.", "error");
 
       setLoading(true, "Sending…");
-      showMsg("", "");
-      setDbg("resend signup…");
-
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email
-      });
-
+      setDbg("resend signup...");
+      const { error } = await supabase.auth.resend({ type: "signup", email });
       setLoading(false);
-      if (error) {
-        showMsg(error.message || "Failed to resend verification email.", "error");
-        setDbg("resend error");
-        return;
-      }
 
-      showMsg("Verification email resent. Check your inbox (and spam).", "ok");
+      if(error) return show("Failed: " + error.message, "error");
+      show("Verification email resent. Check your inbox (and spam).", "ok");
       setDbg("resend sent");
     }
 
-    // Wire buttons
-    loginBtn?.addEventListener("click", doLogin);
-    signupBtn?.addEventListener("click", goToSignup);
-    forgotBtn?.addEventListener("click", doForgot);
-    resendBtn?.addEventListener("click", doResendVerification);
+    // Password toggle
+    document.addEventListener("DOMContentLoaded", () => {
+      const passEl = document.getElementById("password");
+      const toggle = document.getElementById("pwToggle");
+      if (!passEl || !toggle) return;
 
-    // Enter key to login
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") doLogin();
+      toggle.addEventListener("click", () => {
+        const isHidden = passEl.type === "password";
+        passEl.type = isHidden ? "text" : "password";
+        toggle.classList.toggle("is-showing", isHidden);
+        setDbg("PW toggle ✅ " + new Date().toLocaleTimeString());
+      });
     });
 
-    // Optional: if already logged in, route immediately
-    (async () => {
-      try {
-        const { data } = await supabase.auth.getUser();
-        if (data?.user) {
-          setDbg("already logged in → routing");
-          await routeAfterLogin(data.user);
-        } else {
-          setDbg("ready");
-        }
-      } catch {
-        setDbg("ready");
-      }
-    })();
+    // Buttons
+    loginBtn.addEventListener("click", doLogin);
+    signupBtn.addEventListener("click", () => window.location.href = "registration.html");
+    forgotBtn.addEventListener("click", doForgot);
+    resendBtn.addEventListener("click", doResend);
+
+    // Enter key
+    document.addEventListener("keydown", (e) => {
+      if(e.key === "Enter") doLogin();
+    });
+
+    // Quick self-test
+    setDbg("ready ✅ click Login");
   </script>
 
 </body>
 </html>
-
