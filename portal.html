@@ -200,6 +200,24 @@
   }
 
   .mutedline{ color:var(--muted); font-size:12px; margin-top:8px; }
+
+/* 🔒 FIX: ensure header + logout are clickable */
+.header,
+.header-actions,
+#logoutBtn {
+  position: relative;
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+
+/* Prevent invisible overlays from blocking clicks */
+.card::before,
+.card::after {
+  pointer-events: none !important;
+}
+
+  
 </style>
 </head>
 
@@ -365,3 +383,4 @@
 </script>
 </body>
 </html>
+
