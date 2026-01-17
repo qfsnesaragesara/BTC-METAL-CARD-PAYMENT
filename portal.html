@@ -35,7 +35,18 @@
       var(--bg);
   }
 
-  .wrap{ max-width:var(--maxw); margin:0 auto; }
+  /* ✅ “Force header above everything” + clickable */
+  .wrap{ max-width:var(--maxw); margin:0 auto; position:relative; z-index:1; }
+  .header,
+  .header-actions,
+  .pill,
+  .badge,
+  #logoutBtn,
+  #logoutLink{
+    position:relative;
+    z-index:999999;
+    pointer-events:auto !important;
+  }
 
   .header{
     display:flex;
@@ -82,6 +93,19 @@
     gap:8px;
     cursor:pointer;
   }
+
+  /* ✅ Make logout a real button (no href loop) */
+  #logoutBtn{
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid rgba(148,163,184,0.35);
+    background:rgba(255,255,255,0.06);
+    color:var(--text);
+    font-weight:900;
+    font-size:12px;
+    cursor:pointer;
+  }
+
   .badge{
     padding:6px 10px;
     border-radius:999px;
@@ -113,6 +137,7 @@
     backdrop-filter: blur(26px);
     position:relative;
     overflow:hidden;
+    z-index:1;
   }
   .card:before{
     content:"";
@@ -121,7 +146,7 @@
     width:320px;
     height:320px;
     background: radial-gradient(circle at center, rgba(56,189,248,0.18), transparent 60%);
-    pointer-events:none;
+    pointer-events:none; /* ✅ never block clicks */
   }
 
   .card h2{ margin:0 0 6px; font-size:16px; font-weight:900; }
@@ -151,6 +176,8 @@
     font-weight:900;
     font-size:13px;
     letter-spacing:0.04em;
+    position:relative;
+    z-index:2;
   }
   .btn-primary{
     background:linear-gradient(135deg, var(--accent), var(--accent2));
@@ -192,22 +219,21 @@
 
   .mutedline{ color:var(--muted); font-size:12px; margin-top:8px; }
 
-  /* =========================================================
-     ✅ CLICK FIXES (header above everything + kill blockers)
-     ========================================================= */
-  .header,
-  .header-actions,
-  #logoutBtn,
-  #statusBadge {
-    position: relative;
-    z-index: 9999 !important;
-    pointer-events: auto !important;
-  }
-
-  /* Prevent invisible overlays/pseudo-elements from blocking clicks */
-  .card::before,
-  .card::after {
-    pointer-events: none !important;
+  /* Small toast (debug/status) */
+  #toast{
+    position:fixed;
+    left:12px;
+    bottom:12px;
+    z-index:9999999;
+    background:rgba(2,6,23,0.75);
+    border:1px solid rgba(148,163,184,0.35);
+    color:#cbd5e1;
+    padding:8px 10px;
+    border-radius:12px;
+    font-size:12px;
+    user-select:none;
+    max-width:min(520px, 92vw);
+    white-space:pre-wrap;
   }
 </style>
 </head>
@@ -228,8 +254,8 @@
 
     <div class="header-actions">
       <span id="statusBadge" class="badge pending">Pending</span>
-      <!-- ✅ REAL LOGOUT BUTTON (no href loop) -->
-      <button id="logoutBtn" class="pill" type="button">Logout</button>
+      <!-- ✅ real button, no href loop -->
+      <button id="logoutBtn" type="button">Logout</button>
     </div>
   </header>
 
@@ -303,6 +329,9 @@
   </section>
 </div>
 
+<div id="toast">boot…</div>
+
+<!-- ✅ IMPORTANT: only ONE app script, at the bottom -->
 <script>
   /*********************************************************
    * CONFIG — Supabase credentials
@@ -311,7 +340,8 @@
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
   const $ = (id) => document.getElementById(id);
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const toast = $("toast");
+  const say = (t) => { if(toast) toast.textContent = String(t || ""); };
 
   function normTier(v){
     const s = String(v || "").trim().toLowerCase();
@@ -399,60 +429,35 @@
     $("btcBalance").textContent = "≈ " + fmtUSD(usdEq) + " (live BTC price)";
   }
 
-  async function requireSessionAndVerified(){
-    const { data, error } = await supabase.auth.getSession();
-    const session = data?.session || null;
-
-    if(error || !session){
-      window.location.replace("login.html");
-      return null;
-    }
-
-    const user = session.user || {};
-    const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
-
-    const email = (user.email || "").trim();
-    if(email){
-      localStorage.setItem("qfsEmail", email);
-      localStorage.setItem("memberEmail", email);
-      $("emailCell").textContent = email;
-    } else {
-      $("emailCell").textContent = "—";
-    }
-
-    if(!verifiedAt){
-      try{
-        $("btcBalance").textContent = "⚠️ Please verify your email before accessing the portal. Redirecting to login…";
-        await supabase.auth.signOut();
-      } catch {}
-      setTimeout(() => window.location.replace("login.html?msg=verify_email"), 900);
-      return null;
-    }
-
-    return session;
+  function hardToLogin(){
+    // ✅ kill loops: clear storage + force navigate
+    try{
+      localStorage.removeItem("qfsEmail");
+      localStorage.removeItem("memberEmail");
+      localStorage.removeItem("qfs_registering_for");
+    } catch {}
+    window.location.replace("login.html");
   }
 
-  async function fetchProfileByEmail(session){
-    const email = (session?.user?.email || "").trim().toLowerCase();
-    if(!email) return null;
+  // ✅ Single Supabase client (avoid “already declared” + multiple clients)
+  if(!window.supabase || typeof window.supabase.createClient !== "function"){
+    say("Supabase CDN failed to load.");
+  }
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const { data, error } = await supabase
+  async function getSessionOrKick(){
+    const { data, error } = await sb.auth.getSession();
+    if(error || !data?.session) return null;
+    return data.session;
+  }
+
+  async function getDbProfileByEmail(email){
+    // ✅ DB truth by email
+    return await sb
       .from("portal_users")
-      .select("id, email, tier, selected_tier, qty, is_active")
+      .select("email, tier, selected_tier, qty, is_active")
       .eq("email", email)
       .maybeSingle();
-
-    if(error) return null;
-    return data || null;
-  }
-
-  function routeIfGold(profile){
-    const t = normTier(profile?.tier) || normTier(profile?.selected_tier);
-    if (t === "gold") {
-      window.location.replace("portal-gold.html");
-      return true;
-    }
-    return false;
   }
 
   async function checkStatusAndUpdateUI(profile){
@@ -462,32 +467,36 @@
     const tier = (profile?.tier || profile?.selected_tier || "").toUpperCase();
     let qty = Number(profile?.qty || 0) || 0;
 
+    // Normalize by tier rules
     if (tier === "BLACK") qty = 1;
     if (tier === "SILVER" && qty > 50) qty = 50;
     if (!Number.isFinite(qty) || qty < 1) qty = 1;
 
+    // Default UI
     lockActions();
     setBadge("pending");
     $("statusCell").textContent = "Pending";
     setAllocationUI(tier, qty);
 
+    // Activation from DB truth
     if (profile?.is_active === true) {
       $("statusCell").textContent = "Active";
       setBadge("confirmed");
       unlockActions();
     }
 
-    const email = (profile?.email || localStorage.getItem("qfsEmail") || "").trim().toLowerCase();
+    // Optional: reflect latest payment_submissions status by email
+    const email = (profile?.email || "").trim().toLowerCase();
     if (email) {
       try {
-        const { data } = await supabase
+        const { data, error } = await sb
           .from("payment_submissions")
           .select("status, card_type, qty, created_at")
           .ilike("email", email)
           .order("created_at", { ascending:false })
           .limit(1);
 
-        if (data && data[0]) {
+        if (!error && data && data[0]) {
           const row = data[0];
           const status = String(row.status || "pending").toLowerCase();
 
@@ -502,6 +511,7 @@
       } catch {}
     }
 
+    // BTC equivalent
     const tierShown = ($("tierCell").textContent || "").toUpperCase();
     if (tierShown === "BLACK"){
       const btcUsd = await fetchBtcUsd();
@@ -517,6 +527,7 @@
     }
   }
 
+  // Buttons
   $("sendBtn").addEventListener("click", () => {
     alert("Send is enabled for Active accounts. (Next step: build real Send flow.)");
   });
@@ -524,44 +535,77 @@
     alert("Receive is enabled for Active accounts. (Next step: build real Receive flow.)");
   });
 
-  // ✅ LOGOUT: clear storage + signout + hard redirect (prevents loops)
+  // ✅ Logout that cannot loop
   $("logoutBtn").addEventListener("click", async () => {
-    try {
-      localStorage.removeItem("qfsEmail");
-      localStorage.removeItem("memberEmail");
-      // optional: clear any other app keys you use
-      await supabase.auth.signOut();
-    } catch {}
-    // hard replace so back button won't return to portal
-    window.location.replace("login.html?msg=signed_out");
+    say("Signing out…");
+    try{ await sb.auth.signOut(); } catch {}
+    hardToLogin();
   });
 
+  // Boot
   (async () => {
-    const session = await requireSessionAndVerified();
-    if(!session) return;
-
-    const profile = await fetchProfileByEmail(session);
-
-    // If profile says GOLD, portal.html must redirect away
-    if (routeIfGold(profile)) return;
-
-    // If profile missing, send to registration (safest)
-    if(!profile){
-      window.location.replace("registration.html?msg=profile_missing");
-      return;
-    }
-
-    await checkStatusAndUpdateUI(profile);
-
-    // refresh profile/status periodically
-    setInterval(async () => {
-      const refreshed = await fetchProfileByEmail(session);
-      if (refreshed) {
-        if (routeIfGold(refreshed)) return;
-        await checkStatusAndUpdateUI(refreshed);
+    try{
+      say("Checking session…");
+      const session = await getSessionOrKick();
+      if(!session){
+        say("No session → login");
+        return hardToLogin();
       }
-    }, 20000);
+
+      const user = session.user || {};
+      const email = (user.email || "").trim().toLowerCase();
+      if(!email){
+        say("No email → login");
+        return hardToLogin();
+      }
+
+      $("emailCell").textContent = email;
+      try{
+        localStorage.setItem("qfsEmail", email);
+        localStorage.setItem("memberEmail", email);
+      } catch {}
+
+      say("Fetching profile (portal_users) by email…");
+      const { data: profile, error } = await getDbProfileByEmail(email);
+
+      if(error){
+        // This is the “RLS blocking SELECT” case
+        say("Profile SELECT blocked (RLS). Fix portal_users read policy by email.");
+        lockActions();
+        return;
+      }
+
+      if(!profile){
+        say("No profile row → registration");
+        return window.location.replace("registration.html");
+      }
+
+      const effectiveTier = normTier(profile.tier) || normTier(profile.selected_tier);
+      if(effectiveTier === "gold"){
+        // ✅ Gold NEVER stays here
+        say("Gold detected → redirect portal-gold.html");
+        return window.location.replace("portal-gold.html");
+      }
+
+      say("Loaded: tier=" + (effectiveTier || "unknown") + " ✅");
+      await checkStatusAndUpdateUI(profile);
+
+      // Refresh profile periodically (still by email, not user.id)
+      setInterval(async () => {
+        const { data: p2 } = await getDbProfileByEmail(email);
+        if(p2){
+          // If tier changed to gold later, redirect immediately
+          const t2 = normTier(p2.tier) || normTier(p2.selected_tier);
+          if(t2 === "gold") return window.location.replace("portal-gold.html");
+          await checkStatusAndUpdateUI(p2);
+        }
+      }, 20000);
+
+    } catch(e){
+      say("Boot error: " + (e?.message || e));
+    }
   })();
 </script>
+
 </body>
 </html>
