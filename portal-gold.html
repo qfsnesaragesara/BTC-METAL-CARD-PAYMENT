@@ -232,7 +232,7 @@
         <div>
           <div class="t1">Gold Portal</div>
           <div class="t2">
-            <span class="pill" id="pillReady"><span class="dot ok"></span> Ready</span>
+            <span class="pill"><span class="dot ok"></span> Ready</span>
             <span class="pill" id="pillLock"><span class="dot lock"></span> Locked Steps</span>
           </div>
         </div>
@@ -371,7 +371,6 @@
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
       const supabase = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
-
       const $ = (id) => document.getElementById(id);
 
       function normTier(v){
@@ -413,7 +412,7 @@
         try{
           const { data, error } = await supabase
             .from("payment_submissions")
-            .select("status, card_type, created_at")
+            .select("status, created_at")
             .ilike("email", email)
             .order("created_at", { ascending:false })
             .limit(1);
@@ -432,19 +431,9 @@
         const step3 = $("step3Pay");
         const bridgeSelect = $("bridgeSelect");
 
-        if(step2){
-          step2.classList.remove("btn-disabled");
-          step2.style.pointerEvents = "auto";
-          step2.style.opacity = "1";
-        }
-        if(step3){
-          step3.classList.remove("btn-disabled");
-          step3.style.pointerEvents = "auto";
-          step3.style.opacity = "1";
-        }
-        if(bridgeSelect){
-          bridgeSelect.disabled = false;
-        }
+        if(step2) step2.classList.remove("btn-disabled");
+        if(step3) step3.classList.remove("btn-disabled");
+        if(bridgeSelect) bridgeSelect.disabled = false;
 
         const pillLock = $("pillLock");
         if(pillLock){
@@ -456,19 +445,12 @@
           bridgePill.innerHTML = `<span class="dot ok"></span> Active`;
         }
 
-        const step2Sub = $("step2Sub");
-        const step3Sub = $("step3Sub");
-        const bridgeSub = $("bridgeSub");
-        const bridgeNote = $("bridgeNote");
-        const acctNext = $("acctNext");
-        const step1Sub = $("step1Sub");
-
-        if(step1Sub) step1Sub.textContent = "Confirmed ✅";
-        if(step2Sub) step2Sub.textContent = "Unlocked ✅";
-        if(step3Sub) step3Sub.textContent = "Unlocked ✅";
-        if(bridgeSub) bridgeSub.textContent = "Available";
-        if(bridgeNote) bridgeNote.textContent = "✅ Your processing payment is confirmed. You can proceed to the next steps.";
-        if(acctNext) acctNext.textContent = "Complete Step 2 form";
+        if($("step1Sub")) $("step1Sub").textContent = "Confirmed ✅";
+        if($("step2Sub")) $("step2Sub").textContent = "Unlocked ✅";
+        if($("step3Sub")) $("step3Sub").textContent = "Unlocked ✅";
+        if($("bridgeSub")) $("bridgeSub").textContent = "Available";
+        if($("bridgeNote")) $("bridgeNote").textContent = "✅ Your processing payment is confirmed. You can proceed to the next steps.";
+        if($("acctNext")) $("acctNext").textContent = "Complete Step 2 form";
       }
 
       function rejectedGoldSteps(){
@@ -476,10 +458,8 @@
         if(pillLock){
           pillLock.innerHTML = `<span class="dot bad"></span> Rejected`;
         }
-        const step1Sub = $("step1Sub");
-        if(step1Sub) step1Sub.textContent = "Rejected — please resubmit";
-        const acctNext = $("acctNext");
-        if(acctNext) acctNext.textContent = "Resubmit payment confirmation";
+        if($("step1Sub")) $("step1Sub").textContent = "Rejected — please resubmit";
+        if($("acctNext")) $("acctNext").textContent = "Resubmit payment confirmation";
       }
 
       // Logout
@@ -520,12 +500,10 @@
         return;
       }
 
-      // Show account info (name + email)
+      // show account info
       const name = pickNameFromUser(user);
-      const acctName = $("acctName");
-      const acctEmail = $("acctEmail");
-      if(acctName) acctName.textContent = name;
-      if(acctEmail) acctEmail.textContent = email;
+      if($("acctName")) $("acctName").textContent = name;
+      if($("acctEmail")) $("acctEmail").textContent = email;
 
       // ✅ DB truth: portal_users by email
       const { data: profile, error: pErr } = await supabase
@@ -540,19 +518,16 @@
       }
 
       const t = normTier(profile.tier) || normTier(profile.selected_tier);
-
-      // ✅ MUST be gold to stay here
       if (t !== "gold") {
         window.location.replace("portal.html");
         return;
       }
 
-      // Smart unlock based on latest submission status
+      // Smart unlock by latest submission status
       const s = await getLatestSubmissionStatus(email);
       if (s === "confirmed") unlockGoldSteps();
       else if (s === "rejected") rejectedGoldSteps();
 
-      // Keep email for other pages
       localStorage.setItem("qfsEmail", email);
       localStorage.setItem("memberEmail", email);
     })();
