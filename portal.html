@@ -294,7 +294,6 @@
    * Helpers
    *********************************************************/
   const $ = (id) => document.getElementById(id);
-  // ✅ IMPORTANT: do not use "supabase" global name in case other scripts do
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let email =
@@ -305,12 +304,37 @@
   // DB truth (from portal_users)
   let __profileTier = "";
   let __profileQty = 0;
-  let __profileIsActive = false;
   let __effectiveTier = "";
 
   function normTier(v){
     const s = (v || "").toString().trim().toLowerCase();
     return (s === "gold" || s === "silver" || s === "black") ? s : "";
+  }
+
+  function inferTierFromText(txt){
+    const s = (txt || "").toString().toLowerCase();
+    if(s.includes("gold")) return "gold";
+    if(s.includes("silver")) return "silver";
+    if(s.includes("black")) return "black";
+    return "";
+  }
+
+  function inferTierFromUser(user){
+    // 1) metadata from signup
+    const meta = user?.user_metadata || {};
+    const registeringFor = meta.registering_for || meta.registeringFor || "";
+    let tier = inferTierFromText(registeringFor);
+
+    // 2) local storage fallback
+    if(!tier){
+      const ls = localStorage.getItem("qfs_registering_for") || "";
+      tier = inferTierFromText(ls);
+    }
+
+    // 3) last resort default
+    if(!tier) tier = "silver";
+
+    return tier;
   }
 
   function fmtUSD(n){
@@ -432,6 +456,7 @@
 
   /*********************************************************
    * ✅ DB TRUTH ONLY — portal_users drives tier + routing
+   *    + Auto-provision portal_users row if missing
    *********************************************************/
   async function loadDbProfileAndRoute(session){
     try{
@@ -441,20 +466,45 @@
         return false;
       }
 
-      // ✅ IMPORTANT: your schema uses portal_users.id = auth.user.id
-      const { data: profile, error } = await sb
+      // Try fetch profile (truth)
+      let { data: profile, error } = await sb
         .from("portal_users")
         .select("email, tier, selected_tier, is_active, card_qty, is_activated")
         .eq("id", user.id)
         .single();
 
+      // If missing: auto-create profile
       if(error || !profile){
-        window.location.replace("registration.html");
-        return false;
+        const inferred = inferTierFromUser(user);
+        const dbEmail = (user.email || email || "").trim().toLowerCase();
+
+        const newRow = {
+          id: user.id,
+          email: dbEmail || null,
+          tier: inferred,              // IMPORTANT: tier is NOT NULL in your table
+          selected_tier: inferred,
+          card_qty: inferred === "silver" ? 1 : 1, // safe default
+          is_active: false,
+          is_activated: false
+        };
+
+        const { data: created, error: insErr } = await sb
+          .from("portal_users")
+          .insert(newRow)
+          .select("email, tier, selected_tier, is_active, card_qty, is_activated")
+          .single();
+
+        if(insErr || !created){
+          // If RLS blocks insert, send them to registration to complete profile manually
+          window.location.replace("registration.html?msg=profile_missing");
+          return false;
+        }
+
+        profile = created;
       }
 
       // Email from DB is best truth
-      const dbEmail = (profile.email || session.user.email || "").trim();
+      const dbEmail = (profile.email || user.email || "").trim();
       if(dbEmail){
         email = dbEmail;
         localStorage.setItem("qfsEmail", email);
@@ -464,24 +514,22 @@
 
       const tier = normTier(profile.tier);
       const selected = normTier(profile.selected_tier);
-      __profileIsActive = profile.is_active === true;
+      const isActive = profile.is_active === true;
 
       // Active -> tier; Not active -> selected_tier (fallback to tier)
-      __effectiveTier = __profileIsActive ? (tier || selected) : (selected || tier);
+      __effectiveTier = isActive ? (tier || selected) : (selected || tier);
 
       // Cache for UI
       __profileTier = (__effectiveTier || tier || selected || "").toUpperCase();
       __profileQty = Number(profile.card_qty || 0) || 0;
 
-      // Your rule:
-      // If DB says gold -> this page should not show; redirect to gold portal
+      // Gold -> move to gold portal
       if(__effectiveTier === "gold"){
         window.location.replace("portal-gold.html");
         return false;
       }
 
-      // Optional: keep your pending gate if you still use it
-      // If they are not activated yet -> pending page
+      // If you enforce activation, keep it:
       if(profile.is_activated === false){
         window.location.replace("pending.html");
         return false;
@@ -601,7 +649,6 @@
     const session = await requireSessionAndVerified();
     if(!session) return;
 
-    // ✅ DB truth + routing (gold -> portal-gold)
     const ok = await loadDbProfileAndRoute(session);
     if(!ok) return;
 
