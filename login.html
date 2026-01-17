@@ -172,7 +172,6 @@
     }
   </style>
 
-  <!-- Supabase JS (v2) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -221,161 +220,193 @@
   <div class="debug-badge" id="dbg">dbg: booting…</div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const dbg = document.getElementById("dbg");
-      const msg = document.getElementById("msg");
-      const setDbg = (t) => { if(dbg) dbg.textContent = "dbg: " + t; };
-      const show = (text, kind) => {
-        if(!msg) return;
-        msg.textContent = text || "";
-        msg.classList.remove("show","error","ok");
-        msg.classList.add("show");
-        if(kind==="error") msg.classList.add("error");
-        if(kind==="ok") msg.classList.add("ok");
-      };
-
-      window.addEventListener("error", (e) => {
-        show("JS Error: " + (e?.message || "unknown"), "error");
-        setDbg("JS error");
-      });
-      window.addEventListener("unhandledrejection", (e) => {
-        show("Promise Error: " + (e?.reason?.message || e?.reason || "unknown"), "error");
-        setDbg("promise error");
-      });
-
-      const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-
-      if(!window.supabase){
-        show("Supabase library failed to load (CDN blocked).", "error");
-        return setDbg("no supabase lib");
-      }
-
-      // ✅ IMPORTANT: do NOT create a global named "supabase"
-      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-      const elEmail = document.getElementById("email");
-      const elPass = document.getElementById("password");
-      const loginBtn = document.getElementById("loginBtn");
-      const signupBtn = document.getElementById("signupBtn");
-      const forgotBtn = document.getElementById("forgotBtn");
-      const resendBtn = document.getElementById("resendBtn");
-
-      const setLoading = (on, label) => {
-        [loginBtn, signupBtn, forgotBtn, resendBtn].forEach(b => { if(b) b.disabled = !!on; });
-        if(loginBtn) loginBtn.textContent = on ? (label || "Working...") : "Login";
-      };
-
-      const normTier = (v) => {
-        const s = (v||"").toString().trim().toLowerCase();
-        return (s==="gold"||s==="silver"||s==="black") ? s : "";
-      };
-
-      // Gold -> portal-gold.html; Silver/Black -> portal.html
-      const routeByTier = (tier) => (normTier(tier) === "gold" ? "portal-gold.html" : "portal.html");
-
-      const routeAfterLogin = async (user) => {
-        setDbg("fetch portal_users…");
-        const { data: pu, error } = await sb
-          .from("portal_users")
-          .select("tier, selected_tier, is_active")
-          .eq("id", user.id)
-          .single();
-
-        if(error || !pu){
-          setDbg("no portal_users -> registration");
-          return window.location.href = "registration.html";
-        }
-
-        const tier = normTier(pu.tier);
-        const selected = normTier(pu.selected_tier);
-        const isActive = pu.is_active === true;
-
-        const effective = isActive ? (tier || selected) : (selected || tier);
-
-        setDbg("route active=" + isActive + " tier=" + tier + " sel=" + selected);
-        window.location.href = routeByTier(effective);
-      };
-
-      const doLogin = async () => {
-        setDbg("click detected ✅");
-        const email = (elEmail.value || "").trim().toLowerCase();
-        const password = (elPass.value || "");
-
-        if(!email || !password){
-          return show("Please enter your email and password.", "error");
-        }
-
-        setLoading(true, "Logging in...");
-        show("", "");
-        setDbg("signInWithPassword…");
-
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-
-        if(error){
-          setLoading(false);
-          setDbg("login failed");
-          return show("Login failed: " + error.message, "error");
-        }
-
-        show("Login successful. Redirecting…", "ok");
-        setDbg("login ok -> route");
-        await routeAfterLogin(data.user);
-      };
-
-      const doForgot = async () => {
-        const email = (elEmail.value || "").trim().toLowerCase();
-        if(!email) return show("Enter your email first, then click Forgot Password.", "error");
-
-        setLoading(true, "Sending…");
-        setDbg("reset email…");
-        const { error } = await sb.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + "/reset-password.html"
-        });
-        setLoading(false);
-
-        if(error) return show("Failed: " + error.message, "error");
-        show("Password reset email sent. Check your inbox.", "ok");
-        setDbg("reset sent");
-      };
-
-      const doResend = async () => {
-        const email = (elEmail.value || "").trim().toLowerCase();
-        if(!email) return show("Enter your email first, then click Resend Verification Email.", "error");
-
-        setLoading(true, "Sending…");
-        setDbg("resend email…");
-        const { error } = await sb.auth.resend({ type: "signup", email });
-        setLoading(false);
-
-        if(error) return show("Failed: " + error.message, "error");
-        show("Verification email resent. Check your inbox (and spam).", "ok");
-        setDbg("resend sent");
-      };
-
-      // Password toggle
-      const passEl = document.getElementById("password");
-      const toggle = document.getElementById("pwToggle");
-      if(passEl && toggle){
-        toggle.addEventListener("click", () => {
-          const isHidden = passEl.type === "password";
-          passEl.type = isHidden ? "text" : "password";
-          toggle.classList.toggle("is-showing", isHidden);
-          setDbg("PW toggle ✅");
-        });
-      }
-
-      if(loginBtn) loginBtn.addEventListener("click", doLogin);
-      if(signupBtn) signupBtn.addEventListener("click", () => window.location.href = "registration.html");
-      if(forgotBtn) forgotBtn.addEventListener("click", doForgot);
-      if(resendBtn) resendBtn.addEventListener("click", doResend);
-
-      document.addEventListener("keydown", (e) => {
-        if(e.key === "Enter") doLogin();
-      });
-
-      setDbg("ready ✅");
+    const dbg = document.getElementById("dbg");
+    const msg = document.getElementById("msg");
+    function setDbg(t){ if(dbg) dbg.textContent = "dbg: " + t; }
+    function show(text, kind){
+      if(!msg) return;
+      msg.textContent = text || "";
+      msg.classList.remove("show","error","ok");
+      msg.classList.add("show");
+      if(kind==="error") msg.classList.add("error");
+      if(kind==="ok") msg.classList.add("ok");
+    }
+    window.addEventListener("error", (e) => {
+      show("JS Error: " + (e?.message || "unknown"), "error");
+      setDbg("JS error");
     });
+    window.addEventListener("unhandledrejection", (e) => {
+      show("Promise Error: " + (e?.reason?.message || e?.reason || "unknown"), "error");
+      setDbg("promise error");
+    });
+
+    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
+    if(!window.supabase){
+      show("Supabase library failed to load (CDN blocked).", "error");
+      setDbg("no supabase lib");
+    }
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const elEmail = document.getElementById("email");
+    const elPass = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const signupBtn = document.getElementById("signupBtn");
+    const forgotBtn = document.getElementById("forgotBtn");
+    const resendBtn = document.getElementById("resendBtn");
+
+    function setLoading(on, label){
+      [loginBtn, signupBtn, forgotBtn, resendBtn].forEach(b => { if(b) b.disabled = !!on; });
+      if(loginBtn) loginBtn.textContent = on ? (label || "Working...") : "Login";
+    }
+
+    function normTier(v){
+      const s = (v || "").toString().trim().toLowerCase();
+      return (s==="gold"||s==="silver"||s==="black") ? s : "";
+    }
+
+    function routeByTier(tier){
+      return normTier(tier) === "gold" ? "portal-gold.html" : "portal.html";
+    }
+
+    // ✅ DB truth by EMAIL first; fallback to payment_submissions by EMAIL.
+    async function getTierFromDb(email){
+      const e = (email || "").trim().toLowerCase();
+      if(!e) return { tier: "", source: "no-email" };
+
+      // 1) portal_users by email
+      try{
+        setDbg("portal_users by email…");
+        const { data: pu, error: puErr } = await supabase
+          .from("portal_users")
+          .select("tier, selected_tier, is_active, is_active") /* keep simple */
+          .eq("email", e)
+          .maybeSingle();
+
+        if(!puErr && pu){
+          const t = normTier(pu.tier) || normTier(pu.selected_tier);
+          if(t) return { tier: t, source: "portal_users" };
+        }
+      } catch {}
+
+      // 2) payment_submissions latest by email
+      try{
+        setDbg("payment_submissions by email…");
+        const { data: rows, error: psErr } = await supabase
+          .from("payment_submissions")
+          .select("card_type, created_at")
+          .ilike("email", e)
+          .order("created_at", { ascending:false })
+          .limit(1);
+
+        if(!psErr && rows && rows[0]){
+          const t = normTier(rows[0].card_type);
+          if(t) return { tier: t, source: "payment_submissions" };
+        }
+      } catch {}
+
+      return { tier: "", source: "none" };
+    }
+
+    async function routeAfterLogin(user){
+      const email = (user?.email || "").trim().toLowerCase();
+      if(email){
+        localStorage.setItem("qfsEmail", email);
+        localStorage.setItem("memberEmail", email);
+      }
+
+      const { tier, source } = await getTierFromDb(email);
+      setDbg("tier=" + (tier || "none") + " src=" + source);
+
+      if(tier){
+        window.location.href = routeByTier(tier);
+        return;
+      }
+
+      // No DB signal yet -> only then send to registration
+      window.location.href = "registration.html";
+    }
+
+    async function doLogin(){
+      setDbg("click ✅");
+      const email = (elEmail.value || "").trim().toLowerCase();
+      const password = (elPass.value || "");
+
+      if(!email || !password){
+        return show("Please enter your email and password.", "error");
+      }
+
+      setLoading(true, "Logging in...");
+      show("", "");
+      setDbg("signInWithPassword…");
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if(error){
+        setLoading(false);
+        setDbg("login failed");
+        return show("Login failed: " + error.message, "error");
+      }
+
+      show("Login successful. Redirecting…", "ok");
+      setDbg("login ok -> route");
+      await routeAfterLogin(data.user);
+    }
+
+    async function doForgot(){
+      const email = (elEmail.value || "").trim().toLowerCase();
+      if(!email) return show("Enter your email first, then click Forgot Password.", "error");
+
+      setLoading(true, "Sending…");
+      setDbg("reset email…");
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/reset-password.html"
+      });
+      setLoading(false);
+
+      if(error) return show("Failed: " + error.message, "error");
+      show("Password reset email sent. Check your inbox.", "ok");
+      setDbg("reset sent");
+    }
+
+    async function doResend(){
+      const email = (elEmail.value || "").trim().toLowerCase();
+      if(!email) return show("Enter your email first, then click Resend Verification Email.", "error");
+
+      setLoading(true, "Sending…");
+      setDbg("resend email…");
+      const { error } = await supabase.auth.resend({ type: "signup", email });
+      setLoading(false);
+
+      if(error) return show("Failed: " + error.message, "error");
+      show("Verification email resent. Check your inbox (and spam).", "ok");
+      setDbg("resend sent");
+    }
+
+    // Password toggle
+    const passEl = document.getElementById("password");
+    const toggle = document.getElementById("pwToggle");
+    if (passEl && toggle){
+      toggle.addEventListener("click", () => {
+        const isHidden = passEl.type === "password";
+        passEl.type = isHidden ? "text" : "password";
+        toggle.classList.toggle("is-showing", isHidden);
+        setDbg("PW toggle ✅");
+      });
+    }
+
+    if(loginBtn) loginBtn.addEventListener("click", doLogin);
+    if(signupBtn) signupBtn.addEventListener("click", () => window.location.href = "registration.html");
+    if(forgotBtn) forgotBtn.addEventListener("click", doForgot);
+    if(resendBtn) resendBtn.addEventListener("click", doResend);
+
+    document.addEventListener("keydown", (e) => {
+      if(e.key === "Enter") doLogin();
+    });
+
+    setDbg("ready ✅");
   </script>
 
 </body>
