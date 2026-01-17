@@ -7,6 +7,9 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
 
+<!-- Central config (recommended) -->
+<script src="./config.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -203,35 +206,6 @@
     font-size:12px;
   }
 
-  /* ✅ Smart CTA button (hidden unless needed) */
-  .ctaRow{
-    margin-top:10px;
-    display:none;
-    gap:10px;
-    align-items:center;
-    flex-wrap:wrap;
-  }
-  .ctaRow a{
-    text-decoration:none;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    padding:10px 14px;
-    border-radius:999px;
-    font-weight:900;
-    font-size:12px;
-    letter-spacing:0.06em;
-    text-transform:uppercase;
-    background:linear-gradient(135deg, var(--accent), var(--accent2));
-    color:#fff;
-    border:none;
-    cursor:pointer;
-  }
-  .ctaRow .hint{
-    font-size:12px;
-    color:rgba(148,163,184,0.95);
-  }
-
   table{
     width:100%;
     border-collapse:collapse;
@@ -267,6 +241,8 @@
     max-width:min(520px, 92vw);
     white-space:pre-wrap;
   }
+
+  .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 </style>
 </head>
 
@@ -297,6 +273,7 @@
 
     <div class="card">
       <h2>Available Balance</h2>
+      <!-- ✅ auto-hide when Active -->
       <div class="sub" id="balanceHelp">Balance becomes active after you order your access card</div>
 
       <div class="balance" id="balance">$0.00</div>
@@ -311,13 +288,7 @@
         🔒 Send & Receive are locked until you activate your access card.
       </div>
 
-      <!-- ✅ Smart CTA -->
-      <div class="ctaRow" id="ctaRow">
-        <a id="ctaBtn" href="confirmation-page.html">Submit Confirmation</a>
-        <span class="hint" id="ctaHint">Use the same email you registered with.</span>
-      </div>
-
-      <div class="mutedline" id="lastChecked">Checking confirmation…</div>
+      <div class="mutedline" id="lastChecked">Checking status…</div>
     </div>
 
     <div class="card">
@@ -346,26 +317,24 @@
           <td id="statusCell">Pending</td>
         </tr>
       </table>
-
     </div>
 
     <div class="card" style="grid-column:1 / -1;">
-      <h2>Recent Activity</h2>
-      <div class="sub" id="activityHelp">Transactions will appear after activation</div>
+      <h2>My Orders</h2>
+      <div class="sub">Your recent submissions</div>
 
       <table>
         <thead>
           <tr>
             <th>Date</th>
-            <th>Type</th>
-            <th>Amount</th>
+            <th>Card</th>
+            <th>Qty</th>
             <th>Status</th>
+            <th class="mono">TXID</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td colspan="4" style="color:var(--muted);">No activity yet</td>
-          </tr>
+        <tbody id="ordersBody">
+          <tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -376,19 +345,15 @@
 <div id="toast">boot…</div>
 
 <script>
-  const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+  const CFG = window.__QFS_CONFIG || {};
+  const SUPABASE_URL = CFG.SUPABASE_URL || "https://qagktukzxtwbjrdgiben.supabase.co";
+  const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "PASTE_ANON_KEY_HERE_IF_NO_CONFIG_JS";
 
   const $ = (id) => document.getElementById(id);
   const toast = $("toast");
   const say = (t) => { if(toast) toast.textContent = String(t || ""); };
 
-  // ✅ ONE shared client (prevents "supabase already declared" issues)
-  const sb = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
-
-  // Keep current tier/qty so smart messaging can use it
-  let CURRENT_TIER = "";
-  let CURRENT_QTY = 0;
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   function normTier(v){
     const s = String(v || "").trim().toLowerCase();
@@ -397,19 +362,13 @@
 
   function pickNameFromUser(user){
     const md = user?.user_metadata || {};
-    const first = String(md.first_name || "").trim();
-    const middle = String(md.middle_name || "").trim();
-    const last = String(md.last_name || "").trim();
-    const fullFromParts = [first, middle, last].filter(Boolean).join(" ").trim();
-
     const raw =
       md.full_name ||
       md.name ||
-      fullFromParts ||
+      md.first_name ||
       md.username ||
       md.display_name ||
       "";
-
     const cleaned = String(raw || "").trim();
     if(cleaned) return cleaned;
 
@@ -425,82 +384,28 @@
     return "Member";
   }
 
-  function setBadge(status){
+  function setBadge(active){
     const b = $("statusBadge");
     b.classList.remove("pending","active","rejected");
-    if(status === "confirmed"){
+    if(active){
       b.textContent = "Active";
       b.classList.add("active");
-    } else if(status === "rejected"){
-      b.textContent = "Rejected";
-      b.classList.add("rejected");
     } else {
       b.textContent = "Pending";
       b.classList.add("pending");
     }
   }
 
-  function showCTA(show, variant){
-    const row = $("ctaRow");
-    const btn = $("ctaBtn");
-    const hint = $("ctaHint");
-    if(!row || !btn || !hint) return;
-
-    if(!show){
-      row.style.display = "none";
-      return;
-    }
-
-    row.style.display = "flex";
-
-    if(variant === "rejected"){
-      btn.textContent = "Resubmit Confirmation";
-      hint.textContent = "Your last submission was rejected — submit again with the same email.";
-    } else {
-      btn.textContent = "Submit Confirmation";
-      hint.textContent = "If you already paid, submit your confirmation to activate your account.";
-    }
-  }
-
-  function lockActions(reason){
+  function lockActions(){
     $("sendBtn").disabled = true;
     $("receiveBtn").disabled = true;
-
     $("sendBtn").classList.add("btn-disabled");
     $("receiveBtn").classList.add("btn-disabled");
-
     $("sendBtn").classList.remove("btn-primary");
     $("receiveBtn").classList.remove("btn-primary");
-
     $("lockNote").style.display = "block";
-
-    const tier = String(CURRENT_TIER || "").toUpperCase();
-    const qty = Number(CURRENT_QTY || 0) || 0;
-
-    if(reason === "rejected"){
-      $("lockNote").textContent = "❌ Payment rejected — please resubmit your payment confirmation.";
-      $("balanceHelp").style.display = "block";
-      $("balanceHelp").textContent = "Your allocation is on hold until a successful confirmation is approved.";
-      $("activityHelp").style.display = "block";
-      $("activityHelp").textContent = "No transactions will show while your account is not active.";
-      showCTA(true, "rejected");
-      return;
-    }
-
-    // pending
-    if(tier === "SILVER" || tier === "BLACK"){
-      $("balanceHelp").style.display = "block";
-      $("balanceHelp").textContent = "Allocation reserved — becomes active after confirmation.";
-    } else {
-      $("balanceHelp").style.display = "block";
-      $("balanceHelp").textContent = "Balance becomes active after you order your access card";
-    }
-
-    $("lockNote").textContent = "🔒 Send & Receive are locked until your account becomes active.";
-    $("activityHelp").style.display = "block";
-    $("activityHelp").textContent = "Transactions will appear after activation";
-
-    showCTA(true, "pending");
+    $("lockNote").textContent = "🔒 Send & Receive are locked until your account is activated.";
+    $("balanceHelp").style.display = "block";
   }
 
   function unlockActions(){
@@ -513,14 +418,9 @@
     $("sendBtn").classList.add("btn-primary");
     $("receiveBtn").classList.add("btn-primary");
 
-    // ✅ Smart UI: remove help when active
     $("balanceHelp").style.display = "none";
-    $("activityHelp").style.display = "none";
-
     $("lockNote").style.display = "block";
     $("lockNote").textContent = "✅ Account Active — Send & Receive are unlocked.";
-
-    showCTA(false);
   }
 
   function fmtUSD(n){
@@ -571,8 +471,18 @@
       localStorage.removeItem("qfsEmail");
       localStorage.removeItem("memberEmail");
       localStorage.removeItem("qfs_registering_for");
+      localStorage.removeItem("qfs_selected_tier");
     } catch {}
     window.location.replace("login.html");
+  }
+
+  function esc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
   }
 
   async function getSessionOrKick(){
@@ -589,68 +499,70 @@
       .maybeSingle();
   }
 
-  async function getLatestSubmissionStatus(email){
-    try{
-      const { data, error } = await sb
-        .from("payment_submissions")
-        .select("status, card_type, qty, created_at")
-        .ilike("email", email)
-        .order("created_at", { ascending:false })
-        .limit(1);
+  async function loadOrders(email){
+    const body = $("ordersBody");
+    if(!body) return;
 
-      if(error || !data || !data[0]) return null;
-      const s = String(data[0].status || "").toLowerCase();
-      if(s === "confirmed" || s === "rejected" || s === "pending") return s;
-      return "pending";
-    } catch {
-      return null;
+    body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>`;
+
+    const { data, error } = await sb
+      .from("payment_submissions")
+      .select("created_at, card_type, qty, status, txid")
+      .eq("email", email)
+      .order("created_at", { ascending:false })
+      .limit(25);
+
+    if(error){
+      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Orders blocked (RLS): ${esc(error.message)}</td></tr>`;
+      return;
     }
+
+    if(!data || data.length === 0){
+      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No orders yet.</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = "";
+    data.forEach(r => {
+      const dt = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
+      const card = String(r.card_type || "—").toUpperCase();
+      const qty = Number(r.qty || 1);
+      const status = String(r.status || "pending").toLowerCase();
+      const txid = String(r.txid || "");
+      const shortTx = txid ? (txid.length > 16 ? (txid.slice(0,8) + "…" + txid.slice(-6)) : txid) : "—";
+
+      body.insertAdjacentHTML("beforeend", `
+        <tr>
+          <td>${esc(dt)}</td>
+          <td>${esc(card)}</td>
+          <td>${esc(String(qty))}</td>
+          <td>${esc(status)}</td>
+          <td class="mono" title="${esc(txid)}">${esc(shortTx)}</td>
+        </tr>
+      `);
+    });
   }
 
-  function sanitizeQty(tierUpper, qtyRaw){
-    const tier = (tierUpper || "").toUpperCase();
-    let qty = Number(qtyRaw || 0) || 0;
+  async function refreshUI(profile){
+    const now = new Date();
+    $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
+
+    const tier = (profile?.tier || profile?.selected_tier || "").toUpperCase();
+    let qty = Number(profile?.qty || 0) || 0;
 
     if (tier === "BLACK") qty = 1;
     if (tier === "SILVER" && qty > 50) qty = 50;
     if (!Number.isFinite(qty) || qty < 1) qty = 1;
 
-    return qty;
-  }
+    setAllocationUI(tier, qty);
 
-  async function applyStatusUI(profile){
-    const now = new Date();
-    $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
+    const isActive = profile?.is_active === true;
 
-    const tierUpper = (profile?.tier || profile?.selected_tier || "").toUpperCase();
-    const qty = sanitizeQty(tierUpper, profile?.qty);
+    $("statusCell").textContent = isActive ? "Active" : "Pending";
+    setBadge(isActive);
 
-    // cache for smart messaging
-    CURRENT_TIER = tierUpper;
-    CURRENT_QTY = qty;
-
-    // Always show allocation based on tier/qty
-    setAllocationUI(tierUpper, qty);
-
-    // Decide final status once (prevents flip-flop)
-    const email = String(profile?.email || "").trim().toLowerCase();
-    let finalStatus = "pending";
-
-    if (profile?.is_active === true) {
-      finalStatus = "confirmed";
-    } else if (email) {
-      const s = await getLatestSubmissionStatus(email);
-      if (s === "confirmed" || s === "rejected" || s === "pending") finalStatus = s;
-    }
-
-    $("statusCell").textContent =
-      finalStatus === "confirmed" ? "Active" :
-      finalStatus === "rejected" ? "Rejected" : "Pending";
-
-    setBadge(finalStatus);
-
-    if (finalStatus === "confirmed") unlockActions();
-    else lockActions(finalStatus === "rejected" ? "rejected" : "pending");
+    if(isActive) unlockActions();
+    else lockActions();
 
     // BTC equivalent
     const tierShown = ($("tierCell").textContent || "").toUpperCase();
@@ -688,12 +600,17 @@
       if(!session) return hardToLogin();
 
       const user = session.user || {};
+      const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
+      if(!verifiedAt){
+        try{ await sb.auth.signOut(); } catch {}
+        return window.location.replace("login.html?msg=verify_email");
+      }
+
       const email = (user.email || "").trim().toLowerCase();
       if(!email) return hardToLogin();
 
       const name = pickNameFromUser(user);
       $("nameCell").textContent = name;
-
       const hello = $("helloName");
       if(hello){
         hello.style.display = "inline-flex";
@@ -706,12 +623,12 @@
         localStorage.setItem("memberEmail", email);
       } catch {}
 
-      say("Fetching profile by email…");
+      say("Fetching profile…");
       const { data: profile, error } = await getDbProfileByEmail(email);
 
       if(error){
         say("Profile SELECT blocked (RLS). portal_users read policy must allow this email.");
-        lockActions("pending");
+        lockActions();
         return;
       }
 
@@ -726,15 +643,17 @@
         return window.location.replace("portal-gold.html");
       }
 
+      await refreshUI(profile);
+      await loadOrders(email);
       say("Loaded ✅");
-      await applyStatusUI(profile);
 
       setInterval(async () => {
         const { data: p2 } = await getDbProfileByEmail(email);
         if(p2){
           const t2 = normTier(p2.tier) || normTier(p2.selected_tier);
           if(t2 === "gold") return window.location.replace("portal-gold.html");
-          await applyStatusUI(p2);
+          await refreshUI(p2);
+          await loadOrders(email);
         }
       }, 20000);
 
@@ -746,4 +665,3 @@
 
 </body>
 </html>
-
