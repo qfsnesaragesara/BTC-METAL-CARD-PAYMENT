@@ -203,6 +203,35 @@
     font-size:12px;
   }
 
+  /* ✅ Smart CTA button (hidden unless needed) */
+  .ctaRow{
+    margin-top:10px;
+    display:none;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .ctaRow a{
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px 14px;
+    border-radius:999px;
+    font-weight:900;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    background:linear-gradient(135deg, var(--accent), var(--accent2));
+    color:#fff;
+    border:none;
+    cursor:pointer;
+  }
+  .ctaRow .hint{
+    font-size:12px;
+    color:rgba(148,163,184,0.95);
+  }
+
   table{
     width:100%;
     border-collapse:collapse;
@@ -268,7 +297,6 @@
 
     <div class="card">
       <h2>Available Balance</h2>
-      <!-- ✅ auto-hide when Active -->
       <div class="sub" id="balanceHelp">Balance becomes active after you order your access card</div>
 
       <div class="balance" id="balance">$0.00</div>
@@ -281,6 +309,12 @@
 
       <div class="status" id="lockNote">
         🔒 Send & Receive are locked until you activate your access card.
+      </div>
+
+      <!-- ✅ Smart CTA -->
+      <div class="ctaRow" id="ctaRow">
+        <a id="ctaBtn" href="confirmation-page.html">Submit Confirmation</a>
+        <span class="hint" id="ctaHint">Use the same email you registered with.</span>
       </div>
 
       <div class="mutedline" id="lastChecked">Checking confirmation…</div>
@@ -352,6 +386,10 @@
   // ✅ ONE shared client (prevents "supabase already declared" issues)
   const sb = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
 
+  // Keep current tier/qty so smart messaging can use it
+  let CURRENT_TIER = "";
+  let CURRENT_QTY = 0;
+
   function normTier(v){
     const s = String(v || "").trim().toLowerCase();
     return (s === "gold" || s === "silver" || s === "black") ? s : "";
@@ -402,6 +440,28 @@
     }
   }
 
+  function showCTA(show, variant){
+    const row = $("ctaRow");
+    const btn = $("ctaBtn");
+    const hint = $("ctaHint");
+    if(!row || !btn || !hint) return;
+
+    if(!show){
+      row.style.display = "none";
+      return;
+    }
+
+    row.style.display = "flex";
+
+    if(variant === "rejected"){
+      btn.textContent = "Resubmit Confirmation";
+      hint.textContent = "Your last submission was rejected — submit again with the same email.";
+    } else {
+      btn.textContent = "Submit Confirmation";
+      hint.textContent = "If you already paid, submit your confirmation to activate your account.";
+    }
+  }
+
   function lockActions(reason){
     $("sendBtn").disabled = true;
     $("receiveBtn").disabled = true;
@@ -414,15 +474,33 @@
 
     $("lockNote").style.display = "block";
 
+    const tier = String(CURRENT_TIER || "").toUpperCase();
+    const qty = Number(CURRENT_QTY || 0) || 0;
+
     if(reason === "rejected"){
       $("lockNote").textContent = "❌ Payment rejected — please resubmit your payment confirmation.";
-    } else {
-      $("lockNote").textContent = "🔒 Send & Receive are locked until you activate your access card.";
+      $("balanceHelp").style.display = "block";
+      $("balanceHelp").textContent = "Your allocation is on hold until a successful confirmation is approved.";
+      $("activityHelp").style.display = "block";
+      $("activityHelp").textContent = "No transactions will show while your account is not active.";
+      showCTA(true, "rejected");
+      return;
     }
 
-    // help is relevant when not active
-    $("balanceHelp").style.display = "block";
+    // pending
+    if(tier === "SILVER" || tier === "BLACK"){
+      $("balanceHelp").style.display = "block";
+      $("balanceHelp").textContent = "Allocation reserved — becomes active after confirmation.";
+    } else {
+      $("balanceHelp").style.display = "block";
+      $("balanceHelp").textContent = "Balance becomes active after you order your access card";
+    }
+
+    $("lockNote").textContent = "🔒 Send & Receive are locked until your account becomes active.";
     $("activityHelp").style.display = "block";
+    $("activityHelp").textContent = "Transactions will appear after activation";
+
+    showCTA(true, "pending");
   }
 
   function unlockActions(){
@@ -435,12 +513,14 @@
     $("sendBtn").classList.add("btn-primary");
     $("receiveBtn").classList.add("btn-primary");
 
-    // ✅ Smart UI: remove “order your access card” help when active
+    // ✅ Smart UI: remove help when active
     $("balanceHelp").style.display = "none";
     $("activityHelp").style.display = "none";
 
     $("lockNote").style.display = "block";
     $("lockNote").textContent = "✅ Account Active — Send & Receive are unlocked.";
+
+    showCTA(false);
   }
 
   function fmtUSD(n){
@@ -545,10 +625,14 @@
     const tierUpper = (profile?.tier || profile?.selected_tier || "").toUpperCase();
     const qty = sanitizeQty(tierUpper, profile?.qty);
 
-    // Always show allocation based on tier/qty (independent of activation)
+    // cache for smart messaging
+    CURRENT_TIER = tierUpper;
+    CURRENT_QTY = qty;
+
+    // Always show allocation based on tier/qty
     setAllocationUI(tierUpper, qty);
 
-    // Decide final status once (prevents “flip-flop” UI)
+    // Decide final status once (prevents flip-flop)
     const email = String(profile?.email || "").trim().toLowerCase();
     let finalStatus = "pending";
 
