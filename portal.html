@@ -209,7 +209,7 @@
 
     <div class="header-actions">
       <span id="statusBadge" class="badge pending">Pending</span>
-      <a class="pill" href="login.html" id="logoutLink">Logout</a>
+      <a class="pill" href="#" id="logoutLink">Logout</a>
     </div>
   </header>
 
@@ -291,7 +291,9 @@
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
   const $ = (id) => document.getElementById(id);
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ✅ Use ONE client globally to avoid “Multiple GoTrueClient” weirdness
+  const supabase = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
 
   function normTier(v){
     const s = String(v || "").trim().toLowerCase();
@@ -313,14 +315,14 @@
     }
   }
 
-  function lockActions(note){
+  function lockActions(){
     $("sendBtn").disabled = true;
     $("receiveBtn").disabled = true;
     $("sendBtn").classList.add("btn-disabled");
     $("receiveBtn").classList.add("btn-disabled");
     $("sendBtn").classList.remove("btn-primary");
     $("receiveBtn").classList.remove("btn-primary");
-    $("lockNote").textContent = note || "🔒 Send & Receive are locked until you activate your access card.";
+    $("lockNote").textContent = "🔒 Send & Receive are locked until you activate your access card.";
   }
 
   function unlockActions(){
@@ -368,11 +370,6 @@
       $("balance").textContent = "25,000 BTC";
       $("btcBalance").textContent = "USD equivalent loading…";
     }
-
-    if(tier === "GOLD"){
-      $("balance").textContent = "$0.00";
-      $("btcBalance").textContent = "Redirecting to Gold Portal…";
-    }
   }
 
   function setBlackUsdEquivalent(btcUsd){
@@ -385,7 +382,7 @@
   }
 
   /*********************************************************
-   * ✅ Require login + verified email
+   * ✅ Auth gate
    *********************************************************/
   async function requireSessionAndVerified(){
     const { data, error } = await supabase.auth.getSession();
@@ -399,7 +396,7 @@
     const user = session.user || {};
     const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
 
-    const email = (user.email || "").trim().toLowerCase();
+    const email = String(user.email || "").trim().toLowerCase();
     if(email){
       localStorage.setItem("qfsEmail", email);
       localStorage.setItem("memberEmail", email);
@@ -409,144 +406,118 @@
     }
 
     if(!verifiedAt){
-      try{
-        $("btcBalance").textContent = "⚠️ Please verify your email before accessing the portal. Redirecting to login…";
-        await supabase.auth.signOut();
-      } catch {}
-      setTimeout(() => window.location.replace("login.html?msg=verify_email"), 900);
+      try{ await supabase.auth.signOut(); } catch {}
+      window.location.replace("login.html?msg=verify_email");
       return null;
     }
 
-    return session;
+    return { session, email };
   }
 
   /*********************************************************
-   * ✅ DB TRUTH ONLY: get portal user by EMAIL
+   * ✅ DB TRUTH — portal_users by EMAIL (not user.id)
    *********************************************************/
-  async function getPortalUserByEmail(email){
-    // Using ilike makes it case-insensitive
+  async function getPortalProfileByEmail(email){
     const { data, error } = await supabase
       .from("portal_users")
-      .select("email,tier,card_qty,is_activated")
+      .select("email, tier, selected_tier, qty, is_active")
       .ilike("email", email)
       .maybeSingle();
 
-    return { data, error };
+    if(error) return null;
+    return data || null;
   }
 
-  /*********************************************************
-   * ✅ GOLD routing (DB truth)
-   *********************************************************/
-  function routeIfGold(tier){
-    const t = normTier(tier);
-    if(t === "gold"){
+  function routeIfGold(profile){
+    const t = normTier(profile?.tier) || normTier(profile?.selected_tier);
+    if (t === "gold"){
       window.location.replace("portal-gold.html");
       return true;
     }
     return false;
   }
 
-  /*********************************************************
-   * Main UI refresh
-   *********************************************************/
-  async function refreshUI(email){
+  async function checkStatusAndUpdateUI(profile){
     const now = new Date();
     $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
 
+    const tier = (profile?.tier || profile?.selected_tier || "").toUpperCase();
+    let qty = Number(profile?.qty || 1);
+
+    if (tier === "BLACK") qty = 1;
+    if (tier === "SILVER" && qty > 50) qty = 50;
+    if (!Number.isFinite(qty) || qty < 1) qty = 1;
+
+    // Default
     lockActions();
     setBadge("pending");
     $("statusCell").textContent = "Pending";
+    setAllocationUI(tier, qty);
 
-    const { data: profile, error } = await getPortalUserByEmail(email);
-
-    if(error){
-      // Most common cause: RLS policy doesn't allow SELECT by email
-      $("tierCell").textContent = "—";
-      $("qtyCell").textContent = "—";
-      $("balance").textContent = "$0.00";
-      $("btcBalance").textContent = "Could not read your profile (permission policy).";
-      lockActions("🔒 Waiting for profile access. If this persists, admin must fix portal_users Read policy.");
-      return null;
-    }
-
-    if(!profile){
-      // No row yet: show pending but DO NOT bounce to registration
-      $("tierCell").textContent = "—";
-      $("qtyCell").textContent = "—";
-      $("balance").textContent = "$0.00";
-      $("btcBalance").textContent = "No portal profile found yet. If you just registered, wait a moment or complete registration.";
-      lockActions("🔒 Your account is not set up yet. Please complete registration or contact support.");
-      return null;
-    }
-
-    // ✅ If GOLD in DB -> redirect away from portal.html
-    if(routeIfGold(profile.tier)) return profile;
-
-    const tierUpper = String(profile.tier || "").toUpperCase();
-    let qty = Number(profile.card_qty || 0) || 0;
-
-    // Normalize tier rules
-    if(tierUpper === "BLACK") qty = 1;
-    if(tierUpper === "SILVER" && qty > 50) qty = 50;
-    if(!Number.isFinite(qty) || qty < 1) qty = 1;
-
-    setAllocationUI(tierUpper, qty);
-
-    if(profile.is_activated === true){
+    // ✅ DB truth for active
+    if (profile?.is_active === true){
       $("statusCell").textContent = "Active";
       setBadge("confirmed");
       unlockActions();
-    } else {
-      $("statusCell").textContent = "Pending";
-      setBadge("pending");
-      lockActions();
     }
 
-    // BTC equivalence for display
-    if(tierUpper === "BLACK"){
+    // BTC equivalent
+    const tierShown = ($("tierCell").textContent || "").toUpperCase();
+    if (tierShown === "BLACK"){
       const btcUsd = await fetchBtcUsd();
       setBlackUsdEquivalent(btcUsd);
-    } else if(tierUpper === "SILVER"){
+    } else if (tierShown === "SILVER"){
       const btcUsd = await fetchBtcUsd();
-      if(btcUsd){
-        const usdBal = 25000 * qty;
+      if (btcUsd){
+        const qtyShown = Number($("qtyCell").textContent || 1);
+        const usdBal = 25000 * (Number.isFinite(qtyShown) ? qtyShown : 1);
         const btcEq = usdBal / btcUsd;
         $("btcBalance").textContent = `≈ ${btcEq.toFixed(8)} BTC (live BTC price)`;
       }
     }
-
-    return profile;
   }
 
-  $("sendBtn").addEventListener("click", () => {
-    alert("Send is enabled for Active accounts. (Next step: build real Send flow.)");
-  });
-  $("receiveBtn").addEventListener("click", () => {
-    alert("Receive is enabled for Active accounts. (Next step: build real Receive flow.)");
-  });
+  // Buttons
+  $("sendBtn").addEventListener("click", () => alert("Send enabled for Active accounts (next: real Send flow)."));
+  $("receiveBtn").addEventListener("click", () => alert("Receive enabled for Active accounts (next: real Receive flow)."));
 
+  // ✅ FIXED Logout (no loop)
   $("logoutLink").addEventListener("click", async (e) => {
     e.preventDefault();
-    try{ await supabase.auth.signOut(); } catch {}
-    window.location.href = "login.html";
+    try { await supabase.auth.signOut(); } catch {}
+    try {
+      localStorage.removeItem("qfsEmail");
+      localStorage.removeItem("memberEmail");
+      localStorage.removeItem("qfs_registering_for");
+    } catch {}
+    window.location.replace("login.html?logged_out=1");
   });
 
   (async () => {
-    const session = await requireSessionAndVerified();
-    if(!session) return;
+    const auth = await requireSessionAndVerified();
+    if(!auth) return;
 
-    const email = (session.user?.email || localStorage.getItem("qfsEmail") || "").trim().toLowerCase();
-    if(!email){
-      window.location.replace("login.html");
+    // ✅ Always load profile by email
+    const profile = await getPortalProfileByEmail(auth.email);
+
+    // If no row, send to registration (this is correct behavior)
+    if(!profile){
+      window.location.replace("registration.html?msg=profile_missing");
       return;
     }
 
-    // Initial
-    await refreshUI(email);
+    // ✅ CRITICAL: Gold must NOT stay here
+    if (routeIfGold(profile)) return;
 
-    // Poll
+    await checkStatusAndUpdateUI(profile);
+
+    // Poll by email (not user.id)
     setInterval(async () => {
-      await refreshUI(email);
+      const refreshed = await getPortalProfileByEmail(auth.email);
+      if(refreshed){
+        if (routeIfGold(refreshed)) return;
+        await checkStatusAndUpdateUI(refreshed);
+      }
     }, 20000);
   })();
 </script>
