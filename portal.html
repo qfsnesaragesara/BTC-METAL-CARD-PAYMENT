@@ -399,7 +399,7 @@
     const user = session.user || {};
     const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
 
-    const email = (user.email || "").trim();
+    const email = (user.email || "").trim().toLowerCase();
     if(email){
       localStorage.setItem("qfsEmail", email);
       localStorage.setItem("memberEmail", email);
@@ -420,27 +420,33 @@
     return session;
   }
 
+  // ✅ FIX: portal_users is keyed/queried by EMAIL (not auth user id)
   async function ensurePortalUserRow(session){
-    const user = session.user;
+    const user = session.user || {};
+    const email = (user.email || "").trim().toLowerCase();
 
-    // Always trust DB first
+    if(!email){
+      window.location.replace("login.html?msg=no_email");
+      return null;
+    }
+
+    // 1) Trust DB by email
     const { data: profile, error } = await supabase
       .from("portal_users")
       .select("id, email, tier, selected_tier, qty, is_active")
-      .eq("id", user.id)
+      .eq("email", email)
       .maybeSingle();
 
     if (!error && profile) return profile;
 
-    // If missing, create it with a NON-NULL tier
+    // 2) If missing, create by email with NON-NULL tier (tier column is NOT NULL)
     const fromMeta = inferTierFromRegisteringFor(user?.user_metadata?.registering_for);
     const fromLocal = inferTierFromRegisteringFor(localStorage.getItem("qfs_registering_for"));
-    const fallback = fromMeta || fromLocal || "silver"; // safe default, avoids NOT NULL
+    const fallback = fromMeta || fromLocal || "silver"; // safe default to satisfy NOT NULL
 
     const insertPayload = {
-      id: user.id,
-      email: (user.email || "").trim().toLowerCase(),
-      tier: fallback,              // NOT NULL satisfied
+      email,
+      tier: fallback,
       selected_tier: fallback,
       qty: 0,
       is_active: false,
@@ -454,7 +460,6 @@
       .single();
 
     if (insErr || !created) {
-      // If we still can't create, send to registration
       window.location.replace("registration.html?msg=profile_missing");
       return null;
     }
@@ -475,29 +480,28 @@
     const now = new Date();
     $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
 
+    // DB truth first
     const tier = (profile?.tier || profile?.selected_tier || "").toUpperCase();
     let qty = Number(profile?.qty || 0) || 0;
 
-    // Normalize by tier rules
     if (tier === "BLACK") qty = 1;
     if (tier === "SILVER" && qty > 50) qty = 50;
     if (!Number.isFinite(qty) || qty < 1) qty = 1;
 
-    // Default UI
     lockActions();
     setBadge("pending");
     $("statusCell").textContent = "Pending";
     setAllocationUI(tier, qty);
 
-    // Activation from DB truth
+    // Activation from portal_users.is_active
     if (profile?.is_active === true) {
       $("statusCell").textContent = "Active";
       setBadge("confirmed");
       unlockActions();
     }
 
-    // Optional: also reflect latest payment_submissions status (doesn't override tier routing)
-    const email = (profile?.email || localStorage.getItem("qfsEmail") || "").trim().toLowerCase();
+    // Optional: reflect latest payment_submissions status (does not change tier routing)
+    const email = (profile?.email || "").trim().toLowerCase();
     if (!email) return;
 
     try {
@@ -522,7 +526,6 @@
       }
     } catch {}
 
-    // BTC equivalent
     const tierShown = ($("tierCell").textContent || "").toUpperCase();
     if (tierShown === "BLACK"){
       const btcUsd = await fetchBtcUsd();
@@ -558,17 +561,27 @@
     const profile = await ensurePortalUserRow(session);
     if(!profile) return;
 
-    // GOLD should never live on portal.html
+    // Gold should never land here
     if (routeIfGold(profile)) return;
 
     await checkStatusAndUpdateUI(profile);
+
+    // Refresh from DB by email every 20s
     setInterval(async () => {
-      const { data: refreshed } = await supabase
-        .from("portal_users")
-        .select("id, email, tier, selected_tier, qty, is_active")
-        .eq("id", session.user.id)
-        .maybeSingle();
-      await checkStatusAndUpdateUI(refreshed || profile);
+      try{
+        const email = (session.user?.email || "").trim().toLowerCase();
+        if(!email) return;
+
+        const { data: refreshed } = await supabase
+          .from("portal_users")
+          .select("id, email, tier, selected_tier, qty, is_active")
+          .eq("email", email)
+          .maybeSingle();
+
+        await checkStatusAndUpdateUI(refreshed || profile);
+      } catch {
+        // ignore
+      }
     }, 20000);
   })();
 </script>
