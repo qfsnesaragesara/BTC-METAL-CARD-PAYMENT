@@ -172,7 +172,6 @@
     }
   </style>
 
-  <!-- Supabase JS (v2) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -233,6 +232,7 @@
       if(kind==="error") msg.classList.add("error");
       if(kind==="ok") msg.classList.add("ok");
     }
+
     window.addEventListener("error", (e) => {
       show("JS Error: " + (e?.message || "unknown"), "error");
       setDbg("JS error");
@@ -246,12 +246,11 @@
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-    if(!window.supabase){
+    if(!window.supabase || typeof window.supabase.createClient !== "function"){
       show("Supabase library failed to load (CDN blocked).", "error");
       setDbg("no supabase lib");
     }
 
-    // IMPORTANT: avoid global name conflicts
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const elEmail = document.getElementById("email");
@@ -270,7 +269,6 @@
       const s = String(v || "").trim().toLowerCase();
       return (s === "gold" || s === "silver" || s === "black") ? s : "";
     }
-
     function routeByTier(tier){
       return normTier(tier) === "gold" ? "portal-gold.html" : "portal.html";
     }
@@ -279,15 +277,13 @@
       setDbg("getUser…");
       const { data: u, error: uErr } = await sb.auth.getUser();
       if(uErr || !u?.user){
-        setDbg("no user -> login");
-        window.location.href = "login.html";
+        setDbg("no user -> stay");
         return;
       }
 
       const email = (u.user.email || "").trim().toLowerCase();
       if(!email){
-        setDbg("no email -> login");
-        window.location.href = "login.html";
+        setDbg("no email -> stay");
         return;
       }
 
@@ -296,16 +292,15 @@
 
       setDbg("fetch portal_users by email…");
 
-      // ✅ DB TRUTH: query by email
       const { data: pu, error: pErr } = await sb
         .from("portal_users")
-        .select("email, tier, selected_tier, is_active, qty")
+        .select("email, tier, selected_tier")
         .eq("email", email)
         .maybeSingle();
 
       if(pErr){
-        setDbg("portal_users blocked (RLS?)");
-        show("Profile lookup blocked. Check your portal_users SELECT policy (by email).", "error");
+        setDbg("portal_users blocked");
+        show("Profile lookup blocked. Add a SELECT policy on portal_users for logged-in users.", "error");
         return;
       }
 
@@ -318,7 +313,7 @@
       const effectiveTier = normTier(pu.tier) || normTier(pu.selected_tier) || "silver";
       const dest = routeByTier(effectiveTier);
 
-      setDbg("route -> " + dest + " (tier=" + effectiveTier + ")");
+      setDbg("route -> " + dest);
       window.location.href = dest;
     }
 
@@ -343,6 +338,7 @@
         return show("Login failed: " + error.message, "error");
       }
 
+      setLoading(false);
       show("Login successful. Redirecting…", "ok");
       setDbg("login ok -> route by DB");
       await routeAfterLoginByDbEmail();
@@ -378,10 +374,12 @@
       setDbg("resend sent");
     }
 
-    // Password toggle
-    const passEl = document.getElementById("password");
-    const toggle = document.getElementById("pwToggle");
-    if (passEl && toggle){
+    // Password toggle (bind after DOM ready)
+    function bindPwToggle(){
+      const passEl = document.getElementById("password");
+      const toggle = document.getElementById("pwToggle");
+      if(!passEl || !toggle) return;
+
       toggle.addEventListener("click", () => {
         const isHidden = passEl.type === "password";
         passEl.type = isHidden ? "text" : "password";
@@ -391,28 +389,57 @@
     }
 
     // Buttons
-    if(loginBtn) loginBtn.addEventListener("click", doLogin);
-    if(signupBtn) signupBtn.addEventListener("click", () => window.location.href = "registration.html");
-    if(forgotBtn) forgotBtn.addEventListener("click", doForgot);
-    if(resendBtn) resendBtn.addEventListener("click", doResend);
+    function bindButtons(){
+      if(loginBtn) loginBtn.addEventListener("click", doLogin);
+      if(signupBtn) signupBtn.addEventListener("click", () => window.location.href = "registration.html");
+      if(forgotBtn) forgotBtn.addEventListener("click", doForgot);
+      if(resendBtn) resendBtn.addEventListener("click", doResend);
 
-    // Enter key
-    document.addEventListener("keydown", (e) => {
-      if(e.key === "Enter") doLogin();
-    });
+      document.addEventListener("keydown", (e) => {
+        if(e.key === "Enter") doLogin();
+      });
+    }
 
-    // If already logged in, route immediately (DB truth)
+    // ✅ IMPORTANT: STOP auto-route loop after logout
+    // If user is sent here with ?logged_out=1 or ?force=1, do NOT auto-redirect.
+    function shouldAutoRoute(){
+      const p = new URLSearchParams(window.location.search);
+      return !(p.get("logged_out") === "1" || p.get("force") === "1");
+    }
+
     (async () => {
+      if(document.readyState === "loading"){
+        document.addEventListener("DOMContentLoaded", () => {
+          bindButtons();
+          bindPwToggle();
+        }, { once:true });
+      } else {
+        bindButtons();
+        bindPwToggle();
+      }
+
+      setDbg("ready ✅");
+
+      // Optional message from portal logout
+      const p = new URLSearchParams(window.location.search);
+      if(p.get("logged_out") === "1"){
+        show("You have been logged out.", "ok");
+      }
+
+      // Auto-route ONLY when allowed
+      if(!shouldAutoRoute()){
+        setDbg("auto-route skipped");
+        return;
+      }
+
       try{
         const { data } = await sb.auth.getSession();
         if(data?.session){
           setDbg("session exists -> auto-route");
           await routeAfterLoginByDbEmail();
-        } else {
-          setDbg("ready ✅");
         }
       } catch {
-        setDbg("ready ✅");
+        // ignore
       }
     })();
   </script>
