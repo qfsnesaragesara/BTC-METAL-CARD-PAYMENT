@@ -218,12 +218,38 @@
     <div id="msg" class="msg"></div>
   </div>
 
-  <div class="debug-badge" id="dbg">dbg: loading…</div>
+  <div class="debug-badge" id="dbg">dbg: booting…</div>
 
   <script>
-    // ✅ Your real keys (from registration.html)
+    // ===== GLOBAL ERROR VISIBILITY =====
+    const dbg = document.getElementById("dbg");
+    const msg = document.getElementById("msg");
+    function setDbg(t){ if(dbg) dbg.textContent = "dbg: " + t; }
+    function show(text, kind){
+      if(!msg) return;
+      msg.textContent = text || "";
+      msg.classList.remove("show","error","ok");
+      msg.classList.add("show");
+      if(kind==="error") msg.classList.add("error");
+      if(kind==="ok") msg.classList.add("ok");
+    }
+    window.addEventListener("error", (e) => {
+      show("JS Error: " + (e?.message || "unknown"), "error");
+      setDbg("JS error");
+    });
+    window.addEventListener("unhandledrejection", (e) => {
+      show("Promise Error: " + (e?.reason?.message || e?.reason || "unknown"), "error");
+      setDbg("promise error");
+    });
+
+    // ✅ Your real keys
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
+    if(!window.supabase){
+      show("Supabase library failed to load (CDN blocked).", "error");
+      setDbg("no supabase lib");
+    }
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -233,17 +259,7 @@
     const signupBtn = document.getElementById("signupBtn");
     const forgotBtn = document.getElementById("forgotBtn");
     const resendBtn = document.getElementById("resendBtn");
-    const msg = document.getElementById("msg");
-    const dbg = document.getElementById("dbg");
 
-    function setDbg(t){ if(dbg) dbg.textContent = "dbg: " + t; }
-    function show(text, kind){
-      msg.textContent = text || "";
-      msg.classList.remove("show","error","ok");
-      msg.classList.add("show");
-      if(kind==="error") msg.classList.add("error");
-      if(kind==="ok") msg.classList.add("ok");
-    }
     function setLoading(on, label){
       [loginBtn, signupBtn, forgotBtn, resendBtn].forEach(b => { if(b) b.disabled = !!on; });
       if(loginBtn) loginBtn.textContent = on ? (label || "Working...") : "Login";
@@ -262,6 +278,7 @@
     }
 
     async function routeAfterLogin(user){
+      setDbg("fetch portal_users…");
       const { data: pu, error } = await supabase
         .from("portal_users")
         .select("tier, selected_tier, is_active")
@@ -269,7 +286,7 @@
         .single();
 
       if(error || !pu){
-        setDbg("no portal_users row -> registration.html");
+        setDbg("no portal_users -> registration");
         return window.location.href = "registration.html";
       }
 
@@ -285,25 +302,28 @@
     }
 
     async function doLogin(){
+      setDbg("click detected ✅");
       const email = (elEmail.value || "").trim().toLowerCase();
       const password = (elPass.value || "");
 
-      if(!email || !password) return show("Please enter your email and password.", "error");
+      if(!email || !password){
+        return show("Please enter your email and password.", "error");
+      }
 
       setLoading(true, "Logging in...");
-      setDbg("signInWithPassword...");
       show("", "");
+      setDbg("signInWithPassword…");
 
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if(error){
         setLoading(false);
-        setDbg("login error");
+        setDbg("login failed");
         return show("Login failed: " + error.message, "error");
       }
 
       show("Login successful. Redirecting…", "ok");
-      setDbg("login ok -> routing");
+      setDbg("login ok -> route");
       await routeAfterLogin(data.user);
     }
 
@@ -312,7 +332,7 @@
       if(!email) return show("Enter your email first, then click Forgot Password.", "error");
 
       setLoading(true, "Sending…");
-      setDbg("resetPasswordForEmail...");
+      setDbg("reset email…");
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + "/reset-password.html"
       });
@@ -328,7 +348,7 @@
       if(!email) return show("Enter your email first, then click Resend Verification Email.", "error");
 
       setLoading(true, "Sending…");
-      setDbg("resend signup...");
+      setDbg("resend email…");
       const { error } = await supabase.auth.resend({ type: "signup", email });
       setLoading(false);
 
@@ -338,32 +358,29 @@
     }
 
     // Password toggle
-    document.addEventListener("DOMContentLoaded", () => {
-      const passEl = document.getElementById("password");
-      const toggle = document.getElementById("pwToggle");
-      if (!passEl || !toggle) return;
-
+    const passEl = document.getElementById("password");
+    const toggle = document.getElementById("pwToggle");
+    if (passEl && toggle){
       toggle.addEventListener("click", () => {
         const isHidden = passEl.type === "password";
         passEl.type = isHidden ? "text" : "password";
         toggle.classList.toggle("is-showing", isHidden);
-        setDbg("PW toggle ✅ " + new Date().toLocaleTimeString());
+        setDbg("PW toggle ✅");
       });
-    });
+    }
 
     // Buttons
-    loginBtn.addEventListener("click", doLogin);
-    signupBtn.addEventListener("click", () => window.location.href = "registration.html");
-    forgotBtn.addEventListener("click", doForgot);
-    resendBtn.addEventListener("click", doResend);
+    if(loginBtn) loginBtn.addEventListener("click", doLogin);
+    if(signupBtn) signupBtn.addEventListener("click", () => window.location.href = "registration.html");
+    if(forgotBtn) forgotBtn.addEventListener("click", doForgot);
+    if(resendBtn) resendBtn.addEventListener("click", doResend);
 
     // Enter key
     document.addEventListener("keydown", (e) => {
       if(e.key === "Enter") doLogin();
     });
 
-    // Quick self-test
-    setDbg("ready ✅ click Login");
+    setDbg("ready ✅");
   </script>
 
 </body>
