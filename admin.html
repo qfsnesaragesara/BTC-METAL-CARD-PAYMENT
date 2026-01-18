@@ -2,415 +2,489 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin • Order Confirmation</title>
-  <meta name="robots" content="noindex, nofollow">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — QFS</title>
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="robots" content="noindex,nofollow" />
+
   <style>
     :root{
-      --card:rgba(255,255,255,.08); --border:rgba(255,255,255,.14);
-      --text:#eaf0ff; --muted:rgba(234,240,255,.72);
-      --gold:#f5c451; --blue:#0ea5e9; --danger:#ffb4b4; --ok:#bfffd6;
+      --bg:#0b1220; --card:#0f1b33; --muted:#98a2b3; --text:#e6eaf2;
+      --line:rgba(255,255,255,.08); --btn:#2563eb; --btn2:#0b3aa6;
+      --good:#16a34a; --bad:#ef4444; --warn:#f59e0b;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0; font-family:Poppins,system-ui,Segoe UI,Roboto,Arial; color:var(--text);
-      background:
-        radial-gradient(900px 500px at 20% 10%, rgba(14,165,233,.18), transparent 60%),
-        radial-gradient(800px 500px at 80% 30%, rgba(245,196,81,.12), transparent 55%),
-        linear-gradient(180deg, #040617 0%, #070a1f 100%);
-      min-height:100vh;
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:radial-gradient(1200px 600px at 10% 0%, rgba(37,99,235,.28), transparent 60%), var(--bg); color:var(--text)}
+    .wrap{max-width:1180px;margin:0 auto;padding:24px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800}
+    h1{font-size:18px;margin:0}
+    .sub{color:var(--muted);font-size:12px;margin-top:2px}
+    .grid{display:grid;grid-template-columns: 1.2fr .8fr;gap:14px}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:rgba(15,27,51,.82);border:1px solid var(--line);border-radius:16px;padding:16px;backdrop-filter: blur(8px)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .btn{background:var(--btn);border:0;color:white;padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:700}
+    .btn:hover{background:var(--btn2)}
+    .btn.secondary{background:rgba(255,255,255,.06);border:1px solid var(--line)}
+    .btn.danger{background:#7f1d1d}
+    .btn.danger:hover{background:#991b1b}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);font-size:12px;color:var(--muted)}
+    input,select,textarea{
+      background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text);
+      border-radius:12px;padding:10px 12px;outline:none
     }
-    .top{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      padding:16px 18px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      position:sticky; top:0;
-      background:rgba(4,6,23,.78);
-      backdrop-filter:blur(10px);
-      z-index:20;
-    }
-    .brand{display:flex; gap:12px; align-items:center; min-width:0}
-    .logo{
-      width:42px; height:42px; border-radius:12px;
-      background:linear-gradient(135deg, rgba(245,196,81,.95), rgba(14,165,233,.85));
-      box-shadow:0 18px 45px rgba(0,0,0,.35);
-      flex:0 0 auto;
-    }
-    .title{font-weight:900; letter-spacing:.2px; line-height:1.1}
-    .sub{font-size:12px; color:rgba(234,240,255,.65)}
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    button,a.btn{
-      display:inline-flex; align-items:center; justify-content:center;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.08);
-      color:var(--text);
-      cursor:pointer;
-      font-weight:900;
-      text-decoration:none;
-    }
-    .primary{background:var(--blue); color:#00131f; border-color:rgba(14,165,233,.35)}
-    .gold{background:linear-gradient(135deg, rgba(245,196,81,.92), rgba(14,165,233,.75)); color:#00131f; border-color:rgba(245,196,81,.30)}
-    .danger{background:rgba(255,0,0,.12); border-color:rgba(255,0,0,.25)}
-    .wrap{max-width:1100px; margin:0 auto; padding:18px;}
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:18px;
-      box-shadow:0 20px 70px rgba(0,0,0,.35);
-      padding:16px;
-      backdrop-filter: blur(10px);
-    }
-    .msg{font-size:13px; margin-top:10px; color:var(--muted)}
-    .msg.err{color:var(--danger)}
-    .msg.ok{color:var(--ok)}
-    table{width:100%; border-collapse:separate; border-spacing:0 10px;}
-    th{font-size:12px; color:rgba(234,240,255,.65); text-align:left; padding:0 10px;}
-    td{
-      padding:12px 10px;
-      background:rgba(0,0,0,.20);
-      border-top:1px solid rgba(255,255,255,.10);
-      border-bottom:1px solid rgba(255,255,255,.10);
-    }
-    td:first-child{border-left:1px solid rgba(255,255,255,.10); border-top-left-radius:14px; border-bottom-left-radius:14px;}
-    td:last-child{border-right:1px solid rgba(255,255,255,.10); border-top-right-radius:14px; border-bottom-right-radius:14px;}
-    .pill{
-      display:inline-flex; align-items:center;
-      padding:6px 10px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      font-size:12px; font-weight:900;
-      background:rgba(0,0,0,.18);
-      text-transform:uppercase;
-    }
-    .small{font-size:12px;color:rgba(234,240,255,.72)}
-    input{
-      width:100%;
-      padding:10px 11px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(0,0,0,.25);
-      color:var(--text);
-      outline:none;
-    }
-    code{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    input::placeholder,textarea::placeholder{color:rgba(230,234,242,.45)}
+    textarea{min-height:72px;resize:vertical}
+    .muted{color:var(--muted)}
+    .err{color:#fecaca;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);padding:10px 12px;border-radius:12px}
+    .ok{color:#bbf7d0;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);padding:10px 12px;border-radius:12px}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
+    th{color:var(--muted);font-weight:700}
+    tr:hover td{background:rgba(255,255,255,.03)}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    .right{display:flex;gap:10px;align-items:center;justify-content:flex-end}
+    .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .kpi .box{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,.03)}
+    .kpi .label{color:var(--muted);font-size:12px}
+    .kpi .val{font-weight:900;font-size:18px;margin-top:4px}
+    .small{font-size:12px}
   </style>
 </head>
+
 <body>
-  <div class="top">
-    <div class="brand">
-      <div class="logo" aria-hidden="true"></div>
-      <div style="min-width:0">
-        <div class="title">Admin • Order Confirmation</div>
-        <div class="sub" id="subLine">Checking admin access…</div>
-      </div>
-    </div>
-
-    <div class="row">
-      <span class="pill" id="emailPill">—</span>
-      <button id="refreshBtn">Refresh</button>
-      <a class="btn" href="./portal.html">Portal</a>
-      <button id="logoutBtn">Logout</button>
-    </div>
-  </div>
-
   <div class="wrap">
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+    <div class="top">
+      <div class="brand">
+        <div class="logo">Q</div>
         <div>
-          <div style="font-weight:900">Pending Submissions</div>
-          <div class="small">Confirming sets status=confirmed AND updates <code>portal_users</code> (tier/qty/is_active) by email.</div>
-        </div>
-
-        <div style="min-width:260px; max-width:380px; width:100%;">
-          <div class="small">Search email</div>
-          <input id="searchEmail" placeholder="buyer@email.com" />
+          <h1>Admin Console</h1>
+          <div class="sub">Credit/Debit USD + BTC (sats) • View balances • View ledger</div>
         </div>
       </div>
+      <div class="right">
+        <span id="sessionPill" class="pill">Checking session…</span>
+        <button class="btn secondary" id="btnRefresh">Refresh</button>
+        <button class="btn danger" id="btnLogout">Logout</button>
+      </div>
+    </div>
 
-      <div id="msg" class="msg"></div>
+    <div id="msg" style="margin-bottom:14px;"></div>
 
-      <div style="overflow:auto; margin-top:10px;">
+    <div class="grid">
+      <!-- LEFT: Members list -->
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <div style="font-weight:900">Members</div>
+            <div class="muted small">Select a member to manage balances</div>
+          </div>
+          <div class="row">
+            <input id="search" class="mono" placeholder="Search by user_id (UUID)..." style="min-width:320px" />
+            <select id="filterActivation">
+              <option value="activated">Activated only</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+        </div>
+
         <table>
           <thead>
             <tr>
-              <th>Email</th>
+              <th>User ID</th>
               <th>Tier</th>
-              <th>Qty</th>
-              <th>Created</th>
-              <th>Note</th>
-              <th>Actions</th>
+              <th>Activated</th>
+              <th>Activated At</th>
+              <th></th>
             </tr>
           </thead>
-          <tbody id="rows">
-            <tr><td colspan="6" class="small">Loading…</td></tr>
+          <tbody id="membersBody">
+            <tr><td colspan="5" class="muted">Loading…</td></tr>
           </tbody>
         </table>
+
+        <div class="row" style="justify-content:space-between;margin-top:12px">
+          <div class="muted small" id="pageInfo">—</div>
+          <div class="row">
+            <button class="btn secondary" id="prevPage">Prev</button>
+            <button class="btn secondary" id="nextPage">Next</button>
+          </div>
+        </div>
       </div>
 
-      <div class="msg small" style="margin-top:10px;">
-        If you get “not authorized”, ensure your current user is listed in <code>public.admin_users</code> and <code>is_admin()</code> returns true.
+      <!-- RIGHT: Selected member actions -->
+      <div class="card">
+        <div style="font-weight:900">Selected Member</div>
+        <div class="muted small" style="margin-top:4px">Pick a member on the left, or paste a UUID below.</div>
+
+        <div class="row" style="margin-top:12px">
+          <input id="selectedUserId" class="mono" placeholder="Selected user_id (UUID)" style="flex:1;min-width:280px" />
+          <button class="btn secondary" id="loadBalances">Load</button>
+        </div>
+
+        <div class="kpi">
+          <div class="box">
+            <div class="label">USD Balance</div>
+            <div class="val" id="usdBal">$0.00</div>
+            <div class="muted small">stored as cents</div>
+          </div>
+          <div class="box">
+            <div class="label">BTC Balance</div>
+            <div class="val" id="btcBal">0 sats</div>
+            <div class="muted small">stored as sats</div>
+          </div>
+        </div>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
+
+        <div class="row">
+          <select id="currency">
+            <option value="USD">USD</option>
+            <option value="BTC">BTC</option>
+          </select>
+
+          <input id="amount" placeholder="Amount (USD in dollars, BTC in sats)" style="flex:1;min-width:240px" />
+
+          <select id="action">
+            <option value="credit">Credit</option>
+            <option value="debit">Debit</option>
+          </select>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <input id="reason" placeholder="Reason (e.g. welcome_credit, manual_adjust)" style="flex:1;min-width:260px" />
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <textarea id="note" placeholder='Optional note/metadata (saved). Example: {"note":"manual top up"}'></textarea>
+        </div>
+
+        <div class="row" style="margin-top:12px;justify-content:space-between">
+          <div class="muted small">USD is converted to cents automatically. BTC expects sats.</div>
+          <button class="btn" id="submitTxn">Submit</button>
+        </div>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
+
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <div style="font-weight:900">Recent Ledger</div>
+            <div class="muted small">Last 25 entries (selected currency filter)</div>
+          </div>
+          <button class="btn secondary" id="refreshLedger">Refresh</button>
+        </div>
+
+        <div style="margin-top:10px;max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03)">
+          <table style="margin:0">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Cur</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerBody">
+              <tr><td colspan="5" class="muted">No member selected.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
     </div>
   </div>
 
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
-    // =========================
-    // ✅ ONE SUPABASE CLIENT
-    // =========================
+    // ======== CONFIG (set these) ========
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const subLine = document.getElementById("subLine");
-    const emailPill = document.getElementById("emailPill");
-    const msgEl = document.getElementById("msg");
-    const rowsEl = document.getElementById("rows");
-    const refreshBtn = document.getElementById("refreshBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const searchEmail = document.getElementById("searchEmail");
+    const el = (id) => document.getElementById(id);
 
-    function setMsg(text, type){
-      msgEl.textContent = text || "";
-      msgEl.className = "msg " + (type || "");
-    }
-    function esc(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
+    function setMsg(type, text) {
+      const box = el("msg");
+      if (!text) { box.innerHTML = ""; return; }
+      box.innerHTML = `<div class="${type === "ok" ? "ok" : "err"}">${text}</div>`;
     }
 
-    function normTier(v){
-      const s = String(v || "").trim().toLowerCase();
-      if (s === "gold" || s === "silver" || s === "black") return s;
-      return "";
+    function fmtUsdFromCents(cents) {
+      const n = Number(cents || 0);
+      const dollars = (n / 100).toFixed(2);
+      return "$" + dollars;
     }
 
-    function normQty(tier, qty){
-      let q = Number(qty || 0);
-      if (!Number.isFinite(q) || q < 1) q = 1;
-      if (tier === "black") q = 1;
-      if (tier === "silver") q = Math.min(50, Math.max(1, q));
-      if (tier === "gold") q = Math.max(1, q);
-      return q;
+    function fmtSats(s) {
+      const n = Number(s || 0);
+      return `${n.toLocaleString()} sats`;
     }
 
-    async function requireSession(){
+    function safeJsonParse(str) {
+      const t = (str || "").trim();
+      if (!t) return {};
+      try { return JSON.parse(t); } catch { return { note_raw: t }; }
+    }
+
+    // ======== AUTH / ADMIN CHECK ========
+    async function requireSession() {
       const { data } = await supabase.auth.getSession();
-      if(!data?.session){
-        window.location.href = "./login.html";
+      const session = data?.session || null;
+      if (!session) {
+        el("sessionPill").textContent = "Not logged in";
+        setMsg("err", "You are not logged in. Open the admin login page and sign in first.");
         return null;
       }
-      return data.session;
+      el("sessionPill").textContent = "Logged in";
+      return session;
     }
 
-    async function requireAdmin(){
+    async function requireAdmin() {
+      // Call is_admin() via RPC
       const { data, error } = await supabase.rpc("is_admin");
-      if(error) return { ok:false, reason:error.message };
-      if(data !== true) return { ok:false, reason:"Not an admin" };
-      return { ok:true };
-    }
-
-    function renderEmpty(text){
-      rowsEl.innerHTML = `<tr><td colspan="6" class="small">${esc(text)}</td></tr>`;
-    }
-
-    // =========================
-    // ✅ Upsert portal_users by EMAIL (source of truth for portal routing)
-    // =========================
-    async function upsertPortalUserByEmail(emailRaw, tierRaw, qtyRaw, makeActive){
-      const email = String(emailRaw || "").trim().toLowerCase();
-      const tier = normTier(tierRaw) || "silver";
-      const qty = normQty(tier, qtyRaw);
-
-      if(!email) return { ok:false, error:"Missing email" };
-
-      // We do "upsert" by email, because your portal_users.id is NOT auth uid.
-      // Requires insert/update policies (you said you have them).
-      const payload = {
-        email,
-        tier,
-        selected_tier: tier,
-        qty,
-        is_active: makeActive ? true : false,
-        // balance_label optional; do not overwrite
-      };
-
-      const { error } = await supabase
-        .from("portal_users")
-        .upsert(payload, { onConflict: "email" });
-
-      if(error) return { ok:false, error:error.message };
-      return { ok:true, email, tier, qty };
-    }
-
-    // =========================
-    // ✅ LOAD FROM payment_submissions
-    // =========================
-    async function loadPending(){
-      setMsg("", "");
-      renderEmpty("Loading…");
-
-      const q = (searchEmail.value || "").trim().toLowerCase();
-
-      let query = supabase
-        .from("payment_submissions")
-        .select("id,email,card_type,qty,status,created_at,note")
-        .eq("status","pending")
-        .order("created_at", { ascending:false })
-        .limit(50);
-
-      if(q){
-        query = query.ilike("email", `%${q}%`);
+      if (error) {
+        setMsg("err", "Admin check failed: " + error.message);
+        return false;
       }
+      if (data !== true) {
+        setMsg("err", "Not authorized: your account is not an admin.");
+        return false;
+      }
+      return true;
+    }
 
-      const { data, error } = await query;
+    // ======== MEMBERS LIST ========
+    let pageLimit = 25;
+    let pageOffset = 0;
+    let cachedMembers = [];
 
-      if(error){
-        renderEmpty("Error loading submissions.");
-        setMsg(error.message, "err");
+    function renderMembers(rows) {
+      const body = el("membersBody");
+      if (!rows || rows.length === 0) {
+        body.innerHTML = `<tr><td colspan="5" class="muted">No members found.</td></tr>`;
         return;
       }
 
-      if(!data || data.length === 0){
-        renderEmpty("No pending submissions.");
-        return;
-      }
-
-      rowsEl.innerHTML = "";
-      data.forEach(o => {
-        const tr = document.createElement("tr");
-        const created = new Date(o.created_at).toLocaleString();
-
-        tr.innerHTML = `
-          <td>
-            <div style="font-weight:900">${esc(o.email || "—")}</div>
-            <div class="small">ID: ${esc(String(o.id).slice(0,8))}…</div>
-          </td>
-          <td><span class="pill">${esc(String(o.card_type || "—"))}</span></td>
-          <td><span class="pill">${esc(String(o.qty || 1))}</span></td>
-          <td class="small">${esc(created)}</td>
-          <td style="min-width:220px">
-            <input data-note="${esc(o.id)}" placeholder="Optional note…" value="${esc(o.note || "")}">
-          </td>
-          <td style="min-width:260px">
-            <div class="row">
-              <button class="gold" data-confirm="${esc(o.id)}">Confirm</button>
-              <button class="danger" data-reject="${esc(o.id)}">Reject</button>
-            </div>
-          </td>
+      body.innerHTML = rows.map(r => {
+        const act = r.is_activated ? "Yes" : "No";
+        const actAt = r.activated_at ? new Date(r.activated_at).toLocaleString() : "—";
+        return `
+          <tr>
+            <td class="mono">${r.user_id}</td>
+            <td>${r.tier || "—"}</td>
+            <td>${act}</td>
+            <td>${actAt}</td>
+            <td><button class="btn secondary small" data-pick="${r.user_id}">Select</button></td>
+          </tr>
         `;
-        rowsEl.appendChild(tr);
-      });
+      }).join("");
 
-      rowsEl.querySelectorAll("button[data-confirm]").forEach(btn => {
+      // attach pick handlers
+      [...body.querySelectorAll("[data-pick]")].forEach(btn => {
         btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-confirm");
-          await updateSubmissionStatus(id, "confirmed", btn);
-        });
-      });
-
-      rowsEl.querySelectorAll("button[data-reject]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-reject");
-          await updateSubmissionStatus(id, "rejected", btn);
+          const uid = btn.getAttribute("data-pick");
+          el("selectedUserId").value = uid;
+          await loadBalancesAndLedger();
         });
       });
     }
 
-    async function updateSubmissionStatus(id, status, btn){
+    function applySearchAndFilter() {
+      const q = (el("search").value || "").trim().toLowerCase();
+      const f = el("filterActivation").value;
+
+      let rows = [...cachedMembers];
+
+      if (f === "activated") rows = rows.filter(r => r.is_activated === true);
+      if (q) rows = rows.filter(r => String(r.user_id || "").toLowerCase().includes(q));
+
+      renderMembers(rows);
+      el("pageInfo").textContent = `Loaded ${cachedMembers.length} members (page offset ${pageOffset})`;
+    }
+
+    async function loadMembers() {
       setMsg("", "");
-      btn.disabled = true;
-      const oldText = btn.textContent;
-      btn.textContent = "Working…";
-
-      try{
-        // Pull the row (email/tier/qty) so we can update portal_users correctly
-        const { data: row, error: getErr } = await supabase
-          .from("payment_submissions")
-          .select("id,email,card_type,qty,status")
-          .eq("id", id)
-          .maybeSingle();
-
-        if(getErr || !row){
-          throw new Error(getErr?.message || "Submission not found");
-        }
-
-        const noteInput = rowsEl.querySelector(`input[data-note="${CSS.escape(id)}"]`);
-        const note = (noteInput?.value || "").trim() || null;
-
-        // 1) Update submission status (only if still pending)
-        const { error: updErr } = await supabase
-          .from("payment_submissions")
-          .update({ status, note })
-          .eq("id", id)
-          .eq("status","pending");
-
-        if(updErr){
-          throw new Error(updErr.message);
-        }
-
-        // 2) If confirmed -> DB truth for portal routing: upsert portal_users by email
-        if(status === "confirmed"){
-          const tier = normTier(row.card_type) || "silver";
-          const qty = normQty(tier, row.qty);
-
-          const up = await upsertPortalUserByEmail(row.email, tier, qty, true);
-          if(!up.ok){
-            // submission confirmed but portal_users update failed -> show loud error
-            setMsg("Confirmed submission, but portal_users update failed: " + up.error, "err");
-          } else {
-            setMsg(`Confirmed ✅ (portal_users set: ${up.email} → ${up.tier.toUpperCase()} x${up.qty}, is_active=true)`, "ok");
-          }
-        } else {
-          // rejected -> do NOT activate; keep portal_users as-is
-          setMsg("Rejected ✅", "ok");
-        }
-
-        await loadPending();
-      } catch(e){
-        setMsg(e?.message || String(e), "err");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = oldText;
+      const { data, error } = await supabase.rpc("admin_list_members", { p_limit: pageLimit, p_offset: pageOffset });
+      if (error) {
+        setMsg("err", "Failed to load members: " + error.message);
+        return;
       }
+      cachedMembers = Array.isArray(data) ? data : [];
+      applySearchAndFilter();
     }
 
-    refreshBtn.addEventListener("click", loadPending);
-    searchEmail.addEventListener("input", () => {
-      clearTimeout(window.__t);
-      window.__t = setTimeout(loadPending, 250);
-    });
-
-    logoutBtn.addEventListener("click", async () => {
-      try{ await supabase.auth.signOut(); } catch {}
-      window.location.replace("./login.html");
-    });
-
-    (async () => {
-      const session = await requireSession();
-      if(!session) return;
-
-      emailPill.textContent = session.user.email || "Admin";
-
-      const admin = await requireAdmin();
-      if(!admin.ok){
-        subLine.textContent = "Access denied";
-        renderEmpty("Not authorized.");
-        setMsg(admin.reason || "Not authorized.", "err");
+    // ======== BALANCES + LEDGER ========
+    async function loadBalancesAndLedger() {
+      const userId = (el("selectedUserId").value || "").trim();
+      if (!userId) {
+        setMsg("err", "Paste/select a user_id first.");
         return;
       }
 
-      subLine.textContent = "Admin access verified";
-      await loadPending();
-    })();
+      // balances
+      const { data: bal, error: balErr } = await supabase.rpc("admin_get_user_balances", { p_user_id: userId });
+      if (balErr) {
+        setMsg("err", "Balance load failed: " + balErr.message);
+        return;
+      }
+      el("usdBal").textContent = fmtUsdFromCents(bal?.usd_cents);
+      el("btcBal").textContent = fmtSats(bal?.btc_sats);
+
+      // ledger
+      await loadLedger();
+    }
+
+    async function loadLedger() {
+      const userId = (el("selectedUserId").value || "").trim();
+      if (!userId) return;
+
+      const cur = (el("currency").value || "USD").toUpperCase();
+      const { data, error } = await supabase.rpc("admin_get_user_ledger", {
+        p_user_id: userId,
+        p_currency: cur,
+        p_limit: 25
+      });
+
+      if (error) {
+        setMsg("err", "Ledger load failed: " + error.message);
+        return;
+      }
+
+      const body = el("ledgerBody");
+      const rows = Array.isArray(data) ? data : [];
+      if (rows.length === 0) {
+        body.innerHTML = `<tr><td colspan="5" class="muted">No ledger entries.</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = rows.map(r => {
+        const time = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
+        const amt = r.currency === "USD"
+          ? fmtUsdFromCents(r.amount_units)
+          : fmtSats(r.amount_units);
+
+        return `
+          <tr>
+            <td class="small">${time}</td>
+            <td>${r.currency}</td>
+            <td>${r.entry_type}</td>
+            <td class="mono">${amt}</td>
+            <td>${r.reason}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // ======== CREDIT/DEBIT SUBMIT ========
+    async function submitTxn() {
+      const userId = (el("selectedUserId").value || "").trim();
+      if (!userId) { setMsg("err", "Select/paste a user_id first."); return; }
+
+      const currency = (el("currency").value || "USD").toUpperCase();
+      const action = (el("action").value || "credit").toLowerCase();
+      const reason = (el("reason").value || "").trim() || (action === "credit" ? "admin_credit" : "admin_debit");
+      const noteMeta = safeJsonParse(el("note").value);
+
+      const rawAmount = (el("amount").value || "").trim();
+      if (!rawAmount) { setMsg("err", "Enter an amount."); return; }
+
+      let amountUnits = 0;
+
+      if (currency === "USD") {
+        const dollars = Number(rawAmount);
+        if (!Number.isFinite(dollars) || dollars <= 0) { setMsg("err", "USD amount must be a positive number (dollars)."); return; }
+        amountUnits = Math.round(dollars * 100); // cents
+      } else {
+        const sats = Number(rawAmount);
+        if (!Number.isFinite(sats) || sats <= 0 || !Number.isInteger(sats)) { setMsg("err", "BTC amount must be a positive whole number (sats)."); return; }
+        amountUnits = sats; // sats
+      }
+
+      setMsg("", "");
+
+      const rpcName = action === "debit" ? "admin_debit_user" : "admin_credit_user";
+      const { data, error } = await supabase.rpc(rpcName, {
+        p_user_id: userId,
+        p_currency: currency,
+        p_amount_units: amountUnits,
+        p_reason: reason,
+        p_metadata: noteMeta
+      });
+
+      if (error) {
+        setMsg("err", "Transaction failed: " + error.message);
+        return;
+      }
+
+      setMsg("ok", `Success: ${rpcName} • ${currency} • ${currency === "USD" ? fmtUsdFromCents(amountUnits) : fmtSats(amountUnits)} • entry/ref: ${data?.entry_id || data?.ref || "ok"}`);
+
+      // refresh balances + ledger
+      await loadBalancesAndLedger();
+    }
+
+    // ======== UI EVENTS ========
+    el("btnLogout").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      location.reload();
+    });
+
+    el("btnRefresh").addEventListener("click", async () => {
+      setMsg("", "");
+      await boot();
+    });
+
+    el("prevPage").addEventListener("click", async () => {
+      pageOffset = Math.max(0, pageOffset - pageLimit);
+      await loadMembers();
+    });
+
+    el("nextPage").addEventListener("click", async () => {
+      pageOffset = pageOffset + pageLimit;
+      await loadMembers();
+    });
+
+    el("search").addEventListener("input", () => applySearchAndFilter());
+    el("filterActivation").addEventListener("change", () => applySearchAndFilter());
+
+    el("loadBalances").addEventListener("click", async () => {
+      await loadBalancesAndLedger();
+    });
+
+    el("refreshLedger").addEventListener("click", async () => {
+      await loadLedger();
+    });
+
+    el("currency").addEventListener("change", async () => {
+      // currency change also refresh ledger (and keeps amount rules)
+      await loadLedger();
+    });
+
+    el("submitTxn").addEventListener("click", async () => {
+      await submitTxn();
+    });
+
+    // ======== BOOT ========
+    async function boot() {
+      const session = await requireSession();
+      if (!session) return;
+
+      const okAdmin = await requireAdmin();
+      if (!okAdmin) return;
+
+      await loadMembers();
+      setMsg("ok", "Admin console ready.");
+    }
+
+    boot();
   </script>
 </body>
 </html>
