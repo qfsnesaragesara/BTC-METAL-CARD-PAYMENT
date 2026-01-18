@@ -454,10 +454,11 @@
             return;
           }
 
-          setPill("Signed in", true);
-          setSignedInUI(true);
-          showToast(loginToast, "Signed in ✅");
-          await loadPending();
+          showToast(loginToast, "Signed in ✅ Redirecting…");
+    setPill("Signed in", true);
+   window.location.href = "admin.html";
+  return;
+
         } catch(e){
           loginBtn.disabled = false;
           console.error(e);
@@ -505,9 +506,9 @@
             return;
           }
 
-          setSignedInUI(true);
           setPill("Signed in", true);
-          await loadPending();
+       window.location.href = "admin.html";
+     return;
         } catch(e){
           console.error(e);
           setPill("Boot error", false);
