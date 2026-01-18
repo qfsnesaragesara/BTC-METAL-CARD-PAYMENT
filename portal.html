@@ -38,7 +38,6 @@
       var(--bg);
   }
 
-  /* ✅ Force header above everything + clickable */
   .wrap{ max-width:var(--maxw); margin:0 auto; position:relative; z-index:1; }
   .header,
   .header-actions,
@@ -273,8 +272,7 @@
 
     <div class="card">
       <h2>Available Balance</h2>
-      <!-- ✅ auto-hide when Active -->
-      <div class="sub" id="balanceHelp">Balance becomes active after you order your access card</div>
+      <div class="sub" id="balanceHelp">Balance becomes active after your payment is confirmed and your account is activated.</div>
 
       <div class="balance" id="balance">$0.00</div>
       <div class="btc" id="btcBalance">—</div>
@@ -293,7 +291,7 @@
 
     <div class="card">
       <h2>Account Details</h2>
-      <div class="sub">Your Membership Balance</div>
+      <div class="sub">Your Membership</div>
 
       <table>
         <tr>
@@ -384,16 +382,22 @@
     return "Member";
   }
 
-  function setBadge(active){
+  function setBadge(statusLower){
     const b = $("statusBadge");
     b.classList.remove("pending","active","rejected");
-    if(active){
+
+    if(statusLower === "active" || statusLower === "confirmed"){
       b.textContent = "Active";
       b.classList.add("active");
-    } else {
-      b.textContent = "Pending";
-      b.classList.add("pending");
+      return;
     }
+    if(statusLower === "rejected"){
+      b.textContent = "Rejected";
+      b.classList.add("rejected");
+      return;
+    }
+    b.textContent = "Pending";
+    b.classList.add("pending");
   }
 
   function lockActions(){
@@ -423,8 +427,14 @@
     $("lockNote").textContent = "✅ Account Active — Send & Receive are unlocked.";
   }
 
-  function fmtUSD(n){
-    return "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  function fmtUSDFromCents(cents){
+    const n = Number(cents || 0) / 100;
+    return "$" + n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+
+  function fmtBTCFromSats(sats){
+    const n = Number(sats || 0) / 1e8;
+    return n.toLocaleString(undefined, { maximumFractionDigits: 8 }) + " BTC";
   }
 
   async function fetchBtcUsd(){
@@ -435,35 +445,6 @@
     } catch {
       return 0;
     }
-  }
-
-  function setAllocationUI(tierUpper, qty){
-    const tier = (tierUpper || "").toUpperCase();
-    $("tierCell").textContent = tier || "—";
-    $("qtyCell").textContent = qty ? String(qty) : "—";
-
-    $("balance").textContent = "$0.00";
-    $("btcBalance").textContent = "—";
-
-    if(tier === "SILVER"){
-      const usdBalance = 25000 * qty;
-      $("balance").textContent = fmtUSD(usdBalance);
-      $("btcBalance").textContent = "≈ $25,000 per card allocation";
-    }
-
-    if(tier === "BLACK"){
-      $("balance").textContent = "25,000 BTC";
-      $("btcBalance").textContent = "USD equivalent loading…";
-    }
-  }
-
-  function setBlackUsdEquivalent(btcUsd){
-    if(!btcUsd) {
-      $("btcBalance").textContent = "USD equivalent unavailable";
-      return;
-    }
-    const usdEq = 25000 * btcUsd;
-    $("btcBalance").textContent = "≈ " + fmtUSD(usdEq) + " (live BTC price)";
   }
 
   function hardToLogin(){
@@ -494,11 +475,40 @@
   async function getDbProfileByEmail(email){
     return await sb
       .from("portal_users")
-      .select("email, tier, selected_tier, qty, is_active")
+      .select("id, user_id, email, tier, selected_tier, qty, is_active")
       .eq("email", email)
       .maybeSingle();
   }
 
+  // ✅ HONEST BALANCES: read from portal_accounts only
+  async function getBalancesForUser(userId){
+    const out = { usd_cents: 0, btc_sats: 0 };
+
+    const { data, error } = await sb
+      .from("portal_accounts")
+      .select("*")
+      .eq("user_id", userId);
+
+    if(error){
+      return { ...out, _error: error.message };
+    }
+
+    (data || []).forEach(row => {
+      const cur = String(row.currency || "").toUpperCase();
+
+      if(cur === "USD"){
+        if(row.balance_cents != null) out.usd_cents = Number(row.balance_cents || 0);
+      }
+      if(cur === "BTC"){
+        if(row.balance_sats != null) out.btc_sats = Number(row.balance_sats || 0);
+        else if(row.balance_cents != null) out.btc_sats = Number(row.balance_cents || 0); // fallback
+      }
+    });
+
+    return out;
+  }
+
+  // ✅ Orders: your schema uses tx_hash (not txid)
   async function loadOrders(email){
     const body = $("ordersBody");
     if(!body) return;
@@ -507,7 +517,7 @@
 
     const { data, error } = await sb
       .from("payment_submissions")
-      .select("created_at, card_type, qty, status, txid")
+      .select("created_at, card_type, qty, status, tx_hash")
       .eq("email", email)
       .order("created_at", { ascending:false })
       .limit(25);
@@ -528,8 +538,8 @@
       const card = String(r.card_type || "—").toUpperCase();
       const qty = Number(r.qty || 1);
       const status = String(r.status || "pending").toLowerCase();
-      const txid = String(r.txid || "");
-      const shortTx = txid ? (txid.length > 16 ? (txid.slice(0,8) + "…" + txid.slice(-6)) : txid) : "—";
+      const tx = String(r.tx_hash || "");
+      const shortTx = tx ? (tx.length > 16 ? (tx.slice(0,8) + "…" + tx.slice(-6)) : tx) : "—";
 
       body.insertAdjacentHTML("beforeend", `
         <tr>
@@ -537,45 +547,68 @@
           <td>${esc(card)}</td>
           <td>${esc(String(qty))}</td>
           <td>${esc(status)}</td>
-          <td class="mono" title="${esc(txid)}">${esc(shortTx)}</td>
+          <td class="mono" title="${esc(tx)}">${esc(shortTx)}</td>
         </tr>
       `);
     });
   }
 
-  async function refreshUI(profile){
+  async function refreshUI(profile, sessionUser){
     const now = new Date();
     $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
 
     const tier = (profile?.tier || profile?.selected_tier || "").toUpperCase();
-    let qty = Number(profile?.qty || 0) || 0;
+    const qty = Number(profile?.qty || 0) || 0;
 
-    if (tier === "BLACK") qty = 1;
-    if (tier === "SILVER" && qty > 50) qty = 50;
-    if (!Number.isFinite(qty) || qty < 1) qty = 1;
-
-    setAllocationUI(tier, qty);
+    $("tierCell").textContent = tier || "—";
+    $("qtyCell").textContent = qty ? String(qty) : "—";
 
     const isActive = profile?.is_active === true;
 
     $("statusCell").textContent = isActive ? "Active" : "Pending";
-    setBadge(isActive);
+    setBadge(isActive ? "active" : "pending");
 
     if(isActive) unlockActions();
     else lockActions();
 
-    // BTC equivalent
-    const tierShown = ($("tierCell").textContent || "").toUpperCase();
-    if (tierShown === "BLACK"){
+    // ✅ HONEST DISPLAY:
+    // Pending => always show 0 balances (no allocations)
+    if(!isActive){
+      $("balance").textContent = "$0.00";
+      $("btcBalance").textContent = "—";
+      return;
+    }
+
+    // Active => show DB balances
+    const balances = await getBalancesForUser(sessionUser.id);
+
+    if(balances._error){
+      $("balance").textContent = "$0.00";
+      $("btcBalance").textContent = "—";
+      say("Balance read blocked: " + balances._error);
+      return;
+    }
+
+    $("balance").textContent = fmtUSDFromCents(balances.usd_cents);
+
+    // If BTC exists, show BTC + USD equivalent; else show BTC equivalent of USD (optional)
+    if(Number(balances.btc_sats || 0) > 0){
+      const btcText = fmtBTCFromSats(balances.btc_sats);
       const btcUsd = await fetchBtcUsd();
-      setBlackUsdEquivalent(btcUsd);
-    } else if (tierShown === "SILVER"){
+      if(btcUsd){
+        const usdEq = (Number(balances.btc_sats) / 1e8) * btcUsd;
+        $("btcBalance").textContent = `${btcText} (≈ $${usdEq.toLocaleString(undefined,{maximumFractionDigits:2})})`;
+      } else {
+        $("btcBalance").textContent = btcText;
+      }
+    } else {
       const btcUsd = await fetchBtcUsd();
-      if (btcUsd){
-        const qtyShown = Number($("qtyCell").textContent || 1);
-        const usdBal = 25000 * (Number.isFinite(qtyShown) ? qtyShown : 1);
+      if(btcUsd && Number(balances.usd_cents || 0) > 0){
+        const usdBal = Number(balances.usd_cents) / 100;
         const btcEq = usdBal / btcUsd;
         $("btcBalance").textContent = `≈ ${btcEq.toFixed(8)} BTC (live BTC price)`;
+      } else {
+        $("btcBalance").textContent = "—";
       }
     }
   }
@@ -643,7 +676,7 @@
         return window.location.replace("portal-gold.html");
       }
 
-      await refreshUI(profile);
+      await refreshUI(profile, user);
       await loadOrders(email);
       say("Loaded ✅");
 
@@ -652,7 +685,7 @@
         if(p2){
           const t2 = normTier(p2.tier) || normTier(p2.selected_tier);
           if(t2 === "gold") return window.location.replace("portal-gold.html");
-          await refreshUI(p2);
+          await refreshUI(p2, user);
           await loadOrders(email);
         }
       }, 20000);
