@@ -69,8 +69,8 @@
       </div>
       <div class="right">
         <span id="sessionPill" class="pill">Checking session…</span>
-        <button class="btn secondary" id="btnRefresh">Refresh</button>
-        <button class="btn danger" id="btnLogout">Logout</button>
+        <button class="btn secondary" id="btnRefresh" type="button">Refresh</button>
+        <button class="btn danger" id="btnLogout" type="button">Logout</button>
       </div>
     </div>
 
@@ -111,8 +111,8 @@
         <div class="row" style="justify-content:space-between;margin-top:12px">
           <div class="muted small" id="pageInfo">—</div>
           <div class="row">
-            <button class="btn secondary" id="prevPage">Prev</button>
-            <button class="btn secondary" id="nextPage">Next</button>
+            <button class="btn secondary" id="prevPage" type="button">Prev</button>
+            <button class="btn secondary" id="nextPage" type="button">Next</button>
           </div>
         </div>
       </div>
@@ -124,7 +124,7 @@
 
         <div class="row" style="margin-top:12px">
           <input id="selectedUserId" class="mono" placeholder="Selected user_id (UUID)" style="flex:1;min-width:280px" />
-          <button class="btn secondary" id="loadBalances">Load</button>
+          <button class="btn secondary" id="loadBalances" type="button">Load</button>
         </div>
 
         <div class="kpi">
@@ -166,7 +166,7 @@
 
         <div class="row" style="margin-top:12px;justify-content:space-between">
           <div class="muted small">USD is converted to cents automatically. BTC expects sats.</div>
-          <button class="btn" id="submitTxn">Submit</button>
+          <button class="btn" id="submitTxn" type="button">Submit</button>
         </div>
 
         <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
@@ -176,7 +176,7 @@
             <div style="font-weight:900">Recent Ledger</div>
             <div class="muted small">Last 25 entries (selected currency filter)</div>
           </div>
-          <button class="btn secondary" id="refreshLedger">Refresh</button>
+          <button class="btn secondary" id="refreshLedger" type="button">Refresh</button>
         </div>
 
         <div style="margin-top:10px;max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03)">
@@ -200,7 +200,7 @@
     </div>
   </div>
 
-  <!-- Supabase JS -->
+  <!-- Supabase JS (keep only one include) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -235,30 +235,47 @@
       try { return JSON.parse(t); } catch { return { note_raw: t }; }
     }
 
-    // ======== AUTH / ADMIN CHECK ========
-    async function requireSession() {
-      const { data } = await supabase.auth.getSession();
+    // ======== AUTH / ADMIN CHECK (BUILT-IN) ========
+    async function requireSessionOrRedirect() {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        el("sessionPill").textContent = "Session error";
+        setMsg("err", "Session error: " + error.message);
+        return null;
+      }
+
       const session = data?.session || null;
       if (!session) {
         el("sessionPill").textContent = "Not logged in";
-        setMsg("err", "You are not logged in. Open the admin login page and sign in first.");
+        setMsg("err", "Not logged in. Redirecting to admin-confirm…");
+        // redirect back to login page
+        setTimeout(() => { window.location.href = "admin-confirm.html"; }, 700);
         return null;
       }
+
       el("sessionPill").textContent = "Logged in";
       return session;
     }
 
-    async function requireAdmin() {
-      // Call is_admin() via RPC
+    async function requireAdminOrRedirect() {
       const { data, error } = await supabase.rpc("is_admin");
       if (error) {
+        el("sessionPill").textContent = "Admin check failed";
         setMsg("err", "Admin check failed: " + error.message);
+        // safest: sign out and go back to login
+        try { await supabase.auth.signOut(); } catch {}
+        setTimeout(() => { window.location.href = "admin-confirm.html"; }, 900);
         return false;
       }
+
       if (data !== true) {
-        setMsg("err", "Not authorized: your account is not an admin.");
+        el("sessionPill").textContent = "Access denied";
+        setMsg("err", "Access denied: your account is not an admin. Redirecting…");
+        try { await supabase.auth.signOut(); } catch {}
+        setTimeout(() => { window.location.href = "admin-confirm.html"; }, 900);
         return false;
       }
+
       return true;
     }
 
@@ -283,12 +300,11 @@
             <td>${r.tier || "—"}</td>
             <td>${act}</td>
             <td>${actAt}</td>
-            <td><button class="btn secondary small" data-pick="${r.user_id}">Select</button></td>
+            <td><button class="btn secondary small" type="button" data-pick="${r.user_id}">Select</button></td>
           </tr>
         `;
       }).join("");
 
-      // attach pick handlers
       [...body.querySelectorAll("[data-pick]")].forEach(btn => {
         btn.addEventListener("click", async () => {
           const uid = btn.getAttribute("data-pick");
@@ -330,16 +346,15 @@
         return;
       }
 
-      // balances
       const { data: bal, error: balErr } = await supabase.rpc("admin_get_user_balances", { p_user_id: userId });
       if (balErr) {
         setMsg("err", "Balance load failed: " + balErr.message);
         return;
       }
+
       el("usdBal").textContent = fmtUsdFromCents(bal?.usd_cents);
       el("btcBal").textContent = fmtSats(bal?.btc_sats);
 
-      // ledger
       await loadLedger();
     }
 
@@ -427,14 +442,13 @@
 
       setMsg("ok", `Success: ${rpcName} • ${currency} • ${currency === "USD" ? fmtUsdFromCents(amountUnits) : fmtSats(amountUnits)} • entry/ref: ${data?.entry_id || data?.ref || "ok"}`);
 
-      // refresh balances + ledger
       await loadBalancesAndLedger();
     }
 
     // ======== UI EVENTS ========
     el("btnLogout").addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      location.reload();
+      try { await supabase.auth.signOut(); } catch {}
+      window.location.href = "admin-confirm.html";
     });
 
     el("btnRefresh").addEventListener("click", async () => {
@@ -464,7 +478,6 @@
     });
 
     el("currency").addEventListener("change", async () => {
-      // currency change also refresh ledger (and keeps amount rules)
       await loadLedger();
     });
 
@@ -474,15 +487,24 @@
 
     // ======== BOOT ========
     async function boot() {
-      const session = await requireSession();
+      const session = await requireSessionOrRedirect();
       if (!session) return;
 
-      const okAdmin = await requireAdmin();
+      const okAdmin = await requireAdminOrRedirect();
       if (!okAdmin) return;
 
       await loadMembers();
       setMsg("ok", "Admin console ready.");
     }
+
+    // Also react to auth changes (logout in another tab)
+    supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        el("sessionPill").textContent = "Signed out";
+        setMsg("err", "Signed out. Redirecting…");
+        setTimeout(() => { window.location.href = "admin-confirm.html"; }, 500);
+      }
+    });
 
     boot();
   </script>
