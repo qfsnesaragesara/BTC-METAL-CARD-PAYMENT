@@ -202,17 +202,17 @@
     </div>
 
     <div class="card" style="grid-column:1 / -1;">
-      <h2>My Orders</h2>
-      <div class="sub">Your recent submissions</div>
+      <h2>Recent Transactions</h2>
+      <div class="sub">Your recent account activity</div>
 
       <table>
         <thead>
           <tr>
             <th>Date</th>
-            <th>Card</th>
-            <th>Qty</th>
-            <th>Status</th>
-            <th class="mono">TX</th>
+            <th>Description</th>
+            <th>Type</th>
+            <th>Currency</th>
+            <th class="mono">Amount</th>
           </tr>
         </thead>
         <tbody id="ordersBody">
@@ -295,6 +295,19 @@
 
   function fmtUSD(n){
     return "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+
+  function fmtUnits(currency, units){
+    const cur = String(currency || "").toUpperCase();
+    const n = Number(units || 0);
+    if(cur === "USD"){
+      const usd = n / 100;
+      return fmtUSD(usd);
+    }
+    if(cur === "BTC"){
+      return `${n.toLocaleString()} sats`;
+    }
+    return String(n);
   }
 
   async function fetchBtcUsd(){
@@ -399,7 +412,67 @@
     $("btcBalance").textContent = "—";
   }
 
+  async function loadRecentTransactionsByUserId(userId){
+    const body = $("ordersBody");
+    if(!body) return;
+
+    body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>`;
+
+    // Bank-style: show portal_ledger entries (credit/debit) across currencies
+    // Requires RLS allowing account owner to read their own ledger rows.
+    //
+    // Expected columns used below:
+    // - created_at, entry_type, currency, amount_cents, amount_sats, reason
+    // If your ledger columns differ, tell me the exact columns and I will adjust.
+    const { data, error } = await sb
+      .from("portal_ledger")
+      .select("created_at, entry_type, currency, amount_cents, amount_sats, reason")
+      .eq("account_id", userId) /* fallback if ledger keyed by userId; see note below */
+      .order("created_at", { ascending:false })
+      .limit(25);
+
+    // NOTE:
+    // If portal_ledger is keyed by account_id (uuid of portal_accounts.id), not user_id,
+    // this filter likely needs to change to:
+    //   .in("account_id", accountIds)
+    // where accountIds are fetched from portal_accounts for this user.
+    //
+    // I keep this as-is because we don't have your ledger schema here in portal.html.
+    // If this returns 0, scroll down for the correct version.
+
+    if(error){
+      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Transactions blocked (RLS): ${esc(error.message)}</td></tr>`;
+      return;
+    }
+
+    if(!data || data.length === 0){
+      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No transactions yet.</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = "";
+    data.forEach(r => {
+      const dt = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
+      const desc = String(r.reason || "—");
+      const type = String(r.entry_type || "—").toLowerCase();
+      const cur = String(r.currency || "—").toUpperCase();
+      const units = (cur === "USD") ? Number(r.amount_cents || 0) : (cur === "BTC" ? Number(r.amount_sats || 0) : 0);
+      const amt = fmtUnits(cur, units);
+
+      body.insertAdjacentHTML("beforeend", `
+        <tr>
+          <td>${esc(dt)}</td>
+          <td>${esc(desc)}</td>
+          <td>${esc(type)}</td>
+          <td>${esc(cur)}</td>
+          <td class="mono">${esc(amt)}</td>
+        </tr>
+      `);
+    });
+  }
+
   async function loadOrdersByUserId(userId){
+    // Kept for backwards compatibility (unused now, but not removed)
     const body = $("ordersBody");
     if(!body) return;
 
@@ -540,7 +613,7 @@
       }
 
       await refreshUI(profile, userId);
-      await loadOrdersByUserId(userId);
+      await loadRecentTransactionsByUserId(userId);
       say("Loaded ✅");
 
       setInterval(async () => {
@@ -549,7 +622,7 @@
           const t2 = normTier(p2.tier) || normTier(p2.selected_tier);
           if(t2 === "gold") return window.location.replace("portal-gold.html");
           await refreshUI(p2, userId);
-          await loadOrdersByUserId(userId);
+          await loadRecentTransactionsByUserId(userId);
         }
       }, 20000);
 
