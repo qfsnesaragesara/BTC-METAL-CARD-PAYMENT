@@ -323,11 +323,12 @@
       setMsg("", "");
 
       const { error } = await sb.rpc("admin_set_user_activation", {
-        p_user_id: uid,
-        p_is_activated: nextActive,
-        p_reason: nextActive ? "admin_activate_user" : "admin_deactivate_user",
-        p_metadata: { source: "admin.html" }
-      });
+    p_user_id: userId,
+    p_is_activated: isActivated,
+    p_reason: "admin_toggle",
+    p_metadata: {}
+  });
+
 
       if (error) {
         // revert UI on failure
@@ -579,3 +580,4 @@
   </script>
 </body>
 </html>
+
