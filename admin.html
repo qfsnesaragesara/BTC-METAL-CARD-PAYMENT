@@ -41,7 +41,7 @@
     input::placeholder,textarea::placeholder{color:rgba(230,234,242,.45)}
     textarea{min-height:72px;resize:vertical}
     .muted{color:var(--muted)}
-    .err{color:#fecaca;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);padding:10px 12px;border-radius:12px;white-space:pre-wrap;line-height:1.35}
+    .err{color:#fecaca;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);padding:10px 12px;border-radius:12px}
     .ok{color:#bbf7d0;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);padding:10px 12px;border-radius:12px}
     table{width:100%;border-collapse:collapse;margin-top:10px}
     th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
@@ -69,7 +69,6 @@
       </div>
       <div class="right">
         <span id="sessionPill" class="pill">Checking session…</span>
-        <button class="btn secondary" id="btnGoLogin" type="button" style="display:none;">Go to Login</button>
         <button class="btn secondary" id="btnRefresh" type="button">Refresh</button>
         <button class="btn danger" id="btnLogout" type="button">Logout</button>
       </div>
@@ -201,17 +200,18 @@
     </div>
   </div>
 
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
     // ======== CONFIG ========
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  </script>
 
+    // IMPORTANT: use "sb" to avoid name collision with the Supabase library object.
+    // Also reuse one client across reloads (prevents redeclare issues).
+    const sb = window.__sb || (window.__sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
 
-  <script>
     const el = (id) => document.getElementById(id);
 
     function setMsg(type, text) {
@@ -225,10 +225,12 @@
       const dollars = (n / 100).toFixed(2);
       return "$" + dollars;
     }
+
     function fmtSats(s) {
       const n = Number(s || 0);
       return `${n.toLocaleString()} sats`;
     }
+
     function safeJsonParse(str) {
       const t = (str || "").trim();
       if (!t) return {};
@@ -236,46 +238,37 @@
     }
 
     // ======== AUTH / ADMIN CHECK ========
-    async function requireSessionOrRedirect() {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
-
-        const session = data?.session || null;
-        if (!session) {
-          el("sessionPill").textContent = "Not logged in";
-          el("btnGoLogin").style.display = "inline-flex";
-          setMsg("err", "Not logged in. Click 'Go to Login' or open admin-confirm.html.");
-          return null;
-        }
-
-        el("sessionPill").textContent = "Logged in";
-        return session;
-      } catch (e) {
+    async function requireSession() {
+      const { data, error } = await sb.auth.getSession();
+      if (error) {
         el("sessionPill").textContent = "Session error";
-        setMsg("err", "Session error: " + (e?.message || e));
+        setMsg("err", "Session read failed: " + error.message);
         return null;
       }
+
+      const session = data?.session || null;
+      if (!session) {
+        el("sessionPill").textContent = "Not logged in";
+        setMsg("err", "You are not logged in. Redirecting to admin-confirm…");
+        setTimeout(() => { window.location.href = "admin-confirm.html"; }, 700);
+        return null;
+      }
+
+      el("sessionPill").textContent = "Logged in";
+      return session;
     }
 
-    async function requireAdminOrRedirect() {
-      try {
-        const { data, error } = await supabase.rpc("is_admin");
-        if (error) throw error;
-
-        if (data !== true) {
-          el("sessionPill").textContent = "Access denied";
-          setMsg("err", "Access denied: is_admin() returned false.\n\nFix: your is_admin() must work with real auth sessions (auth.uid()).");
-          // keep user signed in so you can debug if needed, but block actions
-          return false;
-        }
-
-        return true;
-      } catch (e) {
-        el("sessionPill").textContent = "Admin check failed";
-        setMsg("err", "Admin check failed: " + (e?.message || e));
+    async function requireAdmin() {
+      const { data, error } = await sb.rpc("is_admin");
+      if (error) {
+        setMsg("err", "Admin check failed: " + error.message);
         return false;
       }
+      if (data !== true) {
+        setMsg("err", "Not authorized: your account is not an admin.");
+        return false;
+      }
+      return true;
     }
 
     // ======== MEMBERS LIST ========
@@ -327,9 +320,10 @@
 
     async function loadMembers() {
       setMsg("", "");
-      const { data, error } = await supabase.rpc("admin_list_members", { p_limit: pageLimit, p_offset: pageOffset });
+      const { data, error } = await sb.rpc("admin_list_members", { p_limit: pageLimit, p_offset: pageOffset });
       if (error) {
-        setMsg("err", "Failed to load members (admin_list_members): " + error.message);
+        setMsg("err", "Failed to load members: " + error.message);
+        el("membersBody").innerHTML = `<tr><td colspan="5" class="muted">Error loading members.</td></tr>`;
         return;
       }
       cachedMembers = Array.isArray(data) ? data : [];
@@ -339,11 +333,16 @@
     // ======== BALANCES + LEDGER ========
     async function loadBalancesAndLedger() {
       const userId = (el("selectedUserId").value || "").trim();
-      if (!userId) { setMsg("err", "Paste/select a user_id first."); return; }
+      if (!userId) {
+        setMsg("err", "Paste/select a user_id first.");
+        return;
+      }
 
-      const { data: bal, error: balErr } = await supabase.rpc("admin_get_user_balances", { p_user_id: userId });
-      if (balErr) { setMsg("err", "Balance load failed: " + balErr.message); return; }
-
+      const { data: bal, error: balErr } = await sb.rpc("admin_get_user_balances", { p_user_id: userId });
+      if (balErr) {
+        setMsg("err", "Balance load failed: " + balErr.message);
+        return;
+      }
       el("usdBal").textContent = fmtUsdFromCents(bal?.usd_cents);
       el("btcBal").textContent = fmtSats(bal?.btc_sats);
 
@@ -355,13 +354,16 @@
       if (!userId) return;
 
       const cur = (el("currency").value || "USD").toUpperCase();
-      const { data, error } = await supabase.rpc("admin_get_user_ledger", {
+      const { data, error } = await sb.rpc("admin_get_user_ledger", {
         p_user_id: userId,
         p_currency: cur,
         p_limit: 25
       });
 
-      if (error) { setMsg("err", "Ledger load failed: " + error.message); return; }
+      if (error) {
+        setMsg("err", "Ledger load failed: " + error.message);
+        return;
+      }
 
       const body = el("ledgerBody");
       const rows = Array.isArray(data) ? data : [];
@@ -372,7 +374,10 @@
 
       body.innerHTML = rows.map(r => {
         const time = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
-        const amt = r.currency === "USD" ? fmtUsdFromCents(r.amount_units) : fmtSats(r.amount_units);
+        const amt = r.currency === "USD"
+          ? fmtUsdFromCents(r.amount_units)
+          : fmtSats(r.amount_units);
+
         return `
           <tr>
             <td class="small">${time}</td>
@@ -402,7 +407,7 @@
 
       if (currency === "USD") {
         const dollars = Number(rawAmount);
-        if (!Number.isFinite(dollars) || dollars <= 0) { setMsg("err", "USD amount must be positive (dollars)."); return; }
+        if (!Number.isFinite(dollars) || dollars <= 0) { setMsg("err", "USD amount must be a positive number (dollars)."); return; }
         amountUnits = Math.round(dollars * 100);
       } else {
         const sats = Number(rawAmount);
@@ -413,7 +418,7 @@
       setMsg("", "");
 
       const rpcName = action === "debit" ? "admin_debit_user" : "admin_credit_user";
-      const { data, error } = await supabase.rpc(rpcName, {
+      const { data, error } = await sb.rpc(rpcName, {
         p_user_id: userId,
         p_currency: currency,
         p_amount_units: amountUnits,
@@ -421,27 +426,25 @@
         p_metadata: noteMeta
       });
 
-      if (error) { setMsg("err", "Transaction failed: " + error.message); return; }
+      if (error) {
+        setMsg("err", "Transaction failed: " + error.message);
+        return;
+      }
 
       setMsg("ok", `Success: ${rpcName} • ${currency} • ${currency === "USD" ? fmtUsdFromCents(amountUnits) : fmtSats(amountUnits)} • entry/ref: ${data?.entry_id || data?.ref || "ok"}`);
       await loadBalancesAndLedger();
     }
 
     // ======== UI EVENTS ========
-    el("btnGoLogin").addEventListener("click", () => { window.location.href = "admin-confirm.html"; });
-
     el("btnLogout").addEventListener("click", async () => {
-  try { await supabase.auth.signOut(); } catch {}
-  try { localStorage.clear(); } catch {}
-  try { sessionStorage.clear(); } catch {}
-  window.location.href = "admin-confirm.html";
-});
+      try { await sb.auth.signOut(); } catch {}
+      window.location.href = "admin-confirm.html";
+    });
 
-
-    el("btnRefresh").addEventListener("click", () => {
-  window.location.reload(true);
-});
-
+    el("btnRefresh").addEventListener("click", async () => {
+      setMsg("", "");
+      await boot();
+    });
 
     el("prevPage").addEventListener("click", async () => {
       pageOffset = Math.max(0, pageOffset - pageLimit);
@@ -456,40 +459,37 @@
     el("search").addEventListener("input", () => applySearchAndFilter());
     el("filterActivation").addEventListener("change", () => applySearchAndFilter());
 
-    el("loadBalances").addEventListener("click", async () => { await loadBalancesAndLedger(); });
-    el("refreshLedger").addEventListener("click", async () => { await loadLedger(); });
-    el("currency").addEventListener("change", async () => { await loadLedger(); });
-    el("submitTxn").addEventListener("click", async () => { await submitTxn(); });
+    el("loadBalances").addEventListener("click", async () => {
+      await loadBalancesAndLedger();
+    });
+
+    el("refreshLedger").addEventListener("click", async () => {
+      await loadLedger();
+    });
+
+    el("currency").addEventListener("change", async () => {
+      await loadLedger();
+    });
+
+    el("submitTxn").addEventListener("click", async () => {
+      await submitTxn();
+    });
 
     // ======== BOOT ========
     async function boot() {
-      setMsg("", "");
       el("sessionPill").textContent = "Checking session…";
-      el("btnGoLogin").style.display = "none";
 
-      const session = await requireSessionOrRedirect();
+      const session = await requireSession();
       if (!session) return;
 
-      const okAdmin = await requireAdminOrRedirect();
+      const okAdmin = await requireAdmin();
       if (!okAdmin) return;
 
-      el("sessionPill").textContent = "Admin OK";
       await loadMembers();
       setMsg("ok", "Admin console ready.");
     }
 
-    // Helpful: if session changes in another tab
-    supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        el("sessionPill").textContent = "Signed out";
-        setMsg("err", "Signed out. Redirecting to login…");
-        setTimeout(() => { window.location.href = "admin-confirm.html"; }, 600);
-      }
-    });
-
-    window.addEventListener("DOMContentLoaded", boot);
+    boot();
   </script>
 </body>
 </html>
-
-
