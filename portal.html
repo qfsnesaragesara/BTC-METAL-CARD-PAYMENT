@@ -7,9 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
 
-<!-- Central config (recommended) -->
 <script src="./config.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -37,88 +35,40 @@
       radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
       var(--bg);
   }
-
   .wrap{ max-width:var(--maxw); margin:0 auto; position:relative; z-index:1; }
-  .header,
-  .header-actions,
-  .pill,
-  .badge,
-  #logoutBtn{
-    position:relative;
-    z-index:999999;
-    pointer-events:auto !important;
+  .header,.header-actions,.pill,.badge,#logoutBtn{
+    position:relative; z-index:999999; pointer-events:auto !important;
   }
-
   .header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:14px;
-    margin-bottom:18px;
+    display:flex; justify-content:space-between; align-items:center;
+    gap:14px; margin-bottom:18px;
   }
   .brand{ display:flex; align-items:center; gap:12px; }
   .logo{
-    width:54px; height:54px;
-    border-radius:14px;
-    object-fit:cover;
-    box-shadow:
-      0 14px 44px rgba(2,6,23,0.95),
-      0 0 0 1px rgba(148,163,184,0.35);
+    width:54px; height:54px; border-radius:14px; object-fit:cover;
+    box-shadow: 0 14px 44px rgba(2,6,23,0.95), 0 0 0 1px rgba(148,163,184,0.35);
   }
-  .brand h1{
-    margin:0;
-    font-size:18px;
-    font-weight:900;
-    letter-spacing:-0.02em;
-  }
+  .brand h1{ margin:0; font-size:18px; font-weight:900; letter-spacing:-0.02em; }
   .brand .subline{
-    font-size:12px;
-    color:var(--muted);
-    display:flex;
-    gap:8px;
-    align-items:center;
-    flex-wrap:wrap;
-    margin-top:2px;
+    font-size:12px; color:var(--muted); display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:2px;
   }
   .hello{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:4px 10px;
-    border-radius:999px;
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 10px; border-radius:999px;
     border:1px solid rgba(148,163,184,0.25);
     background:rgba(255,255,255,0.05);
-    color:#dbeafe;
-    font-weight:850;
-    font-size:12px;
+    color:#dbeafe; font-weight:850; font-size:12px;
   }
-
-  .header-actions{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-    justify-content:flex-end;
-  }
-
+  .header-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
   #logoutBtn{
-    padding:8px 12px;
-    border-radius:999px;
+    padding:8px 12px; border-radius:999px;
     border:1px solid rgba(148,163,184,0.35);
     background:rgba(255,255,255,0.06);
-    color:var(--text);
-    font-weight:900;
-    font-size:12px;
-    cursor:pointer;
+    color:var(--text); font-weight:900; font-size:12px; cursor:pointer;
   }
-
   .badge{
-    padding:6px 10px;
-    border-radius:999px;
-    font-size:11px;
-    font-weight:900;
-    letter-spacing:0.06em;
-    text-transform:uppercase;
+    padding:6px 10px; border-radius:999px;
+    font-size:11px; font-weight:900; letter-spacing:0.06em; text-transform:uppercase;
     border:1px solid rgba(148,163,184,0.30);
     background:rgba(2,6,23,0.40);
     color:#e5e7eb;
@@ -127,11 +77,7 @@
   .badge.active{ border-color: rgba(34,197,94,0.35); color:#bbf7d0; }
   .badge.rejected{ border-color: rgba(244,63,94,0.35); color:#fecdd3; }
 
-  .grid{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:18px;
-  }
+  .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
   @media (max-width:860px){ .grid{ grid-template-columns:1fr; } }
 
   .card{
@@ -141,54 +87,31 @@
     padding:20px;
     box-shadow: 0 28px 110px var(--shadow);
     backdrop-filter: blur(26px);
-    position:relative;
-    overflow:hidden;
-    z-index:1;
+    position:relative; overflow:hidden; z-index:1;
   }
   .card:before{
-    content:"";
-    position:absolute;
-    inset:-120px -120px auto auto;
-    width:320px;
-    height:320px;
+    content:""; position:absolute; inset:-120px -120px auto auto;
+    width:320px; height:320px;
     background: radial-gradient(circle at center, rgba(56,189,248,0.18), transparent 60%);
     pointer-events:none;
   }
-
   .card h2{ margin:0 0 6px; font-size:16px; font-weight:900; }
   .sub{ font-size:12px; color:var(--muted); }
 
   .balance{
-    font-size:34px;
-    font-weight:900;
-    margin:12px 0 4px;
+    font-size:34px; font-weight:900; margin:12px 0 4px;
     background:linear-gradient(135deg, var(--accent), var(--accent2));
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
   }
-  .btc{
-    font-size:13px;
-    color:#cbd5f5;
-    line-height:1.55;
-  }
+  .btc{ font-size:13px; color:#cbd5f5; line-height:1.55; }
 
   .actions{ display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; }
   .btn{
-    flex:1;
-    padding:12px 14px;
-    border-radius:999px;
-    border:none;
-    cursor:pointer;
-    font-weight:900;
-    font-size:13px;
-    letter-spacing:0.04em;
-    position:relative;
-    z-index:2;
+    flex:1; padding:12px 14px; border-radius:999px; border:none;
+    cursor:pointer; font-weight:900; font-size:13px; letter-spacing:0.04em; position:relative; z-index:2;
   }
-  .btn-primary{
-    background:linear-gradient(135deg, var(--accent), var(--accent2));
-    color:#fff;
-  }
+  .btn-primary{ background:linear-gradient(135deg, var(--accent), var(--accent2)); color:#fff; }
   .btn-disabled{
     background:rgba(255,255,255,0.06);
     border:1px dashed rgba(148,163,184,0.45);
@@ -197,50 +120,26 @@
   }
 
   .status{
-    margin-top:10px;
-    padding:10px 12px;
-    border-radius:14px;
+    margin-top:10px; padding:10px 12px; border-radius:14px;
     background:rgba(2,6,23,0.45);
     border:1px solid rgba(148,163,184,0.35);
     font-size:12px;
   }
 
-  table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:10px;
-    font-size:12px;
-  }
-  th, td{
-    padding:10px 8px;
-    border-bottom:1px solid rgba(148,163,184,0.2);
-    text-align:left;
-  }
-  th{
-    color:var(--muted);
-    font-weight:700;
-    text-transform:uppercase;
-    font-size:11px;
-  }
+  table{ width:100%; border-collapse:collapse; margin-top:10px; font-size:12px; }
+  th, td{ padding:10px 8px; border-bottom:1px solid rgba(148,163,184,0.2); text-align:left; }
+  th{ color:var(--muted); font-weight:700; text-transform:uppercase; font-size:11px; }
 
   .mutedline{ color:var(--muted); font-size:12px; margin-top:8px; }
 
   #toast{
-    position:fixed;
-    left:12px;
-    bottom:12px;
-    z-index:9999999;
+    position:fixed; left:12px; bottom:12px; z-index:9999999;
     background:rgba(2,6,23,0.75);
     border:1px solid rgba(148,163,184,0.35);
     color:#cbd5e1;
-    padding:8px 10px;
-    border-radius:12px;
-    font-size:12px;
-    user-select:none;
-    max-width:min(520px, 92vw);
-    white-space:pre-wrap;
+    padding:8px 10px; border-radius:12px; font-size:12px;
+    user-select:none; max-width:min(520px, 92vw); white-space:pre-wrap;
   }
-
   .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 </style>
 </head>
@@ -272,7 +171,7 @@
 
     <div class="card">
       <h2>Available Balance</h2>
-      <div class="sub" id="balanceHelp">Balance becomes active after your payment is confirmed and your account is activated.</div>
+      <div class="sub" id="balanceHelp">Balance becomes active after your payment is confirmed</div>
 
       <div class="balance" id="balance">$0.00</div>
       <div class="btc" id="btcBalance">—</div>
@@ -283,7 +182,7 @@
       </div>
 
       <div class="status" id="lockNote">
-        🔒 Send & Receive are locked until you activate your access card.
+        🔒 Send & Receive are locked until your account is activated.
       </div>
 
       <div class="mutedline" id="lastChecked">Checking status…</div>
@@ -294,26 +193,11 @@
       <div class="sub">Your Membership</div>
 
       <table>
-        <tr>
-          <th>Name</th>
-          <td id="nameCell">—</td>
-        </tr>
-        <tr>
-          <th>Email</th>
-          <td id="emailCell">—</td>
-        </tr>
-        <tr>
-          <th>Tier</th>
-          <td id="tierCell">—</td>
-        </tr>
-        <tr>
-          <th>Quantity</th>
-          <td id="qtyCell">—</td>
-        </tr>
-        <tr>
-          <th>Status</th>
-          <td id="statusCell">Pending</td>
-        </tr>
+        <tr><th>Name</th><td id="nameCell">—</td></tr>
+        <tr><th>Email</th><td id="emailCell">—</td></tr>
+        <tr><th>Tier</th><td id="tierCell">—</td></tr>
+        <tr><th>Quantity</th><td id="qtyCell">—</td></tr>
+        <tr><th>Status</th><td id="statusCell">Pending</td></tr>
       </table>
     </div>
 
@@ -328,7 +212,7 @@
             <th>Card</th>
             <th>Qty</th>
             <th>Status</th>
-            <th class="mono">TXID</th>
+            <th class="mono">TX</th>
           </tr>
         </thead>
         <tbody id="ordersBody">
@@ -360,44 +244,29 @@
 
   function pickNameFromUser(user){
     const md = user?.user_metadata || {};
-    const raw =
-      md.full_name ||
-      md.name ||
-      md.first_name ||
-      md.username ||
-      md.display_name ||
-      "";
+    const raw = md.full_name || md.name || md.first_name || md.username || md.display_name || "";
     const cleaned = String(raw || "").trim();
     if(cleaned) return cleaned;
 
     const email = String(user?.email || "").trim();
     if(email && email.includes("@")){
       const left = email.split("@")[0] || "";
-      const pretty = left
-        .replace(/[._-]+/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
+      const pretty = left.replace(/[._-]+/g, " ").replace(/\s+/g, " ").trim();
       if(pretty) return pretty.charAt(0).toUpperCase() + pretty.slice(1);
     }
     return "Member";
   }
 
-  function setBadge(statusLower){
+  function setBadge(active){
     const b = $("statusBadge");
     b.classList.remove("pending","active","rejected");
-
-    if(statusLower === "active" || statusLower === "confirmed"){
+    if(active){
       b.textContent = "Active";
       b.classList.add("active");
-      return;
+    } else {
+      b.textContent = "Pending";
+      b.classList.add("pending");
     }
-    if(statusLower === "rejected"){
-      b.textContent = "Rejected";
-      b.classList.add("rejected");
-      return;
-    }
-    b.textContent = "Pending";
-    b.classList.add("pending");
   }
 
   function lockActions(){
@@ -415,26 +284,17 @@
   function unlockActions(){
     $("sendBtn").disabled = false;
     $("receiveBtn").disabled = false;
-
     $("sendBtn").classList.remove("btn-disabled");
     $("receiveBtn").classList.remove("btn-disabled");
-
     $("sendBtn").classList.add("btn-primary");
     $("receiveBtn").classList.add("btn-primary");
-
     $("balanceHelp").style.display = "none";
     $("lockNote").style.display = "block";
     $("lockNote").textContent = "✅ Account Active — Send & Receive are unlocked.";
   }
 
-  function fmtUSDFromCents(cents){
-    const n = Number(cents || 0) / 100;
-    return "$" + n.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  }
-
-  function fmtBTCFromSats(sats){
-    const n = Number(sats || 0) / 1e8;
-    return n.toLocaleString(undefined, { maximumFractionDigits: 8 }) + " BTC";
+  function fmtUSD(n){
+    return "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
   }
 
   async function fetchBtcUsd(){
@@ -475,50 +335,81 @@
   async function getDbProfileByEmail(email){
     return await sb
       .from("portal_users")
-      .select("id, user_id, email, tier, selected_tier, qty, is_active")
+      .select("id, email, tier, selected_tier, qty, is_active")
       .eq("email", email)
       .maybeSingle();
   }
 
-  // ✅ HONEST BALANCES: read from portal_accounts only
-  async function getBalancesForUser(userId){
-    const out = { usd_cents: 0, btc_sats: 0 };
-
-    const { data, error } = await sb
+  async function getAccountsByUserId(userId){
+    // Requires RLS policy: user_id = auth.uid()
+    return await sb
       .from("portal_accounts")
-      .select("*")
+      .select("currency, balance_cents, balance_sats")
       .eq("user_id", userId);
-
-    if(error){
-      return { ...out, _error: error.message };
-    }
-
-    (data || []).forEach(row => {
-      const cur = String(row.currency || "").toUpperCase();
-
-      if(cur === "USD"){
-        if(row.balance_cents != null) out.usd_cents = Number(row.balance_cents || 0);
-      }
-      if(cur === "BTC"){
-        if(row.balance_sats != null) out.btc_sats = Number(row.balance_sats || 0);
-        else if(row.balance_cents != null) out.btc_sats = Number(row.balance_cents || 0); // fallback
-      }
-    });
-
-    return out;
   }
 
-  // ✅ Orders: your schema uses tx_hash (not txid)
-  async function loadOrders(email){
+  function getAccount(accounts, currency){
+    const cur = String(currency || "").toUpperCase();
+    return (accounts || []).find(a => String(a.currency || "").toUpperCase() === cur) || null;
+  }
+
+  async function renderBalanceFromDb(tierUpper, accounts){
+    const tier = (tierUpper || "").toUpperCase();
+
+    // Default honest state
+    $("balance").textContent = "$0.00";
+    $("btcBalance").textContent = "—";
+
+    const usdAcc = getAccount(accounts, "USD");
+    const btcAcc = getAccount(accounts, "BTC");
+
+    const btcUsd = await fetchBtcUsd();
+
+    if (tier === "SILVER") {
+      const cents = Number(usdAcc?.balance_cents || 0);
+      const usd = cents / 100;
+      $("balance").textContent = fmtUSD(usd);
+
+      if (btcUsd && usd > 0) {
+        const btcEq = usd / btcUsd;
+        $("btcBalance").textContent = `≈ ${btcEq.toFixed(8)} BTC (live BTC price)`;
+      } else {
+        $("btcBalance").textContent = "—";
+      }
+      return;
+    }
+
+    if (tier === "BLACK") {
+      const sats = Number(btcAcc?.balance_sats || 0);
+      const btc = sats / 1e8;
+
+      // For BLACK show BTC as primary
+      $("balance").textContent = (btc === 0 ? "0 BTC" : `${btc.toLocaleString(undefined, { maximumFractionDigits: 8 })} BTC`);
+
+      if (btcUsd && btc > 0) {
+        const usdEq = btc * btcUsd;
+        $("btcBalance").textContent = `≈ ${fmtUSD(usdEq)} (live BTC price)`;
+      } else {
+        $("btcBalance").textContent = "USD equivalent unavailable";
+      }
+      return;
+    }
+
+    // GOLD is elsewhere (should redirect before this)
+    $("btcBalance").textContent = "—";
+  }
+
+  async function loadOrdersByUserId(userId){
     const body = $("ordersBody");
     if(!body) return;
 
     body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>`;
 
+    // FIX: tx_hash (not txid)
     const { data, error } = await sb
       .from("payment_submissions")
       .select("created_at, card_type, qty, status, tx_hash")
-      .eq("email", email)
+      .eq("user_id", userId)
       .order("created_at", { ascending:false })
       .limit(25);
 
@@ -553,64 +444,35 @@
     });
   }
 
-  async function refreshUI(profile, sessionUser){
+  async function refreshUI(profile, userId){
     const now = new Date();
     $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
 
     const tier = (profile?.tier || profile?.selected_tier || "").toUpperCase();
-    const qty = Number(profile?.qty || 0) || 0;
+    let qty = Number(profile?.qty || 0) || 0;
+
+    if (tier === "BLACK") qty = 1;
+    if (!Number.isFinite(qty) || qty < 1) qty = 1;
 
     $("tierCell").textContent = tier || "—";
-    $("qtyCell").textContent = qty ? String(qty) : "—";
+    $("qtyCell").textContent = String(qty);
 
     const isActive = profile?.is_active === true;
-
     $("statusCell").textContent = isActive ? "Active" : "Pending";
-    setBadge(isActive ? "active" : "pending");
+    setBadge(isActive);
 
     if(isActive) unlockActions();
     else lockActions();
 
-    // ✅ HONEST DISPLAY:
-    // Pending => always show 0 balances (no allocations)
-    if(!isActive){
+    // Pull real balances (honest portal)
+    const { data: accounts, error: accErr } = await getAccountsByUserId(userId);
+    if(accErr){
       $("balance").textContent = "$0.00";
-      $("btcBalance").textContent = "—";
+      $("btcBalance").textContent = "Balance blocked (RLS)";
       return;
     }
 
-    // Active => show DB balances
-    const balances = await getBalancesForUser(sessionUser.id);
-
-    if(balances._error){
-      $("balance").textContent = "$0.00";
-      $("btcBalance").textContent = "—";
-      say("Balance read blocked: " + balances._error);
-      return;
-    }
-
-    $("balance").textContent = fmtUSDFromCents(balances.usd_cents);
-
-    // If BTC exists, show BTC + USD equivalent; else show BTC equivalent of USD (optional)
-    if(Number(balances.btc_sats || 0) > 0){
-      const btcText = fmtBTCFromSats(balances.btc_sats);
-      const btcUsd = await fetchBtcUsd();
-      if(btcUsd){
-        const usdEq = (Number(balances.btc_sats) / 1e8) * btcUsd;
-        $("btcBalance").textContent = `${btcText} (≈ $${usdEq.toLocaleString(undefined,{maximumFractionDigits:2})})`;
-      } else {
-        $("btcBalance").textContent = btcText;
-      }
-    } else {
-      const btcUsd = await fetchBtcUsd();
-      if(btcUsd && Number(balances.usd_cents || 0) > 0){
-        const usdBal = Number(balances.usd_cents) / 100;
-        const btcEq = usdBal / btcUsd;
-        $("btcBalance").textContent = `≈ ${btcEq.toFixed(8)} BTC (live BTC price)`;
-      } else {
-        $("btcBalance").textContent = "—";
-      }
-    }
+    await renderBalanceFromDb(tier, accounts || []);
   }
 
   $("sendBtn").addEventListener("click", () => {
@@ -640,7 +502,8 @@
       }
 
       const email = (user.email || "").trim().toLowerCase();
-      if(!email) return hardToLogin();
+      const userId = user.id;
+      if(!email || !userId) return hardToLogin();
 
       const name = pickNameFromUser(user);
       $("nameCell").textContent = name;
@@ -676,8 +539,8 @@
         return window.location.replace("portal-gold.html");
       }
 
-      await refreshUI(profile, user);
-      await loadOrders(email);
+      await refreshUI(profile, userId);
+      await loadOrdersByUserId(userId);
       say("Loaded ✅");
 
       setInterval(async () => {
@@ -685,8 +548,8 @@
         if(p2){
           const t2 = normTier(p2.tier) || normTier(p2.selected_tier);
           if(t2 === "gold") return window.location.replace("portal-gold.html");
-          await refreshUI(p2, user);
-          await loadOrders(email);
+          await refreshUI(p2, userId);
+          await loadOrdersByUserId(userId);
         }
       }, 20000);
 
