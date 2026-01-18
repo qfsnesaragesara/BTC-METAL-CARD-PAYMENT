@@ -428,14 +428,17 @@
     el("btnGoLogin").addEventListener("click", () => { window.location.href = "admin-confirm.html"; });
 
     el("btnLogout").addEventListener("click", async () => {
-      try { await supabase.auth.signOut(); } catch {}
-      window.location.href = "admin-confirm.html";
-    });
+  try { await supabase.auth.signOut(); } catch {}
+  try { localStorage.clear(); } catch {}
+  try { sessionStorage.clear(); } catch {}
+  window.location.href = "admin-confirm.html";
+});
 
-    el("btnRefresh").addEventListener("click", async () => {
-      setMsg("", "");
-      await boot();
-    });
+
+    el("btnRefresh").addEventListener("click", () => {
+  window.location.reload(true);
+});
+
 
     el("prevPage").addEventListener("click", async () => {
       pageOffset = Math.max(0, pageOffset - pageLimit);
@@ -485,3 +488,4 @@
   </script>
 </body>
 </html>
+
