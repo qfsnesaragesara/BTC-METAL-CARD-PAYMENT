@@ -297,17 +297,18 @@
     return "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
   }
 
-  function fmtUnits(currency, units){
+  function fmtAmount(currency, amountCents, amountSats){
     const cur = String(currency || "").toUpperCase();
-    const n = Number(units || 0);
     if(cur === "USD"){
-      const usd = n / 100;
+      const cents = Number(amountCents || 0);
+      const usd = cents / 100;
       return fmtUSD(usd);
     }
     if(cur === "BTC"){
-      return `${n.toLocaleString()} sats`;
+      const sats = Number(amountSats || 0);
+      return `${sats.toLocaleString()} sats`;
     }
-    return String(n);
+    return "—";
   }
 
   async function fetchBtcUsd(){
@@ -357,7 +358,7 @@
     // Requires RLS policy: user_id = auth.uid()
     return await sb
       .from("portal_accounts")
-      .select("currency, balance_cents, balance_sats")
+      .select("id, currency, balance_cents, balance_sats")
       .eq("user_id", userId);
   }
 
@@ -418,27 +419,31 @@
 
     body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>`;
 
-    // Bank-style: show portal_ledger entries (credit/debit) across currencies
-    // Requires RLS allowing account owner to read their own ledger rows.
-    //
-    // Expected columns used below:
-    // - created_at, entry_type, currency, amount_cents, amount_sats, reason
-    // If your ledger columns differ, tell me the exact columns and I will adjust.
+    // 1) Get this user's account IDs (USD/BTC accounts)
+    const { data: accRows, error: accErr } = await sb
+      .from("portal_accounts")
+      .select("id")
+      .eq("user_id", userId);
+
+    if(accErr){
+      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Transactions blocked (RLS): ${esc(accErr.message)}</td></tr>`;
+      return;
+    }
+
+    const accountIds = (accRows || []).map(r => r.id).filter(Boolean);
+
+    if(accountIds.length === 0){
+      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No transactions yet.</td></tr>`;
+      return;
+    }
+
+    // 2) Pull ledger entries for those accounts
     const { data, error } = await sb
       .from("portal_ledger")
       .select("created_at, entry_type, currency, amount_cents, amount_sats, reason")
-      .eq("account_id", userId) /* fallback if ledger keyed by userId; see note below */
+      .in("account_id", accountIds)
       .order("created_at", { ascending:false })
       .limit(25);
-
-    // NOTE:
-    // If portal_ledger is keyed by account_id (uuid of portal_accounts.id), not user_id,
-    // this filter likely needs to change to:
-    //   .in("account_id", accountIds)
-    // where accountIds are fetched from portal_accounts for this user.
-    //
-    // I keep this as-is because we don't have your ledger schema here in portal.html.
-    // If this returns 0, scroll down for the correct version.
 
     if(error){
       body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Transactions blocked (RLS): ${esc(error.message)}</td></tr>`;
@@ -456,8 +461,7 @@
       const desc = String(r.reason || "—");
       const type = String(r.entry_type || "—").toLowerCase();
       const cur = String(r.currency || "—").toUpperCase();
-      const units = (cur === "USD") ? Number(r.amount_cents || 0) : (cur === "BTC" ? Number(r.amount_sats || 0) : 0);
-      const amt = fmtUnits(cur, units);
+      const amt = fmtAmount(cur, r.amount_cents, r.amount_sats);
 
       body.insertAdjacentHTML("beforeend", `
         <tr>
@@ -466,52 +470,6 @@
           <td>${esc(type)}</td>
           <td>${esc(cur)}</td>
           <td class="mono">${esc(amt)}</td>
-        </tr>
-      `);
-    });
-  }
-
-  async function loadOrdersByUserId(userId){
-    // Kept for backwards compatibility (unused now, but not removed)
-    const body = $("ordersBody");
-    if(!body) return;
-
-    body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>`;
-
-    // FIX: tx_hash (not txid)
-    const { data, error } = await sb
-      .from("payment_submissions")
-      .select("created_at, card_type, qty, status, tx_hash")
-      .eq("user_id", userId)
-      .order("created_at", { ascending:false })
-      .limit(25);
-
-    if(error){
-      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Orders blocked (RLS): ${esc(error.message)}</td></tr>`;
-      return;
-    }
-
-    if(!data || data.length === 0){
-      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No orders yet.</td></tr>`;
-      return;
-    }
-
-    body.innerHTML = "";
-    data.forEach(r => {
-      const dt = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
-      const card = String(r.card_type || "—").toUpperCase();
-      const qty = Number(r.qty || 1);
-      const status = String(r.status || "pending").toLowerCase();
-      const tx = String(r.tx_hash || "");
-      const shortTx = tx ? (tx.length > 16 ? (tx.slice(0,8) + "…" + tx.slice(-6)) : tx) : "—";
-
-      body.insertAdjacentHTML("beforeend", `
-        <tr>
-          <td>${esc(dt)}</td>
-          <td>${esc(card)}</td>
-          <td>${esc(String(qty))}</td>
-          <td>${esc(status)}</td>
-          <td class="mono" title="${esc(tx)}">${esc(shortTx)}</td>
         </tr>
       `);
     });
