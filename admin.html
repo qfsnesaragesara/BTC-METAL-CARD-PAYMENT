@@ -54,6 +54,43 @@
     .kpi .label{color:var(--muted);font-size:12px}
     .kpi .val{font-weight:900;font-size:18px;margin-top:4px}
     .small{font-size:12px}
+
+    /* ===== Activation toggle (added) ===== */
+    .switch{
+      position:relative;
+      display:inline-block;
+      width:42px;
+      height:24px;
+      vertical-align:middle;
+    }
+    .switch input{display:none;}
+    .slider{
+      position:absolute;
+      inset:0;
+      cursor:pointer;
+      background:rgba(255,255,255,.10);
+      border:1px solid var(--line);
+      transition:.2s;
+      border-radius:999px;
+    }
+    .slider:before{
+      content:"";
+      position:absolute;
+      height:18px;
+      width:18px;
+      left:3px;
+      top:2px;
+      background:rgba(255,255,255,.85);
+      transition:.2s;
+      border-radius:999px;
+    }
+    .switch input:checked + .slider{
+      background:rgba(34,197,94,.22);
+      border-color:rgba(34,197,94,.35);
+    }
+    .switch input:checked + .slider:before{
+      transform:translateX(18px);
+    }
   </style>
 </head>
 
@@ -100,11 +137,12 @@
               <th>Tier</th>
               <th>Activated</th>
               <th>Activated At</th>
+              <th>Activate</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="membersBody">
-            <tr><td colspan="5" class="muted">Loading…</td></tr>
+            <tr><td colspan="6" class="muted">Loading…</td></tr>
           </tbody>
         </table>
 
@@ -276,22 +314,61 @@
     let pageOffset = 0;
     let cachedMembers = [];
 
+    // (added) activation toggle handler
+    async function setActivation(uid, nextActive, checkboxEl) {
+      if (!uid) return;
+
+      // optimistic: disable while saving
+      if (checkboxEl) checkboxEl.disabled = true;
+      setMsg("", "");
+
+      const { error } = await sb.rpc("admin_set_user_activation", {
+        p_user_id: uid,
+        p_is_activated: nextActive,
+        p_reason: nextActive ? "admin_activate_user" : "admin_deactivate_user",
+        p_metadata: { source: "admin.html" }
+      });
+
+      if (error) {
+        // revert UI on failure
+        if (checkboxEl) {
+          checkboxEl.checked = !nextActive;
+          checkboxEl.disabled = false;
+        }
+        setMsg("err", "Activation update failed: " + error.message);
+        return;
+      }
+
+      // reload members so filter "Activated only" behaves immediately (your choice #1)
+      await loadMembers();
+      if (checkboxEl) checkboxEl.disabled = false;
+
+      setMsg("ok", `User ${uid} ${nextActive ? "activated" : "deactivated"}.`);
+    }
+
     function renderMembers(rows) {
       const body = el("membersBody");
       if (!rows || rows.length === 0) {
-        body.innerHTML = `<tr><td colspan="5" class="muted">No members found.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="6" class="muted">No members found.</td></tr>`;
         return;
       }
 
       body.innerHTML = rows.map(r => {
         const act = r.is_activated ? "Yes" : "No";
         const actAt = r.activated_at ? new Date(r.activated_at).toLocaleString() : "—";
+        const checked = r.is_activated ? "checked" : "";
         return `
           <tr>
             <td class="mono">${r.user_id}</td>
             <td>${r.tier || "—"}</td>
             <td>${act}</td>
             <td>${actAt}</td>
+            <td>
+              <label class="switch" title="Toggle activation">
+                <input type="checkbox" data-activate="${r.user_id}" ${checked} />
+                <span class="slider"></span>
+              </label>
+            </td>
             <td><button class="btn secondary small" type="button" data-pick="${r.user_id}">Select</button></td>
           </tr>
         `;
@@ -302,6 +379,15 @@
           const uid = btn.getAttribute("data-pick");
           el("selectedUserId").value = uid;
           await loadBalancesAndLedger();
+        });
+      });
+
+      // (added) wire activation toggles
+      [...body.querySelectorAll("input[data-activate]")].forEach(chk => {
+        chk.addEventListener("change", async (e) => {
+          const uid = chk.getAttribute("data-activate");
+          const next = chk.checked;
+          await setActivation(uid, next, chk);
         });
       });
     }
@@ -323,7 +409,7 @@
       const { data, error } = await sb.rpc("admin_list_members", { p_limit: pageLimit, p_offset: pageOffset });
       if (error) {
         setMsg("err", "Failed to load members: " + error.message);
-        el("membersBody").innerHTML = `<tr><td colspan="5" class="muted">Error loading members.</td></tr>`;
+        el("membersBody").innerHTML = `<tr><td colspan="6" class="muted">Error loading members.</td></tr>`;
         return;
       }
       cachedMembers = Array.isArray(data) ? data : [];
