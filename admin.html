@@ -55,7 +55,7 @@
     .kpi .val{font-weight:900;font-size:18px;margin-top:4px}
     .small{font-size:12px}
 
-    /* ===== Activation toggle (added) ===== */
+    /* ===== Activation toggle ===== */
     .switch{
       position:relative;
       display:inline-block;
@@ -90,6 +90,10 @@
     }
     .switch input:checked + .slider:before{
       transform:translateX(18px);
+    }
+    .saving{
+      opacity:.55;
+      pointer-events:none;
     }
   </style>
 </head>
@@ -238,7 +242,6 @@
     </div>
   </div>
 
-  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -246,8 +249,7 @@
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-    // IMPORTANT: use "sb" to avoid name collision with the Supabase library object.
-    // Also reuse one client across reloads (prevents redeclare issues).
+    // reuse one client
     const sb = window.__sb || (window.__sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
 
     const el = (id) => document.getElementById(id);
@@ -314,36 +316,42 @@
     let pageOffset = 0;
     let cachedMembers = [];
 
-    // (added) activation toggle handler
+    // Activation RPC (fixed)
     async function setActivation(uid, nextActive, checkboxEl) {
       if (!uid) return;
 
-      // optimistic: disable while saving
-      if (checkboxEl) checkboxEl.disabled = true;
+      // optimistic + prevent loops
+      if (checkboxEl) {
+        checkboxEl.disabled = true;
+        checkboxEl.closest("tr")?.classList.add("saving");
+      }
       setMsg("", "");
 
       const { error } = await sb.rpc("admin_set_user_activation", {
-    p_user_id: userId,
-    p_is_activated: isActivated,
-    p_reason: "admin_toggle",
-    p_metadata: {}
-  });
-
+        p_user_id: uid,
+        p_is_activated: !!nextActive,
+        p_reason: "admin_toggle",
+        p_metadata: {}
+      });
 
       if (error) {
         // revert UI on failure
         if (checkboxEl) {
           checkboxEl.checked = !nextActive;
           checkboxEl.disabled = false;
+          checkboxEl.closest("tr")?.classList.remove("saving");
         }
         setMsg("err", "Activation update failed: " + error.message);
         return;
       }
 
-      // reload members so filter "Activated only" behaves immediately (your choice #1)
+      // reload so the "Activated only" filter stays correct + activated_at updates
       await loadMembers();
-      if (checkboxEl) checkboxEl.disabled = false;
 
+      if (checkboxEl) {
+        checkboxEl.disabled = false;
+        checkboxEl.closest("tr")?.classList.remove("saving");
+      }
       setMsg("ok", `User ${uid} ${nextActive ? "activated" : "deactivated"}.`);
     }
 
@@ -375,6 +383,7 @@
         `;
       }).join("");
 
+      // select buttons
       [...body.querySelectorAll("[data-pick]")].forEach(btn => {
         btn.addEventListener("click", async () => {
           const uid = btn.getAttribute("data-pick");
@@ -383,9 +392,9 @@
         });
       });
 
-      // (added) wire activation toggles
+      // activation toggles (stable: use uid from dataset, no globals)
       [...body.querySelectorAll("input[data-activate]")].forEach(chk => {
-        chk.addEventListener("change", async (e) => {
+        chk.addEventListener("change", async () => {
           const uid = chk.getAttribute("data-activate");
           const next = chk.checked;
           await setActivation(uid, next, chk);
@@ -580,4 +589,3 @@
   </script>
 </body>
 </html>
-
