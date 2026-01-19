@@ -1,855 +1,629 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin Console — QFS</title>
-  <meta name="robots" content="noindex, nofollow" />
-  <link rel="icon" type="image/png"
-    href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Admin Console — QFS</title>
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
 
-  <!-- config.js should set window.__QFS_CONFIG -->
-  <script src="./config.js"></script>
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Supabase v2 -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#020617;
+    --text:#e5e7eb;
+    --muted:#9ca3af;
+    --accent:#38bdf8;
+    --accent2:#a855f7;
+    --glass:rgba(15,23,42,0.88);
+    --border:rgba(148,163,184,0.45);
+    --shadow:rgba(2,6,23,0.9);
+    --radius:18px;
+    --maxw:1250px;
+    --good:#22c55e;
+    --bad:#f43f5e;
+    --warn:#fbbf24;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; padding:24px;
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(circle at top, rgba(56,189,248,0.30), transparent 55%),
+      radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
+      var(--bg);
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto;}
+  .header{
+    display:flex; justify-content:space-between; align-items:center;
+    gap:14px; margin-bottom:16px;
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .logo{
+    width:54px; height:54px; border-radius:14px; object-fit:cover;
+    box-shadow: 0 14px 44px rgba(2,6,23,0.95), 0 0 0 1px rgba(148,163,184,0.35);
+  }
+  .brand h1{margin:0; font-size:18px; font-weight:900; letter-spacing:-0.02em;}
+  .brand .sub{font-size:12px; color:var(--muted); margin-top:2px;}
+  .actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;}
+  .pill{
+    padding:6px 10px; border-radius:999px;
+    border:1px solid rgba(148,163,184,0.30);
+    background:rgba(2,6,23,0.40);
+    font-size:11px; font-weight:900; letter-spacing:0.06em;
+    text-transform:uppercase;
+  }
+  .pill.good{border-color:rgba(34,197,94,0.35); color:#bbf7d0;}
+  .btn{
+    padding:8px 12px; border-radius:999px;
+    border:1px solid rgba(148,163,184,0.35);
+    background:rgba(255,255,255,0.06);
+    color:var(--text); font-weight:900; font-size:12px; cursor:pointer;
+  }
+  .btn.primary{background:linear-gradient(135deg, var(--accent), var(--accent2)); border:none;}
+  .btn:disabled{opacity:0.55; cursor:not-allowed;}
+  .banner{
+    margin:10px 0 16px;
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid rgba(148,163,184,0.30);
+    background:rgba(2,6,23,0.45);
+    font-size:13px;
+    white-space:pre-wrap;
+  }
+  .banner.ok{border-color:rgba(34,197,94,0.35);}
+  .banner.err{border-color:rgba(244,63,94,0.35);}
 
-  <style>
-    :root{
-      --bg:#020617;
-      --text:#e5e7eb;
-      --muted:#9ca3af;
-      --accent:#38bdf8;
-      --accent2:#a855f7;
-      --glass:rgba(15,23,42,0.88);
-      --border:rgba(148,163,184,0.45);
-      --shadow:rgba(2,6,23,0.9);
-      --radius:18px;
-      --maxw:1200px;
+  .grid{display:grid; grid-template-columns: 1.1fr 0.9fr; gap:18px;}
+  @media (max-width:980px){ .grid{grid-template-columns:1fr;} }
 
-      --good:#22c55e;
-      --bad:#ef4444;
-      --warn:#f59e0b;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      min-height:100vh;
-      padding:24px;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(circle at top, rgba(56,189,248,0.30), transparent 55%),
-        radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
-        var(--bg);
-    }
-    .wrap{ max-width:var(--maxw); margin:0 auto; position:relative; z-index:1; }
-
-    .header{
-      display:flex; justify-content:space-between; align-items:center;
-      gap:14px; margin-bottom:14px;
-    }
-    .brand{ display:flex; align-items:center; gap:12px; }
-    .logo{
-      width:54px; height:54px; border-radius:14px; object-fit:cover;
-      box-shadow: 0 14px 44px rgba(2,6,23,0.95), 0 0 0 1px rgba(148,163,184,0.35);
-    }
-    .brand h1{ margin:0; font-size:18px; font-weight:900; letter-spacing:-0.02em; }
-    .brand .subline{
-      font-size:12px; color:var(--muted); display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:2px;
-    }
-
-    .header-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-    .pill{
-      padding:6px 10px; border-radius:999px;
-      font-size:11px; font-weight:900; letter-spacing:0.06em; text-transform:uppercase;
-      border:1px solid rgba(148,163,184,0.30);
-      background:rgba(2,6,23,0.40);
-      color:#e5e7eb;
-      display:inline-flex; align-items:center; gap:8px;
-    }
-    .dot{ width:8px; height:8px; border-radius:999px; background:var(--warn); box-shadow:0 0 0 3px rgba(245,158,11,0.18); }
-    .pill.ok .dot{ background:var(--good); box-shadow:0 0 0 3px rgba(34,197,94,0.18); }
-    .pill.bad .dot{ background:var(--bad); box-shadow:0 0 0 3px rgba(239,68,68,0.18); }
-
-    .btnTop{
-      padding:8px 12px; border-radius:999px;
-      border:1px solid rgba(148,163,184,0.35);
-      background:rgba(255,255,255,0.06);
-      color:var(--text); font-weight:900; font-size:12px; cursor:pointer;
-    }
-
-    .banner{
-      margin:10px 0 18px;
-      padding:12px 14px;
-      border-radius:16px;
-      border:1px solid rgba(148,163,184,0.35);
-      background:rgba(2,6,23,0.35);
-      color:#cbd5e1;
-      font-size:12px;
-      white-space:pre-wrap;
-    }
-    .banner.ok{ border-color: rgba(34,197,94,0.35); }
-    .banner.err{ border-color: rgba(239,68,68,0.35); color:#fecdd3; }
-    .banner.warn{ border-color: rgba(245,158,11,0.35); color:#fde68a; }
-
-    .grid{ display:grid; grid-template-columns: 1.1fr 0.9fr; gap:18px; }
-    @media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
-
-    .card{
-      background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.84));
-      border:1px solid var(--border);
-      border-radius:28px;
-      padding:18px;
-      box-shadow: 0 28px 110px var(--shadow);
-      backdrop-filter: blur(26px);
-      position:relative; overflow:hidden; z-index:1;
-      min-height: 120px;
-    }
-    .card:before{
-      content:""; position:absolute; inset:-120px -120px auto auto;
-      width:320px; height:320px;
-      background: radial-gradient(circle at center, rgba(56,189,248,0.18), transparent 60%);
-      pointer-events:none;
-    }
-    .card h2{ margin:0 0 6px; font-size:16px; font-weight:900; }
-    .sub{ font-size:12px; color:var(--muted); }
-
-    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px; }
-    .input, .select, .textarea{
-      width:100%;
-      background:rgba(2,6,23,0.35);
-      border:1px solid rgba(148,163,184,0.30);
-      border-radius:14px;
-      padding:10px 12px;
-      color:var(--text);
-      outline:none;
-      font-size:13px;
-    }
-    .textarea{ min-height:84px; resize:vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    .miniBtn{
-      padding:10px 14px; border-radius:999px; border:none;
-      cursor:pointer; font-weight:900; font-size:12px; letter-spacing:0.04em;
-      background:linear-gradient(135deg, var(--accent), var(--accent2));
-      color:#fff;
-      white-space:nowrap;
-    }
-    .miniBtn.gray{
-      background:rgba(255,255,255,0.06);
-      border:1px solid rgba(148,163,184,0.35);
-      color:var(--text);
-    }
-    .miniBtn:disabled{ opacity:.55; cursor:not-allowed; }
-
-    table{ width:100%; border-collapse:collapse; margin-top:12px; font-size:12px; }
-    th, td{ padding:10px 8px; border-bottom:1px solid rgba(148,163,184,0.18); text-align:left; vertical-align:top; }
-    th{ color:var(--muted); font-weight:800; text-transform:uppercase; font-size:11px; }
-
-    .tag{
-      display:inline-flex; align-items:center; gap:6px;
-      border:1px solid rgba(148,163,184,0.28);
-      background:rgba(255,255,255,0.04);
-      padding:3px 10px;
-      border-radius:999px;
-      font-weight:900;
-      font-size:11px;
-      color:#dbeafe;
-      white-space:nowrap;
-    }
-    .tag.yes{ border-color: rgba(34,197,94,0.35); color:#bbf7d0; }
-    .tag.no{ border-color: rgba(239,68,68,0.35); color:#fecdd3; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-
-    .memberRow{ cursor:pointer; }
-    .memberRow:hover{ background:rgba(255,255,255,0.03); }
-    .memberRow.activeSel{ outline:1px solid rgba(56,189,248,0.35); background:rgba(56,189,248,0.06); }
-
-    .balances{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:10px; }
-    @media (max-width:520px){ .balances{ grid-template-columns:1fr; } }
-    .balBox{
-      background:rgba(2,6,23,0.35);
-      border:1px solid rgba(148,163,184,0.25);
-      border-radius:18px;
-      padding:12px;
-    }
-    .balLabel{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; font-weight:900; }
-    .balVal{ font-size:18px; font-weight:900; margin-top:4px; }
-    .balSub{ font-size:11px; color:var(--muted); }
-
-    .split{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:10px;
-      margin-top:10px;
-    }
-
-    .toggleWrap{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:12px;
-      background:rgba(2,6,23,0.35);
-      border:1px solid rgba(148,163,184,0.25);
-      border-radius:18px;
-      padding:12px;
-      margin-top:12px;
-    }
-    .toggleLeft .title{ font-weight:900; }
-    .toggleLeft .desc{ font-size:12px; color:var(--muted); margin-top:2px; }
-
-    .switch{
-      position:relative; width:52px; height:28px; background:rgba(255,255,255,0.10);
-      border-radius:999px; border:1px solid rgba(148,163,184,0.35); cursor:pointer;
-      flex:0 0 auto;
-    }
-    .knob{
-      position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:999px;
-      background:#e5e7eb;
-      transition: transform .18s ease;
-    }
-    .switch.on{ background:rgba(34,197,94,0.16); border-color: rgba(34,197,94,0.40); }
-    .switch.on .knob{ transform: translateX(24px); background:#bbf7d0; }
-
-    .amountCell.credit{ color:#bbf7d0; }
-    .amountCell.debit{ color:#fecdd3; }
-
-    #toast{
-      position:fixed; left:12px; bottom:12px; z-index:9999999;
-      background:rgba(2,6,23,0.78);
-      border:1px solid rgba(148,163,184,0.35);
-      color:#cbd5e1;
-      padding:9px 11px; border-radius:12px; font-size:12px;
-      user-select:none; max-width:min(560px, 92vw); white-space:pre-wrap;
-    }
-  </style>
+  .card{
+    background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.84));
+    border:1px solid var(--border);
+    border-radius:28px;
+    padding:18px;
+    box-shadow: 0 28px 110px var(--shadow);
+    backdrop-filter: blur(26px);
+    position:relative; overflow:hidden;
+  }
+  .card:before{
+    content:""; position:absolute; inset:-120px -120px auto auto;
+    width:320px; height:320px;
+    background: radial-gradient(circle at center, rgba(56,189,248,0.18), transparent 60%);
+    pointer-events:none;
+  }
+  .card h2{margin:0 0 6px; font-size:16px; font-weight:900;}
+  .subtle{color:var(--muted); font-size:12px;}
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .input, .select, .textarea{
+    width:100%;
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid rgba(148,163,184,0.28);
+    background:rgba(2,6,23,0.35);
+    color:var(--text);
+    outline:none;
+  }
+  .textarea{min-height:80px; resize:vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  .mini{width:auto; min-width:140px;}
+  table{width:100%; border-collapse:collapse; margin-top:10px; font-size:12px;}
+  th,td{padding:10px 8px; border-bottom:1px solid rgba(148,163,184,0.18); text-align:left; vertical-align:top;}
+  th{color:var(--muted); font-weight:700; text-transform:uppercase; font-size:11px;}
+  .tag{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:4px 8px; border-radius:999px;
+    border:1px solid rgba(148,163,184,0.25);
+    background:rgba(255,255,255,0.05);
+    font-weight:900; font-size:11px;
+  }
+  .tag.yes{border-color:rgba(34,197,94,0.35); color:#bbf7d0;}
+  .tag.no{border-color:rgba(244,63,94,0.35); color:#fecdd3;}
+  .switch{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border-radius:14px;
+    border:1px solid rgba(148,163,184,0.28);
+    background:rgba(2,6,23,0.35);
+  }
+  .toggle{
+    width:44px; height:26px; border-radius:999px;
+    border:1px solid rgba(148,163,184,0.35);
+    background:rgba(255,255,255,0.08);
+    position:relative; cursor:pointer;
+    flex:0 0 auto;
+  }
+  .knob{
+    width:22px; height:22px; border-radius:50%;
+    background:#e5e7eb; position:absolute; top:1px; left:1px;
+    transition: transform 140ms ease;
+  }
+  .toggle.on{background:rgba(34,197,94,0.18); border-color:rgba(34,197,94,0.35);}
+  .toggle.on .knob{transform: translateX(18px);}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+</style>
 </head>
 
 <body>
 <div class="wrap">
+
   <header class="header">
     <div class="brand">
-      <img class="logo"
-        src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true"
-        alt="QFS" />
+      <img class="logo" src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="QFS" />
       <div>
         <h1>Admin Console</h1>
-        <div class="subline">
-          <span>Credit/Debit USD + BTC (sats) · View balances · View ledger</span>
-        </div>
+        <div class="sub">Credit/Debit USD + BTC (sats) · View balances · View ledger</div>
       </div>
     </div>
 
-    <div class="header-actions">
-      <span id="sessionPill" class="pill"><span class="dot"></span><span id="sessionTxt">Checking session…</span></span>
-      <button id="refreshBtn" class="btnTop" type="button">Refresh</button>
-      <button id="logoutBtn" class="btnTop" type="button" style="border-color: rgba(244,63,94,0.40);">Logout</button>
+    <div class="actions">
+      <span id="loginPill" class="pill">Checking…</span>
+      <button id="refreshBtn" class="btn">Refresh</button>
+      <button id="logoutBtn" class="btn">Logout</button>
     </div>
   </header>
 
-  <div id="banner" class="banner">boot…</div>
+  <div id="banner" class="banner ok">Booting…</div>
 
   <section class="grid">
-    <!-- MEMBERS -->
+
+    <!-- LEFT: MEMBERS -->
     <div class="card">
       <h2>Members</h2>
-      <div class="sub">Select a member to manage balances and activation</div>
+      <div class="subtle">Search by email or user_id (UUID). Filter All / Activated / Pending.</div>
 
-      <div class="row" style="margin-top:12px;">
-        <div style="flex:1; min-width:240px;">
-          <input id="searchBox" class="input" placeholder="Search by email or user_id (UUID)..." />
-        </div>
-        <div style="min-width:180px;">
-          <select id="filterSel" class="select">
-            <option value="all">All</option>
-            <option value="activated">Activated only</option>
-            <option value="pending">Pending only</option>
-          </select>
-        </div>
-        <button id="loadMembersBtn" class="miniBtn" type="button">Load</button>
+      <div class="row" style="margin-top:10px;">
+        <input id="searchInput" class="input" placeholder="Search by email or user_id (UUID)…" />
+        <select id="filterSelect" class="select mini">
+          <option value="all">All</option>
+          <option value="activated">Activated only</option>
+          <option value="pending">Pending only</option>
+        </select>
+        <button id="loadMembersBtn" class="btn primary">Load</button>
       </div>
 
-      <div style="margin-top:12px; overflow:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th style="min-width:260px;">User ID</th>
-              <th style="min-width:220px;">Email</th>
-              <th>Tier</th>
-              <th>Qty</th>
-              <th>Active</th>
-            </tr>
-          </thead>
-          <tbody id="membersBody">
-            <tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Email</th>
+            <th>Tier</th>
+            <th>Qty</th>
+            <th>Active</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="membersBody">
+          <tr><td colspan="6" style="color:var(--muted);">Loading…</td></tr>
+        </tbody>
+      </table>
 
-      <div class="row" style="justify-content:space-between; margin-top:12px;">
-        <div class="sub" id="pageInfo">Page offset 0</div>
-        <div class="row" style="margin:0;">
-          <button id="prevBtn" class="miniBtn gray" type="button">Prev</button>
-          <button id="nextBtn" class="miniBtn gray" type="button">Next</button>
+      <div class="row" style="justify-content:space-between; margin-top:10px;">
+        <div class="subtle" id="pageInfo">Page offset 0</div>
+        <div class="row">
+          <button id="prevBtn" class="btn">Prev</button>
+          <button id="nextBtn" class="btn">Next</button>
         </div>
       </div>
 
-      <div class="sub" id="adminDebug" style="margin-top:10px;"></div>
+      <div class="subtle" id="adminSessionLine" style="margin-top:10px;"></div>
     </div>
 
-    <!-- SELECTED MEMBER -->
+    <!-- RIGHT: SELECTED MEMBER -->
     <div class="card">
       <h2>Selected Member</h2>
-      <div class="sub">Pick a member on the left, or paste a UUID below.</div>
+      <div class="subtle">Pick a member on the left, or paste a UUID below.</div>
 
-      <div class="row">
+      <div class="row" style="margin-top:10px;">
         <input id="selectedUserId" class="input mono" placeholder="Selected user_id (UUID)" />
-        <button id="loadSelectedBtn" class="miniBtn" type="button">Load</button>
+        <button id="loadSelectedBtn" class="btn primary">Load</button>
       </div>
 
-      <div class="balances">
-        <div class="balBox">
-          <div class="balLabel">USD Balance</div>
-          <div class="balVal" id="usdBal">$0.00</div>
-          <div class="balSub">stored as cents</div>
+      <div class="row" style="margin-top:12px;">
+        <div class="card" style="padding:12px; border-radius:18px; flex:1;">
+          <div class="subtle">USD Balance</div>
+          <div style="font-size:18px; font-weight:900;" id="usdBal">$0.00</div>
+          <div class="subtle">stored as cents</div>
         </div>
-        <div class="balBox">
-          <div class="balLabel">BTC Balance</div>
-          <div class="balVal" id="btcBal">0 sats</div>
-          <div class="balSub">stored as sats</div>
-        </div>
-      </div>
-
-      <div class="toggleWrap">
-        <div class="toggleLeft">
-          <div class="title">Activation</div>
-          <div class="desc" id="actDesc">No member selected.</div>
-        </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div class="switch" id="actSwitch" title="Toggle activation"><div class="knob"></div></div>
-          <span id="actPill" class="tag no">PENDING</span>
+        <div class="card" style="padding:12px; border-radius:18px; flex:1;">
+          <div class="subtle">BTC Balance</div>
+          <div style="font-size:18px; font-weight:900;" id="btcBal">0 sats</div>
+          <div class="subtle">stored as sats</div>
         </div>
       </div>
 
-      <div class="split">
-        <div class="row">
-          <div style="min-width:120px;">
-            <select id="curSel" class="select">
-              <option value="USD">USD</option>
-              <option value="BTC">BTC</option>
-            </select>
-          </div>
-          <div style="flex:1; min-width:200px;">
-            <input id="amountBox" class="input" placeholder="Amount (USD in dollars, BTC in sats)" />
-          </div>
+      <div class="switch" style="margin-top:12px;">
+        <div style="flex:1;">
+          <div style="font-weight:900;">Activation</div>
+          <div class="subtle" id="activationHelp">—</div>
         </div>
+        <div id="activationToggle" class="toggle"><div class="knob"></div></div>
+        <span id="activationTag" class="tag no">PENDING</span>
+      </div>
 
-        <div class="row">
-          <div style="min-width:120px;">
-            <select id="typeSel" class="select">
-              <option value="credit">Credit</option>
-              <option value="debit">Debit</option>
-            </select>
-          </div>
-          <div style="flex:1; min-width:200px;">
-            <input id="reasonBox" class="input" placeholder="Reason (e.g. welcome_credit, manual_adjust)" />
-          </div>
-        </div>
+      <div class="row" style="margin-top:12px;">
+        <select id="currencySelect" class="select mini">
+          <option value="USD">USD</option>
+          <option value="BTC">BTC</option>
+        </select>
+        <input id="amountInput" class="input" placeholder="Amount (USD in dollars, BTC in sats)" />
+      </div>
 
-        <textarea id="metaBox" class="textarea" spellcheck="false"
-          placeholder='Optional note/metadata (saved). Example:
+      <div class="row" style="margin-top:10px;">
+        <select id="typeSelect" class="select mini">
+          <option value="credit">Credit</option>
+          <option value="debit">Debit</option>
+        </select>
+        <input id="reasonInput" class="input" placeholder="Reason (e.g. welcome_credit, manual_adjust)" />
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <textarea id="metaInput" class="textarea" placeholder='Optional note/metadata (saved). Example:
 {"note":"manual top up"}'></textarea>
-
-        <div class="row" style="justify-content:flex-end;">
-          <button id="submitBtn" class="miniBtn" type="button">Submit</button>
-        </div>
       </div>
 
-      <div style="margin-top:10px;">
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-          <div>
-            <div style="font-weight:900; font-size:14px;">Recent Ledger</div>
-            <div class="sub">Last 25 entries (selected member)</div>
-          </div>
-          <button id="refreshLedgerBtn" class="miniBtn gray" type="button">Refresh</button>
-        </div>
-
-        <div style="overflow:auto; margin-top:8px;">
-          <table>
-            <thead>
-              <tr>
-                <th style="min-width:170px;">Time</th>
-                <th>Cur</th>
-                <th>Type</th>
-                <th class="mono">Amount</th>
-                <th>Reason</th>
-              </tr>
-            </thead>
-            <tbody id="ledgerBody">
-              <tr><td colspan="5" style="color:var(--muted);">No member selected.</td></tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="row" style="justify-content:flex-end; margin-top:10px;">
+        <button id="submitBtn" class="btn primary">Submit</button>
       </div>
+
+      <div class="subtle" style="margin-top:10px;">
+        USD is converted to cents automatically. BTC expects sats.
+      </div>
+
+      <div class="row" style="justify-content:space-between; margin-top:16px;">
+        <div>
+          <div style="font-weight:900;">Recent Ledger</div>
+          <div class="subtle">Last 25 entries (selected member)</div>
+        </div>
+        <button id="refreshLedgerBtn" class="btn">Refresh</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Cur</th>
+            <th>Type</th>
+            <th class="mono">Amount</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody id="ledgerBody">
+          <tr><td colspan="5" style="color:var(--muted);">No member selected.</td></tr>
+        </tbody>
+      </table>
 
     </div>
+
   </section>
 </div>
 
-<div id="toast">boot…</div>
-
 <script>
 (() => {
-  // ---------- CONFIG / CLIENT ----------
   const CFG = window.__QFS_CONFIG || {};
   const SUPABASE_URL = CFG.SUPABASE_URL || "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "PASTE_ANON_KEY_HERE_IF_NO_CONFIG_JS";
+  const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "";
 
-  const sb = (window.__qfsAdminSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
+  const sb = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
 
   const $ = (id) => document.getElementById(id);
-  const toast = $("toast");
+
   const banner = $("banner");
-
-  const say = (t) => { if (toast) toast.textContent = String(t || ""); };
-  const setBanner = (text, kind="ok") => {
-    banner.classList.remove("ok","err","warn");
-    banner.classList.add(kind);
+  function setBanner(text, ok=true){
     banner.textContent = String(text || "");
-  };
-
-  const setPill = (kind, text) => {
-    const pill = $("sessionPill");
-    const txt = $("sessionTxt");
-    pill.classList.remove("ok","bad");
-    if (kind === "ok") pill.classList.add("ok");
-    if (kind === "bad") pill.classList.add("bad");
-    txt.textContent = text || "";
-  };
-
-  const esc = (s) => String(s ?? "")
-    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-
-  const fmtUSD = (usd) => "$" + Number(usd || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const fmtSats = (sats) => `${Number(sats || 0).toLocaleString()} sats`;
-
-  function parseMetaJSON(){
-    const raw = String($("metaBox").value || "").trim();
-    if(!raw) return {};
-    try{
-      const j = JSON.parse(raw);
-      return (j && typeof j === "object") ? j : {};
-    } catch {
-      return { note: raw };
-    }
+    banner.classList.toggle("ok", !!ok);
+    banner.classList.toggle("err", !ok);
   }
 
-  function hardToLogin(msg){
-    const q = msg ? ("?msg=" + encodeURIComponent(msg)) : "";
-    window.location.replace("login.html" + q);
-  }
+  const loginPill = $("loginPill");
+  const membersBody = $("membersBody");
+  const ledgerBody = $("ledgerBody");
 
-  // ---------- STATE ----------
-  let session = null;
   let pageOffset = 0;
-  const pageLimit = 25;
+  const pageLimit = 8;
 
-  let members = [];
-  let selected = null; // { user_id, email, tier, qty, is_active, created_at }
+  let selected = {
+    user_id: null,
+    email: null,
+    tier: null,
+    qty: null,
+    is_active: null
+  };
 
-  // ---------- AUTH ----------
-  async function ensureSession(){
+  function esc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function fmtUSDFromCents(cents){
+    const usd = Number(cents || 0) / 100;
+    return "$" + usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function fmtAmount(cur, cents, sats){
+    const c = String(cur || "").toUpperCase();
+    if(c === "USD") return fmtUSDFromCents(cents);
+    if(c === "BTC") return (Number(sats||0)).toLocaleString() + " sats";
+    return "—";
+  }
+
+  function setActivationUI(isActive){
+    const toggle = $("activationToggle");
+    const tag = $("activationTag");
+    toggle.classList.toggle("on", !!isActive);
+    tag.classList.toggle("yes", !!isActive);
+    tag.classList.toggle("no", !isActive);
+    tag.textContent = isActive ? "ACTIVE" : "PENDING";
+    $("activationHelp").textContent = isActive ? "Member is activated." : "Member is pending (locked).";
+  }
+
+  async function checkSession(){
     const { data, error } = await sb.auth.getSession();
-    if(error || !data?.session) return null;
+    if(error || !data?.session){
+      loginPill.textContent = "LOGGED OUT";
+      loginPill.className = "pill";
+      setBanner("Not logged in. Go to login.html", false);
+      return null;
+    }
+    loginPill.textContent = "LOGGED IN";
+    loginPill.className = "pill good";
+
+    const u = data.session.user;
+    $("adminSessionLine").textContent = `admin session: ${u?.email || "—"} · uid: ${u?.id || "—"}`;
     return data.session;
   }
 
-  async function boot(){
-    try{
-      say("Checking session…");
-      setPill("warn","Checking session…");
-      setBanner("Checking session…", "warn");
-
-      session = await ensureSession();
-      if(!session){
-        setPill("bad","Not logged in");
-        return hardToLogin("login_required");
-      }
-
-      // also require verified email
-      const user = session.user || {};
-      const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
-      if(!verifiedAt){
-        try{ await sb.auth.signOut(); }catch{}
-        setPill("bad","Verify email");
-        return hardToLogin("verify_email");
-      }
-
-      setPill("ok","Logged in");
-      setBanner("Admin console ready.", "ok");
-      $("adminDebug").textContent = `admin session: ${user.email || "—"} · uid: ${user.id || "—"}`;
-
-      // initial load
-      await loadMembers();
-    } catch(e){
-      setPill("bad","Boot error");
-      setBanner("Boot error: " + (e?.message || e), "err");
-    }
-  }
-
-  // ---------- RPC WRAPPERS ----------
-  async function rpc(name, args){
-    // Always show useful error details if rpc fails
-    const { data, error } = await sb.rpc(name, args || {});
+  async function requireAdminOrFail(){
+    const { data, error } = await sb.rpc("is_admin");
     if(error){
-      throw new Error(`${name}: ${error.message}${error.code ? " ["+error.code+"]" : ""}`);
+      setBanner("Admin check failed: " + error.message, false);
+      return false;
     }
-    return data;
+    if(data !== true){
+      setBanner("Not allowed: your user is not in admin_users.", false);
+      return false;
+    }
+    return true;
   }
 
-  // ---------- MEMBERS ----------
-  function renderMembers(){
-    const body = $("membersBody");
-    if(!body) return;
+  async function loadMembers(){
+    if(!(await requireAdminOrFail())) return;
 
-    if(!members || members.length === 0){
-      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No members found.</td></tr>`;
+    const p_search = ($("searchInput").value || "").trim() || null;
+    const p_filter = ($("filterSelect").value || "all").trim();
+    const p_limit = pageLimit;
+    const p_offset = pageOffset;
+
+    setBanner("Loading members…");
+    membersBody.innerHTML = `<tr><td colspan="6" style="color:var(--muted);">Loading…</td></tr>`;
+
+    const { data, error } = await sb.rpc("admin_list_members", { p_search, p_filter, p_limit, p_offset });
+    if(error){
+      setBanner("Error loading members: " + error.message, false);
+      membersBody.innerHTML = `<tr><td colspan="6" style="color:var(--muted);">Error loading members.</td></tr>`;
       return;
     }
 
-    body.innerHTML = "";
-    members.forEach((m) => {
-      const isSel = selected && String(selected.user_id) === String(m.user_id);
-      const tier = String(m.tier || "").toUpperCase() || "—";
-      const qty = (m.qty ?? 1);
-      const active = (m.is_active === true);
+    const rows = data || [];
+    $("pageInfo").textContent = `Page offset ${pageOffset} · loaded ${rows.length}`;
 
-      body.insertAdjacentHTML("beforeend", `
-        <tr class="memberRow ${isSel ? "activeSel" : ""}" data-uid="${esc(m.user_id)}">
-          <td class="mono">${esc(m.user_id)}</td>
-          <td>${esc(m.email || "—")}</td>
-          <td>${esc(tier)}</td>
-          <td>${esc(String(qty))}</td>
+    if(rows.length === 0){
+      membersBody.innerHTML = `<tr><td colspan="6" style="color:var(--muted);">No members found.</td></tr>`;
+      setBanner("No members found.", true);
+      return;
+    }
+
+    membersBody.innerHTML = "";
+    rows.forEach(r => {
+      const active = !!r.is_active;
+      membersBody.insertAdjacentHTML("beforeend", `
+        <tr>
+          <td class="mono">${esc(r.user_id)}</td>
+          <td>${esc(r.email || "—")}</td>
+          <td>${esc(r.tier || "—")}</td>
+          <td>${esc(r.qty ?? "—")}</td>
           <td>${active ? `<span class="tag yes">YES</span>` : `<span class="tag no">NO</span>`}</td>
+          <td><button class="btn" data-select="${esc(r.user_id)}">Select</button></td>
         </tr>
       `);
     });
 
-    // click handlers
-    [...body.querySelectorAll(".memberRow")].forEach(row => {
-      row.addEventListener("click", async () => {
-        const uid = row.getAttribute("data-uid");
-        if(!uid) return;
-        $("selectedUserId").value = uid;
-        // set selected from members list if found
-        const found = members.find(x => String(x.user_id) === String(uid));
-        if(found) selected = found;
-        await loadSelected(uid);
-        renderMembers();
-      });
-    });
-  }
-
-  async function loadMembers(){
-    try{
-      say("Loading members…");
-      setBanner("Loading members…", "warn");
-
-      const p_search = String($("searchBox").value || "").trim();
-      const p_filter = String($("filterSel").value || "all").trim();
-
-      // ✅ Matches your final RPC:
-      // admin_list_members(p_search text DEFAULT NULL, p_filter text DEFAULT 'all', p_limit int DEFAULT 25, p_offset int DEFAULT 0)
-      const data = await rpc("admin_list_members", {
-        p_search: p_search || null,
-        p_filter: p_filter || "all",
-        p_limit: pageLimit,
-        p_offset: pageOffset
-      });
-
-      members = Array.isArray(data) ? data : [];
-      $("pageInfo").textContent = `Page offset ${pageOffset} · loaded ${members.length}`;
-      renderMembers();
-
-      setBanner("Members loaded ✅", "ok");
-      say("Loaded ✅");
-    } catch(e){
-      members = [];
-      renderMembers();
-      $("pageInfo").textContent = `Page offset ${pageOffset}`;
-      setBanner("Error loading members:\n" + (e?.message || e), "err");
-      say("Members load failed");
-    }
-  }
-
-  // ---------- SELECTED MEMBER ----------
-  function setActivationUI(isActive, labelText){
-    const sw = $("actSwitch");
-    const pill = $("actPill");
-    const desc = $("actDesc");
-
-    const active = (isActive === true);
-    sw.classList.toggle("on", active);
-
-    if(active){
-      pill.classList.remove("no");
-      pill.classList.add("yes");
-      pill.textContent = "ACTIVE";
-      desc.textContent = labelText || "Member is activated.";
-    } else {
-      pill.classList.remove("yes");
-      pill.classList.add("no");
-      pill.textContent = "PENDING";
-      desc.textContent = labelText || "Member is pending (locked).";
-    }
-  }
-
-  async function loadBalances(userId){
-    // admin_get_user_balances(p_user_id uuid) RETURNS TABLE(currency,balance_cents,balance_sats)
-    const rows = await rpc("admin_get_user_balances", { p_user_id: userId });
-
-    const usdRow = (rows || []).find(r => String(r.currency || "").toUpperCase() === "USD");
-    const btcRow = (rows || []).find(r => String(r.currency || "").toUpperCase() === "BTC");
-
-    const usdCents = Number(usdRow?.balance_cents || 0);
-    const btcSats  = Number(btcRow?.balance_sats || 0);
-
-    $("usdBal").textContent = fmtUSD(usdCents / 100);
-    $("btcBal").textContent = fmtSats(btcSats);
-  }
-
-  function fmtLedgerAmount(cur, cents, sats){
-    const c = String(cur || "").toUpperCase();
-    if(c === "USD"){
-      return fmtUSD((Number(cents || 0) / 100));
-    }
-    if(c === "BTC"){
-      return fmtSats(Number(sats || 0));
-    }
-    return "—";
-  }
-
-  async function loadLedger(userId){
-    const body = $("ledgerBody");
-    body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>`;
-
-    try{
-      // ✅ Matches your final RPC:
-      // admin_get_user_ledger(p_user_id uuid, p_limit integer DEFAULT 25)
-      const rows = await rpc("admin_get_user_ledger", { p_user_id: userId, p_limit: 25 });
-
-      if(!rows || rows.length === 0){
-        body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No ledger entries.</td></tr>`;
-        return;
-      }
-
-      body.innerHTML = "";
-      rows.forEach(r => {
-        const dt = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
-        const cur = String(r.currency || "").toUpperCase() || "—";
-        const type = String(r.entry_type || "").toLowerCase() || "—";
-        const reason = String(r.reason || "—");
-
-        const amt = fmtLedgerAmount(cur, r.amount_cents, r.amount_sats);
-
-        const cls = (type === "credit") ? "credit" : (type === "debit" ? "debit" : "");
-        body.insertAdjacentHTML("beforeend", `
-          <tr>
-            <td>${esc(dt)}</td>
-            <td>${esc(cur)}</td>
-            <td>${esc(type)}</td>
-            <td class="mono amountCell ${cls}">${esc(amt)}</td>
-            <td>${esc(reason)}</td>
-          </tr>
-        `);
-      });
-    } catch(e){
-      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Ledger error: ${esc(e?.message || e)}</td></tr>`;
-    }
+    setBanner("Members loaded ✅", true);
   }
 
   async function loadSelected(userId){
-    const uid = String(userId || $("selectedUserId").value || "").trim();
-    if(!uid){
-      setBanner("Paste/select a user_id first.", "warn");
+    if(!userId) return;
+
+    selected.user_id = userId;
+
+    setBanner("Loading balances + activation + ledger…");
+    $("selectedUserId").value = userId;
+
+    // Load balances
+    const { data: bals, error: balErr } = await sb.rpc("admin_get_user_balances", { p_user_id: userId });
+    if(balErr){
+      setBanner("Balance error: " + balErr.message, false);
+      $("usdBal").textContent = "$0.00";
+      $("btcBal").textContent = "0 sats";
       return;
     }
 
-    try{
-      say("Loading selected member…");
+    const usd = (bals || []).find(x => String(x.currency||"").toUpperCase() === "USD");
+    const btc = (bals || []).find(x => String(x.currency||"").toUpperCase() === "BTC");
+    $("usdBal").textContent = fmtUSDFromCents(usd?.balance_cents || 0);
+    $("btcBal").textContent = (Number(btc?.balance_sats || 0)).toLocaleString() + " sats";
 
-      // Try to resolve selected from current list (best UX)
-      const fromList = members.find(m => String(m.user_id) === String(uid)) || null;
-      if(fromList) selected = fromList;
+    // Also try to infer activation from members list row currently selected in UI
+    // (If you want exact truth, you can add an admin_get_user_profile RPC later; this is enough for now.)
+    // We'll keep the current toggle state unless user selects a row.
+    setBanner("Loaded balances ✅", true);
 
-      // If not found in list, still attempt to load balances/ledger and activation state
-      if(!selected){
-        // fetch a single row by searching p_search = uid (will match id::text)
-        const rows = await rpc("admin_list_members", {
-          p_search: uid,
-          p_filter: "all",
-          p_limit: 1,
-          p_offset: 0
-        });
-        selected = (rows && rows[0]) ? rows[0] : null;
-      }
+    await loadLedger(userId);
+  }
 
-      if(!selected){
-        setBanner("Member not found for that user_id.", "warn");
-        $("usdBal").textContent = "$0.00";
-        $("btcBal").textContent = "0 sats";
-        setActivationUI(false, "Member not found.");
-        $("ledgerBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No member selected.</td></tr>`;
+  async function loadLedger(userId){
+    ledgerBody.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>`;
+
+    const { data, error } = await sb.rpc("admin_get_user_ledger", { p_user_id: userId, p_limit: 25 });
+    if(error){
+      setBanner("Ledger error: " + error.message, false);
+      ledgerBody.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Ledger failed to load.</td></tr>`;
+      return;
+    }
+
+    const rows = data || [];
+    if(rows.length === 0){
+      ledgerBody.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No ledger entries.</td></tr>`;
+      setBanner("Ledger loaded (empty).", true);
+      return;
+    }
+
+    ledgerBody.innerHTML = "";
+    rows.forEach(r => {
+      const dt = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
+      const cur = String(r.currency||"—").toUpperCase();
+      const type = String(r.entry_type||"—").toLowerCase();
+      const amt = fmtAmount(cur, r.amount_cents, r.amount_sats);
+
+      ledgerBody.insertAdjacentHTML("beforeend", `
+        <tr>
+          <td>${esc(dt)}</td>
+          <td>${esc(cur)}</td>
+          <td>${esc(type)}</td>
+          <td class="mono">${esc(amt)}</td>
+          <td>${esc(r.reason || "—")}</td>
+        </tr>
+      `);
+    });
+
+    setBanner("Ledger loaded ✅", true);
+  }
+
+  async function toggleActivation(){
+    if(!selected.user_id){
+      setBanner("Select a user first.", false);
+      return;
+    }
+    if(!(await requireAdminOrFail())) return;
+
+    const current = $("activationToggle").classList.contains("on");
+    const next = !current;
+
+    setBanner("Updating activation…");
+
+    const { error } = await sb.rpc("admin_set_user_activation", {
+      p_user_id: selected.user_id,
+      p_is_activated: next,
+      p_reason: "admin_toggle",
+      p_metadata: {}
+    });
+
+    if(error){
+      setBanner("Activation update failed: " + error.message, false);
+      return;
+    }
+
+    setActivationUI(next);
+    setBanner("Activation updated ✅", true);
+  }
+
+  async function submitAdjustment(){
+    if(!selected.user_id){
+      setBanner("Select a user first.", false);
+      return;
+    }
+    if(!(await requireAdminOrFail())) return;
+
+    const currency = ($("currencySelect").value || "USD").toUpperCase();
+    const kind = ($("typeSelect").value || "credit").toLowerCase();
+    const reason = ($("reasonInput").value || "admin_adjust").trim() || "admin_adjust";
+
+    // Parse metadata JSON safely
+    let meta = {};
+    const rawMeta = ($("metaInput").value || "").trim();
+    if(rawMeta){
+      try{ meta = JSON.parse(rawMeta); } catch(e){
+        setBanner("Metadata must be valid JSON.", false);
         return;
       }
-
-      // Activation UI based on portal_users.is_active
-      const label = `${selected.email || "—"} · ${String(selected.tier || "").toUpperCase()} · qty ${selected.qty ?? 1}`;
-      setActivationUI(selected.is_active === true, label);
-
-      // Balances + ledger
-      await loadBalances(uid);
-      await loadLedger(uid);
-
-      setBanner("Selected member loaded ✅", "ok");
-      say("Loaded ✅");
-      renderMembers();
-    } catch(e){
-      setBanner("Selected load failed:\n" + (e?.message || e), "err");
-      say("Load failed");
     }
-  }
 
-  // ---------- ACTIONS ----------
-  async function toggleActivation(){
-    if(!selected?.user_id){
-      setBanner("Select a member first.", "warn");
+    // Amount rules:
+    // - USD input is dollars in UI -> convert to cents (bigint)
+    // - BTC input is sats directly
+    const rawAmt = ($("amountInput").value || "").trim();
+    if(!rawAmt){
+      setBanner("Enter an amount.", false);
       return;
     }
 
-    const uid = String(selected.user_id);
-    const nextActive = !(selected.is_active === true);
+    let amountBig = 0n;
 
-    try{
-      say("Updating activation…");
-      setBanner("Updating activation…", "warn");
-
-      // ✅ Matches your RPC:
-      // admin_set_user_activation(p_user_id uuid, p_is_activated boolean, p_reason text, p_metadata jsonb)
-      await rpc("admin_set_user_activation", {
-        p_user_id: uid,
-        p_is_activated: nextActive,
-        p_reason: "admin_toggle",
-        p_metadata: {}
-      });
-
-      // update local and refresh list/selected views
-      selected.is_active = nextActive;
-      setActivationUI(nextActive, `${selected.email || "—"} · ${String(selected.tier||"").toUpperCase()} · qty ${selected.qty ?? 1}`);
-
-      // reload members page (so the table reflects new state)
-      await loadMembers();
-      // reload balances/ledger (optional but keeps everything in sync)
-      await loadBalances(uid);
-      await loadLedger(uid);
-
-      setBanner("Activation updated ✅", "ok");
-      say("Activation updated ✅");
-    } catch(e){
-      setBanner("Activation update failed:\n" + (e?.message || e), "err");
-      say("Activation failed");
-    }
-  }
-
-  function toUnits(currency, amountStr){
-    const cur = String(currency || "").toUpperCase();
-    const raw = String(amountStr || "").trim();
-
-    if(cur === "USD"){
-      // USD entered as dollars -> store as cents (bigint)
-      const dollars = Number(raw);
-      if(!Number.isFinite(dollars)) return null;
-      return Math.round(dollars * 100);
-    }
-    if(cur === "BTC"){
-      // BTC entered as sats
-      const sats = Number(raw);
-      if(!Number.isFinite(sats)) return null;
-      return Math.trunc(sats);
-    }
-    return null;
-  }
-
-  async function submitAdjust(){
-    if(!selected?.user_id){
-      setBanner("Select a member first.", "warn");
-      return;
-    }
-
-    const uid = String(selected.user_id);
-    const cur = String($("curSel").value || "USD").toUpperCase();
-    const type = String($("typeSel").value || "credit").toLowerCase();
-    const reason = String($("reasonBox").value || "").trim() || (type === "credit" ? "admin_credit" : "admin_debit");
-    const meta = parseMetaJSON();
-
-    const units = toUnits(cur, $("amountBox").value);
-    if(units === null){
-      setBanner("Invalid amount. USD must be a number (dollars). BTC must be a number (sats).", "warn");
-      return;
-    }
-    if(units <= 0){
-      setBanner("Amount must be greater than 0.", "warn");
-      return;
-    }
-
-    try{
-      $("submitBtn").disabled = true;
-      say("Submitting…");
-      setBanner("Submitting…", "warn");
-
-      if(type === "credit"){
-        // admin_credit_user(p_user_id, p_currency, p_amount, p_reason, p_metadata)
-        await rpc("admin_credit_user", {
-          p_user_id: uid,
-          p_currency: cur,
-          p_amount: units,
-          p_reason: reason,
-          p_metadata: meta
-        });
-      } else {
-        // admin_debit_user(p_user_id, p_currency, p_amount_units, p_reason, p_metadata)
-        await rpc("admin_debit_user", {
-          p_user_id: uid,
-          p_currency: cur,
-          p_amount_units: units,
-          p_reason: reason,
-          p_metadata: meta
-        });
+    if(currency === "USD"){
+      const dollars = Number(rawAmt);
+      if(!Number.isFinite(dollars)){
+        setBanner("USD amount must be a number.", false);
+        return;
       }
-
-      // refresh balances/ledger
-      await loadBalances(uid);
-      await loadLedger(uid);
-
-      setBanner(`${type.toUpperCase()} successful ✅`, "ok");
-      say("Done ✅");
-    } catch(e){
-      setBanner("Submit failed:\n" + (e?.message || e), "err");
-      say("Submit failed");
-    } finally {
-      $("submitBtn").disabled = false;
+      const cents = Math.round(dollars * 100);
+      amountBig = BigInt(cents);
+    } else {
+      // BTC sats
+      const sats = Number(rawAmt);
+      if(!Number.isFinite(sats) || !Number.isInteger(sats)){
+        setBanner("BTC amount must be an integer number of sats.", false);
+        return;
+      }
+      amountBig = BigInt(sats);
     }
+
+    setBanner("Submitting…");
+
+    if(kind === "credit"){
+      const { error } = await sb.rpc("admin_credit_user", {
+        p_user_id: selected.user_id,
+        p_currency: currency,
+        p_amount: amountBig.toString(),
+        p_reason: reason,
+        p_metadata: meta
+      });
+      if(error){
+        setBanner("Credit failed: " + error.message, false);
+        return;
+      }
+    } else {
+      const { error } = await sb.rpc("admin_debit_user", {
+        p_user_id: selected.user_id,
+        p_currency: currency,
+        p_amount_units: amountBig.toString(),
+        p_reason: reason,
+        p_metadata: meta
+      });
+      if(error){
+        setBanner("Debit failed: " + error.message, false);
+        return;
+      }
+    }
+
+    setBanner("Saved ✅ Refreshing…", true);
+    await loadSelected(selected.user_id);
   }
 
-  // ---------- EVENTS ----------
+  // UI events
   $("refreshBtn").addEventListener("click", async () => {
-    pageOffset = 0;
     await loadMembers();
-    if(selected?.user_id) await loadSelected(String(selected.user_id));
+    if(selected.user_id) await loadSelected(selected.user_id);
   });
 
   $("logoutBtn").addEventListener("click", async () => {
-    setBanner("Signing out…", "warn");
+    setBanner("Signing out…");
     try{ await sb.auth.signOut(); } catch {}
-    hardToLogin("signed_out");
+    window.location.replace("login.html");
   });
 
   $("loadMembersBtn").addEventListener("click", async () => {
@@ -867,33 +641,52 @@
     await loadMembers();
   });
 
+  membersBody.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-select]");
+    if(!btn) return;
+    const uid = btn.getAttribute("data-select");
+    selected.user_id = uid;
+
+    // we don’t have is_active from a separate fetch; infer from row UI (best-effort)
+    const tr = btn.closest("tr");
+    const activeCell = tr?.children?.[4];
+    const isActive = !!activeCell?.querySelector(".tag.yes");
+    setActivationUI(isActive);
+
+    // store email/tier/qty best-effort from row
+    selected.email = tr?.children?.[1]?.textContent?.trim() || null;
+    selected.tier = tr?.children?.[2]?.textContent?.trim() || null;
+    selected.qty = tr?.children?.[3]?.textContent?.trim() || null;
+
+    await loadSelected(uid);
+  });
+
   $("loadSelectedBtn").addEventListener("click", async () => {
-    await loadSelected();
+    const uid = ($("selectedUserId").value || "").trim();
+    if(!uid) return setBanner("Paste a user_id.", false);
+    setActivationUI(false);
+    await loadSelected(uid);
   });
 
+  $("activationToggle").addEventListener("click", toggleActivation);
+  $("submitBtn").addEventListener("click", submitAdjustment);
   $("refreshLedgerBtn").addEventListener("click", async () => {
-    if(!selected?.user_id) return setBanner("Select a member first.", "warn");
-    await loadLedger(String(selected.user_id));
+    if(!selected.user_id) return setBanner("Select a user first.", false);
+    await loadLedger(selected.user_id);
   });
 
-  $("actSwitch").addEventListener("click", async () => {
-    await toggleActivation();
-  });
+  // Boot
+  (async () => {
+    setBanner("Checking session…");
+    const session = await checkSession();
+    if(!session) return;
 
-  $("submitBtn").addEventListener("click", async () => {
-    await submitAdjust();
-  });
+    const ok = await requireAdminOrFail();
+    if(!ok) return;
 
-  // Enter key behaviors
-  $("searchBox").addEventListener("keydown", (e) => {
-    if(e.key === "Enter"){ e.preventDefault(); pageOffset = 0; loadMembers(); }
-  });
-  $("selectedUserId").addEventListener("keydown", (e) => {
-    if(e.key === "Enter"){ e.preventDefault(); loadSelected(); }
-  });
-
-  // ---------- START ----------
-  boot();
+    setBanner("Admin console ready.", true);
+    await loadMembers();
+  })();
 })();
 </script>
 </body>
