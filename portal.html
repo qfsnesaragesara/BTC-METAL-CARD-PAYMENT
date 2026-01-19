@@ -8,57 +8,101 @@
   <style>
     :root{
       color-scheme: dark;
-      --bg0:#06102a;
-      --bg1:#050a18;
-      --card: rgba(255,255,255,.06);
-      --card2: rgba(255,255,255,.04);
-      --stroke: rgba(255,255,255,.10);
-      --stroke2: rgba(255,255,255,.14);
+
+      --bg0:#030816;
+      --bg1:#061a3a;
+
+      --card: rgba(255,255,255,.08);
+      --card2: rgba(255,255,255,.05);
+
+      --stroke: rgba(255,255,255,.12);
+      --stroke2: rgba(255,255,255,.18);
+
       --text:#eaf0ff;
-      --muted: rgba(234,240,255,.72);
+      --muted: rgba(234,240,255,.75);
       --muted2: rgba(234,240,255,.55);
-      --blue: rgba(90,140,255,.35);
-      --blue2: rgba(90,140,255,.55);
-      --green: rgba(60,220,160,.35);
-      --red: rgba(255,80,80,.35);
-      --shadow: 0 18px 50px rgba(0,0,0,.45);
-      --r16: 16px;
+
+      --accent: rgba(90,140,255,.55);
+      --accent2: rgba(90,140,255,.80);
+
+      --green: #2be6a6;
+      --greenBg: rgba(43,230,166,.15);
+      --red: #ff4b4b;
+      --redBg: rgba(255,75,75,.15);
+      --amber:#ffcc66;
+
+      --shadow: 0 22px 60px rgba(0,0,0,.55);
+
+      --r18: 18px;
       --r14: 14px;
       --r12: 12px;
     }
+
     *{ box-sizing:border-box; }
+    html,body{ height:100%; }
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color: var(--text);
       background:
-        radial-gradient(1200px 600px at 20% 10%, rgba(70,120,255,.25), transparent 55%),
-        radial-gradient(900px 520px at 80% 20%, rgba(70,220,180,.10), transparent 55%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
-      min-height:100vh;
+        radial-gradient(1100px 520px at 12% 8%, rgba(255,70,70,.22), transparent 58%),
+        radial-gradient(1000px 600px at 88% 15%, rgba(40,230,160,.14), transparent 60%),
+        radial-gradient(1200px 720px at 55% 105%, rgba(90,140,255,.18), transparent 65%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
       overflow-x:hidden;
     }
 
+    /* Topbar */
     .topbar{
-      position:sticky;
-      top:0;
-      z-index:20;
-      padding: 16px 18px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      background: rgba(6,16,42,.65);
+      position:sticky; top:0; z-index:50;
+      background: rgba(5,12,30,.72);
       backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.10);
     }
     .topbar-inner{
-      max-width: 1100px;
+      max-width: 1160px;
       margin:0 auto;
+      padding: 14px 16px;
       display:flex;
-      gap:12px;
       align-items:center;
       justify-content:space-between;
+      gap:12px;
     }
-    .brand{ display:flex; flex-direction:column; gap:2px; min-width:0; }
-    .brand .title{ font-weight:800; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .brand .sub{ font-size:12px; color: var(--muted2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+    .logo{
+      width:36px; height:36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
+      flex: 0 0 auto;
+    }
+    .logo img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .brand-text{
+      display:flex; flex-direction:column; gap:2px; min-width:0;
+    }
+    .brand-title{
+      font-weight:900;
+      letter-spacing:.3px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .brand-sub{
+      font-size:12px;
+      color: var(--muted2);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
 
     .top-actions{
       display:flex;
@@ -76,73 +120,151 @@
       background: rgba(255,255,255,.06);
       color: var(--muted);
       white-space:nowrap;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
     }
-    .pill.ok{ border-color: var(--green); background: rgba(60,220,160,.12); color: var(--text); }
-    .pill.bad{ border-color: var(--red); background: rgba(255,80,80,.12); color: var(--text); }
+    .dot{
+      width:8px; height:8px;
+      border-radius:999px;
+      background: rgba(255,255,255,.45);
+      box-shadow: 0 0 0 3px rgba(255,255,255,.10);
+    }
+    .pill.ok{ border-color: rgba(43,230,166,.40); background: rgba(43,230,166,.12); color: var(--text); }
+    .pill.ok .dot{ background: var(--green); box-shadow: 0 0 0 3px rgba(43,230,166,.18); }
 
-    button{
+    .pill.bad{ border-color: rgba(255,75,75,.40); background: rgba(255,75,75,.12); color: var(--text); }
+    .pill.bad .dot{ background: var(--red); box-shadow: 0 0 0 3px rgba(255,75,75,.18); }
+
+    .btn{
       cursor:pointer;
       border-radius: 999px;
       padding: 10px 14px;
-      border: 1px solid var(--blue);
-      background: rgba(90,140,255,.18);
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.07);
       color: var(--text);
-      box-shadow: 0 6px 18px rgba(0,0,0,.22);
+      box-shadow: 0 8px 22px rgba(0,0,0,.25);
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
     }
-    button:hover{ background: rgba(90,140,255,.28); border-color: var(--blue2); }
-    button:disabled{ opacity:.5; cursor:not-allowed; }
+    .btn:hover{
+      background: rgba(255,255,255,.11);
+      border-color: rgba(255,255,255,.22);
+      transform: translateY(-1px);
+    }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+    .btn.primary{
+      border-color: rgba(90,140,255,.35);
+      background: rgba(90,140,255,.18);
+    }
+    .btn.primary:hover{
+      border-color: rgba(90,140,255,.55);
+      background: rgba(90,140,255,.26);
+    }
+    .btn.danger{
+      border-color: rgba(255,75,75,.35);
+      background: rgba(255,75,75,.14);
+    }
+    .btn.danger:hover{
+      border-color: rgba(255,75,75,.55);
+      background: rgba(255,75,75,.20);
+    }
 
-    .wrap{ max-width:1100px; margin: 0 auto; padding: 18px; }
+    /* Layout */
+    .wrap{
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 18px 16px 32px;
+    }
 
     .banner{
       display:none;
-      margin: 14px 0 0;
+      margin: 12px 0 0;
       padding: 12px 14px;
       border-radius: var(--r14);
       border:1px solid var(--stroke2);
       background: rgba(255,255,255,.06);
       white-space: pre-wrap;
+      line-height:1.35;
     }
-    .banner.err{ border-color: var(--red); background: rgba(255,80,80,.10); }
+    .banner.err{ border-color: rgba(255,75,75,.55); background: rgba(255,75,75,.12); }
+    .banner.ok{ border-color: rgba(43,230,166,.45); background: rgba(43,230,166,.10); }
 
     .grid{
       margin-top: 16px;
       display:grid;
-      grid-template-columns: 1.25fr .85fr;
+      grid-template-columns: 1.35fr .85fr;
       gap: 16px;
       align-items:stretch;
     }
 
     .card{
-      border-radius: var(--r16);
+      border-radius: var(--r18);
       border: 1px solid var(--stroke);
-      background: var(--card);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
       box-shadow: var(--shadow);
       padding: 16px;
       min-width:0;
+      position:relative;
+      overflow:hidden;
+    }
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-60px -60px auto auto;
+      width:240px; height:240px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,70,70,.18), transparent 60%);
+      filter: blur(0px);
+      pointer-events:none;
+    }
+    .card::after{
+      content:"";
+      position:absolute;
+      inset:auto auto -80px -80px;
+      width:280px; height:280px;
+      background: radial-gradient(circle at 60% 40%, rgba(40,230,160,.14), transparent 60%);
+      pointer-events:none;
     }
 
-    .card h3{ margin:0 0 6px; font-size:14px; letter-spacing:.2px; color: var(--muted); font-weight:700; }
-    .balance{ font-size: clamp(26px, 4vw, 44px); font-weight: 900; margin: 2px 0 8px; line-height:1.05; }
+    .card h3{
+      margin:0 0 6px;
+      font-size:13px;
+      letter-spacing:.25px;
+      color: var(--muted);
+      font-weight:800;
+      text-transform:uppercase;
+    }
+    .balance{
+      font-size: clamp(30px, 4.5vw, 50px);
+      font-weight: 950;
+      margin: 2px 0 6px;
+      line-height:1.05;
+      letter-spacing: .3px;
+    }
     .muted{ color: var(--muted); font-size:12px; }
     .muted2{ color: var(--muted2); font-size:12px; }
 
-    .actions{ display:flex; gap:10px; margin-top: 12px; flex-wrap:wrap; }
-    .actions button{
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+      flex-wrap:wrap;
+      position:relative;
+      z-index:1;
+    }
+    .actions .btn{
       border-radius: 12px;
       padding: 10px 14px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
       box-shadow:none;
     }
-    .actions button:hover{ background: rgba(255,255,255,.10); }
 
     .status-box{
       margin-top: 14px;
       border-radius: var(--r14);
-      border: 1px solid rgba(255,255,255,.10);
-      background: var(--card2);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
       padding: 12px;
+      position:relative;
+      z-index:1;
     }
 
     .kv{
@@ -151,16 +273,18 @@
       gap: 8px 10px;
       margin-top: 10px;
       align-items:center;
+      position:relative;
+      z-index:1;
     }
-    .k{ color: var(--muted2); font-size:12px; }
+    .k{ color: var(--muted2); font-size:12px; letter-spacing:.2px; }
     .v{ color: var(--text); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
     .full{ margin-top: 16px; }
-    .tx{ margin-top: 12px; display:flex; flex-direction:column; gap:10px; }
+    .tx{ margin-top: 12px; display:flex; flex-direction:column; gap:10px; position:relative; z-index:1; }
 
     .tx-row{
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.04);
       padding: 10px 12px;
       display:flex;
@@ -169,16 +293,27 @@
       align-items:center;
       justify-content:space-between;
     }
-    .tx-left{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; min-width:0; }
+
+    .tx-left{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      min-width:0;
+    }
+
     .tag{
       font-size:11px;
-      padding: 4px 8px;
+      padding: 4px 9px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.14);
       background: rgba(255,255,255,.06);
       color: var(--muted);
       white-space:nowrap;
     }
+    .tag.credit{ border-color: rgba(43,230,166,.35); background: rgba(43,230,166,.10); color: var(--text); }
+    .tag.debit{ border-color: rgba(255,75,75,.35); background: rgba(255,75,75,.10); color: var(--text); }
+
     .mono{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       font-size:12px;
@@ -186,16 +321,84 @@
       white-space:nowrap;
     }
 
+    .amount{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      white-space:nowrap;
+    }
+    .amount.credit{ color: var(--green); border-color: rgba(43,230,166,.35); background: var(--greenBg); }
+    .amount.debit{ color: var(--red); border-color: rgba(255,75,75,.35); background: var(--redBg); }
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.65);
+      backdrop-filter: blur(6px);
+      display:none;
+      z-index:100;
+      padding: 18px;
+    }
+    .modal{
+      max-width: 640px;
+      margin: 8vh auto 0;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(10,16,32,.92);
+      box-shadow: 0 30px 90px rgba(0,0,0,.65);
+      overflow:hidden;
+    }
+    .modal-head{
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .modal-title{ font-weight:900; letter-spacing:.2px; }
+    .modal-body{ padding: 14px; }
+    .modal-body p{ margin: 0 0 10px; color: var(--muted); line-height:1.35; }
+    .field{
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin: 10px 0;
+    }
+    .field .val{
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      min-width:0;
+    }
+    .modal-actions{
+      display:flex; gap:10px; flex-wrap:wrap;
+      padding: 0 14px 14px;
+    }
+
     @media (max-width: 980px){
       .grid{ grid-template-columns: 1fr; }
       .kv{ grid-template-columns: 100px 1fr; }
+      .modal{ margin-top: 4vh; }
     }
     @media (max-width: 520px){
-      .wrap{ padding: 14px; }
-      .top-actions{ gap:8px; }
-      button{ padding: 10px 12px; }
+      .wrap{ padding: 14px 12px 24px; }
+      .topbar-inner{ padding: 12px 12px; }
       .kv{ grid-template-columns: 1fr; }
       .v{ white-space:normal; }
+      .logo{ width:34px; height:34px; }
     }
   </style>
 
@@ -206,13 +409,19 @@
   <div class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <div class="title">Member Portal</div>
-        <div class="sub">QFS NESARA GESARA</div>
+        <div class="logo" id="logoBox" title="Logo">
+          <span style="color:rgba(255,255,255,.65);font-weight:900;">Q</span>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">Member Portal</div>
+          <div class="brand-sub">QFS NESARA GESARA</div>
+        </div>
       </div>
 
       <div class="top-actions">
-        <span id="statusPill" class="pill">Checking…</span>
-        <button id="btnLogout">Logout</button>
+        <span id="statusPill" class="pill"><span class="dot"></span><span>Checking…</span></span>
+        <button id="btnRefresh" class="btn primary">Refresh</button>
+        <button id="btnLogout" class="btn danger">Logout</button>
       </div>
     </div>
   </div>
@@ -227,8 +436,8 @@
         <div id="balBTC" class="muted2">0 sats</div>
 
         <div class="actions">
-          <button id="btnSend" disabled>Send</button>
-          <button id="btnReceive" disabled>Receive</button>
+          <button id="btnSend" class="btn" disabled>Send</button>
+          <button id="btnReceive" class="btn" disabled>Receive</button>
         </div>
 
         <div class="status-box">
@@ -248,14 +457,74 @@
           <div class="k">QUANTITY</div><div id="qtyVal" class="v">—</div>
           <div class="k">STATUS</div><div id="statusVal" class="v">—</div>
         </div>
+
+        <div style="margin-top:12px" class="status-box">
+          <div class="muted">Member ID</div>
+          <div id="uidVal" class="mono" style="margin-top:6px;word-break:break-all;white-space:normal;">—</div>
+        </div>
       </div>
     </div>
 
     <div class="card full">
       <h3>Recent Transactions</h3>
-      <div class="muted2">Your recent account activity</div>
+      <div class="muted2">Credits show green, debits show red</div>
       <div id="tx" class="tx">
         <div class="muted">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receive Modal -->
+  <div id="modalReceive" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title">Receive</div>
+        <button class="btn" id="closeReceive">Close</button>
+      </div>
+      <div class="modal-body">
+        <p>Use the details below to identify your account for deposits/credits.</p>
+
+        <div class="field">
+          <div class="val" id="recvEmail">—</div>
+          <button class="btn primary" id="copyEmail">Copy</button>
+        </div>
+
+        <div class="field">
+          <div class="val" id="recvUid">—</div>
+          <button class="btn primary" id="copyUid">Copy</button>
+        </div>
+
+        <p class="muted2">If you expect BTC deposits, you’ll need a BTC address feature. This portal currently displays balances and history from your database.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn primary" id="recvDone">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Send Modal -->
+  <div id="modalSend" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title">Send</div>
+        <button class="btn" id="closeSend">Close</button>
+      </div>
+      <div class="modal-body">
+        <p><b>Send is not wired to transfers yet.</b> Your current backend tables/functions are for admin credit/debit + balances.</p>
+        <p class="muted2">If you want real “send”, you’ll need a transfer table + function (and rules) to move funds between users.</p>
+
+        <div class="status-box" style="margin-top:12px">
+          <div class="muted">What I can implement next (properly):</div>
+          <div class="muted2" style="margin-top:6px;line-height:1.35">
+            • Transfer USD between members (ledger + atomic balance updates)<br/>
+            • BTC transfer support (sats)<br/>
+            • Recipient lookup by email<br/>
+            • Confirmation + limits + receipts
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn primary" id="sendOk">OK</button>
       </div>
     </div>
   </div>
@@ -264,20 +533,39 @@
     // ========= CONFIG (SET THESE) =========
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
+    // Put your logo somewhere public, then set it here.
+    // Examples:
+    // const LOGO_URL = "/logo.png";
+    // const LOGO_URL = "https://your-site.com/assets/logo.png";
+    const LOGO_URL = "/logo.png";
     // =====================================
 
     const el = (id) => document.getElementById(id);
+
     const banner = el("banner");
     const statusPill = el("statusPill");
 
-    function showBanner(msg, isErr=false){
+    function setPill(text, mode){
+      statusPill.classList.remove("ok","bad");
+      const dot = statusPill.querySelector(".dot");
+      const t = statusPill.querySelector("span:last-child");
+      t.textContent = text;
+
+      if (mode === "ok") statusPill.classList.add("ok");
+      if (mode === "bad") statusPill.classList.add("bad");
+      if (!dot) return;
+    }
+
+    function showBanner(msg, type){
       banner.style.display = "block";
-      banner.className = "banner" + (isErr ? " err" : "");
+      banner.className = "banner" + (type ? (" " + type) : "");
       banner.textContent = msg;
     }
     function clearBanner(){
       banner.style.display = "none";
       banner.textContent = "";
+      banner.className = "banner";
     }
 
     function fmtUSDFromCents(cents){
@@ -285,24 +573,72 @@
       return n.toLocaleString(undefined, { style:"currency", currency:"USD" });
     }
 
+    function openModal(id){ el(id).style.display = "block"; }
+    function closeModal(id){ el(id).style.display = "none"; }
+
+    function copyText(txt){
+      return navigator.clipboard.writeText(txt);
+    }
+
     function setActiveUI(isActive){
-      statusPill.classList.remove("ok","bad");
       if (isActive){
-        statusPill.textContent = "ACTIVE";
-        statusPill.classList.add("ok");
+        setPill("ACTIVE", "ok");
         el("btnSend").disabled = false;
         el("btnReceive").disabled = false;
         el("activeLine").textContent = "Account Active — Send & Receive are unlocked.";
         el("statusVal").textContent = "Active";
       } else {
-        statusPill.textContent = "INACTIVE";
-        statusPill.classList.add("bad");
+        setPill("INACTIVE", "bad");
         el("btnSend").disabled = true;
         el("btnReceive").disabled = true;
         el("activeLine").textContent = "Account Inactive — Send & Receive are locked.";
         el("statusVal").textContent = "Inactive";
       }
       el("lastChecked").textContent = "Last checked: " + new Date().toLocaleString();
+    }
+
+    function isCreditLike(row){
+      const t = String(row.entry_type || row.type || row.kind || row.action || "").toLowerCase();
+      if (t.includes("credit") || t.includes("deposit") || t.includes("add")) return true;
+      if (t.includes("debit") || t.includes("withdraw") || t.includes("subtract")) return false;
+
+      // Fall back to amount sign
+      const cents = Number(row.amount_cents ?? row.cents ?? row.amount ?? 0);
+      const sats  = Number(row.amount_sats ?? row.sats ?? 0);
+      if (!Number.isNaN(cents) && cents !== 0) return cents > 0;
+      if (!Number.isNaN(sats) && sats !== 0) return sats > 0;
+
+      return true;
+    }
+
+    function pickTime(row){
+      return row.created_at || row.time || row.ts || row.timestamp || row.inserted_at || null;
+    }
+    function pickCurrency(row){
+      return (row.currency || row.cur || row.asset || row.coin || "").toString().toUpperCase();
+    }
+    function pickReason(row){
+      return row.reason || row.note || row.description || row.memo || row.details || "";
+    }
+    function pickAmountText(row, currency, credit){
+      const sign = credit ? "+" : "-";
+
+      if (currency === "USD"){
+        const cents = Number(row.amount_cents ?? row.cents ?? row.usd_cents ?? row.amount ?? 0);
+        const abs = Math.abs(Number.isFinite(cents) ? cents : 0);
+        return sign + fmtUSDFromCents(abs).replace("$", "$");
+      }
+
+      if (currency === "BTC"){
+        const sats = Number(row.amount_sats ?? row.sats ?? row.btc_sats ?? row.amount ?? 0);
+        const abs = Math.abs(Number.isFinite(sats) ? sats : 0);
+        return sign + abs.toLocaleString() + " sats";
+      }
+
+      // Unknown currency: try generic amount
+      const a = Number(row.amount ?? row.value ?? 0);
+      const abs = Math.abs(Number.isFinite(a) ? a : 0);
+      return sign + abs.toLocaleString();
     }
 
     function renderTx(rows){
@@ -315,72 +651,63 @@
       }
 
       for (const r of rows){
+        const credit = isCreditLike(r);
+
+        const cur = pickCurrency(r) || (r.amount_cents != null ? "USD" : (r.amount_sats != null ? "BTC" : ""));
+        const time = pickTime(r);
+        const reason = pickReason(r);
+
         const row = document.createElement("div");
         row.className = "tx-row";
 
         const left = document.createElement("div");
         left.className = "tx-left";
 
-        const tag = document.createElement("span");
-        tag.className = "tag";
-        tag.textContent = String(r.entry_type || r.type || "entry").toUpperCase();
+        const typ = document.createElement("span");
+        typ.className = "tag " + (credit ? "credit" : "debit");
+        typ.textContent = credit ? "CREDIT" : "DEBIT";
 
-        const cur = document.createElement("span");
-        cur.className = "tag";
-        cur.textContent = String(r.currency || "").toUpperCase();
+        const curTag = document.createElement("span");
+        curTag.className = "tag";
+        curTag.textContent = (cur || "—");
 
-        const time = document.createElement("span");
-        time.className = "mono";
-        time.textContent = r.created_at ? new Date(r.created_at).toLocaleString() : "";
+        const timeEl = document.createElement("span");
+        timeEl.className = "mono";
+        timeEl.textContent = time ? new Date(time).toLocaleString() : "";
 
-        const reason = document.createElement("span");
-        reason.className = "muted";
-        reason.style.minWidth = "120px";
-        reason.style.overflow = "hidden";
-        reason.style.textOverflow = "ellipsis";
-        reason.style.whiteSpace = "nowrap";
-        reason.textContent = r.reason || r.note || "";
+        const reasonEl = document.createElement("span");
+        reasonEl.className = "muted";
+        reasonEl.style.maxWidth = "420px";
+        reasonEl.style.overflow = "hidden";
+        reasonEl.style.textOverflow = "ellipsis";
+        reasonEl.style.whiteSpace = "nowrap";
+        reasonEl.textContent = reason || "";
 
-        left.appendChild(tag);
-        left.appendChild(cur);
-        left.appendChild(time);
-        left.appendChild(reason);
+        left.appendChild(typ);
+        left.appendChild(curTag);
+        if (timeEl.textContent) left.appendChild(timeEl);
+        if (reasonEl.textContent) left.appendChild(reasonEl);
 
-        const right = document.createElement("div");
-        right.className = "mono";
-
-        if (String(r.currency || "").toUpperCase() === "USD"){
-          right.textContent = fmtUSDFromCents(r.amount_cents);
-        } else {
-          right.textContent = `${Number(r.amount_sats || 0).toLocaleString()} sats`;
-        }
+        const amt = document.createElement("div");
+        amt.className = "amount " + (credit ? "credit" : "debit");
+        amt.textContent = pickAmountText(r, cur, credit);
 
         row.appendChild(left);
-        row.appendChild(right);
+        row.appendChild(amt);
         tx.appendChild(row);
       }
     }
 
-    async function main(){
+    async function loadAll(sb){
       clearBanner();
+      setPill("Loading…");
 
-      if (SUPABASE_URL.includes("YOUR_SUPABASE") || SUPABASE_ANON_KEY.includes("YOUR_SUPABASE")){
-        statusPill.textContent = "CONFIG";
-        statusPill.classList.add("bad");
-        showBanner("Portal config missing.\nSet SUPABASE_URL and SUPABASE_ANON_KEY inside portal.html.", true);
-        return;
-      }
-
-      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-      // Always check session first
       const { data: ses, error: sesErr } = await sb.auth.getSession();
       if (sesErr) throw sesErr;
 
       if (!ses.session){
-        statusPill.textContent = "Not logged in";
-        statusPill.classList.remove("ok","bad");
-        showBanner("You are not logged in on this domain.\nLog in first, then refresh this page.", true);
+        setPill("Not logged in", "bad");
+        showBanner("You are not logged in on this domain.\nLog in first, then refresh.", "err");
         return;
       }
 
@@ -388,15 +715,18 @@
       const uid = user.id;
       const email = user.email || "";
 
+      el("uidVal").textContent = uid || "—";
       el("emailVal").textContent = email || "—";
       el("nameVal").textContent =
         user.user_metadata?.name ||
         user.user_metadata?.full_name ||
         "—";
 
-      statusPill.textContent = "Loading…";
+      // Wire modal details
+      el("recvEmail").textContent = email || "—";
+      el("recvUid").textContent = uid || "—";
 
-      // 1) portal_users: your policies showed it often gates by email, so query by email
+      // 1) portal_users by email
       let portalUser = null;
       try{
         const { data, error } = await sb
@@ -408,13 +738,11 @@
         if (error) throw error;
         portalUser = data;
       } catch(e){
-        // If this fails, we still show balances and basic auth info
         console.error("portal_users load failed:", e);
         showBanner(
-          "Could not load portal_users row (RLS or missing row).\n\n" +
-          "If this is a new user, you likely need a server-side signup trigger that inserts portal_users.\n" +
-          "Error: " + (e?.message || String(e)),
-          true
+          "Could not load portal_users row.\nThis is usually RLS or missing row.\n\n" +
+          "Details: " + (e?.message || String(e)),
+          "err"
         );
       }
 
@@ -428,7 +756,7 @@
         setActiveUI(false);
       }
 
-      // 2) portal_accounts balances (these are driven by your admin_credit_user/admin_debit_user flow)
+      // 2) portal_accounts balances by auth.uid()
       let usdCents = 0;
       let btcSats = 0;
 
@@ -449,50 +777,110 @@
         console.error("portal_accounts load failed:", e);
         showBanner(
           (banner.style.display === "block" ? banner.textContent + "\n\n" : "") +
-          "Could not load portal_accounts (RLS or table mismatch).\nError: " + (e?.message || String(e)),
-          true
+          "Could not load portal_accounts.\nDetails: " + (e?.message || String(e)),
+          "err"
         );
       }
 
       el("balUSD").textContent = fmtUSDFromCents(usdCents);
       el("balBTC").textContent = `${btcSats.toLocaleString()} sats`;
 
-      // 3) portal_ledger (best effort; if your columns differ we won’t crash the whole portal)
+      // 3) portal_ledger (ROBUST): select('*') + map fields
       try{
         const { data: rows, error: ledErr } = await sb
           .from("portal_ledger")
-          .select("created_at,currency,entry_type,type,amount_cents,amount_sats,reason,note")
+          .select("*")
           .eq("user_id", uid)
           .order("created_at", { ascending: false })
-          .limit(10);
+          .limit(25);
 
         if (ledErr) throw ledErr;
         renderTx(rows || []);
       } catch(e){
         console.error("portal_ledger load failed:", e);
-        el("tx").innerHTML = `<div class="muted">Could not load ledger.</div>`;
+        el("tx").innerHTML = `<div class="muted">Ledger failed to load.</div>`;
+        // Show the REAL reason so we can fix it fast (schema or RLS)
+        showBanner(
+          (banner.style.display === "block" ? banner.textContent + "\n\n" : "") +
+          "Ledger error:\n" + (e?.message || String(e)),
+          "err"
+        );
       }
 
-      // Logout
+      // Final pill state
+      if (portalUser?.is_active) setPill("ACTIVE", "ok");
+      else setPill("READY");
+    }
+
+    async function main(){
+      // Logo
+      if (LOGO_URL && typeof LOGO_URL === "string"){
+        const logoBox = el("logoBox");
+        logoBox.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = LOGO_URL;
+        img.alt = "Logo";
+        img.onerror = () => {
+          logoBox.innerHTML = `<span style="color:rgba(255,255,255,.65);font-weight:900;">Q</span>`;
+        };
+        logoBox.appendChild(img);
+      }
+
+      // Config check
+      if (SUPABASE_URL.includes("YOUR_SUPABASE") || SUPABASE_ANON_KEY.includes("YOUR_SUPABASE")){
+        setPill("CONFIG", "bad");
+        showBanner("Portal config missing.\nSet SUPABASE_URL and SUPABASE_ANON_KEY inside portal.html.", "err");
+        return;
+      }
+
+      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // Buttons
+      el("btnRefresh").onclick = () => loadAll(sb);
+
       el("btnLogout").onclick = async () => {
         await sb.auth.signOut();
-        statusPill.textContent = "Logged out";
-        statusPill.classList.remove("ok","bad");
-        showBanner("Logged out.", false);
+        setPill("Logged out");
+        showBanner("Logged out.", "ok");
       };
 
-      // Final
-      statusPill.textContent = portalUser?.is_active ? "ACTIVE" : "READY";
-      if (portalUser?.is_active) statusPill.classList.add("ok");
+      // Modals
+      el("btnReceive").onclick = () => openModal("modalReceive");
+      el("closeReceive").onclick = () => closeModal("modalReceive");
+      el("recvDone").onclick = () => closeModal("modalReceive");
+      el("modalReceive").addEventListener("click", (e) => {
+        if (e.target === el("modalReceive")) closeModal("modalReceive");
+      });
+
+      el("btnSend").onclick = () => openModal("modalSend");
+      el("closeSend").onclick = () => closeModal("modalSend");
+      el("sendOk").onclick = () => closeModal("modalSend");
+      el("modalSend").addEventListener("click", (e) => {
+        if (e.target === el("modalSend")) closeModal("modalSend");
+      });
+
+      el("copyEmail").onclick = async () => {
+        const t = el("recvEmail").textContent || "";
+        await copyText(t);
+        showBanner("Copied email.", "ok");
+        setTimeout(clearBanner, 1200);
+      };
+      el("copyUid").onclick = async () => {
+        const t = el("recvUid").textContent || "";
+        await copyText(t);
+        showBanner("Copied Member ID.", "ok");
+        setTimeout(clearBanner, 1200);
+      };
+
+      // Initial load
+      await loadAll(sb);
     }
 
     main().catch((e) => {
       console.error(e);
-      statusPill.textContent = "ERROR";
-      statusPill.classList.add("bad");
-      showBanner(e?.message || String(e), true);
+      setPill("ERROR", "bad");
+      showBanner(e?.message || String(e), "err");
     });
   </script>
 </body>
 </html>
-
