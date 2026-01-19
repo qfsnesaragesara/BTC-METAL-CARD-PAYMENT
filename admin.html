@@ -91,10 +91,6 @@
     .switch input:checked + .slider:before{
       transform:translateX(18px);
     }
-    .saving{
-      opacity:.55;
-      pointer-events:none;
-    }
   </style>
 </head>
 
@@ -242,6 +238,7 @@
     </div>
   </div>
 
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -249,9 +246,7 @@
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-    // reuse one client
     const sb = window.__sb || (window.__sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
-
     const el = (id) => document.getElementById(id);
 
     function setMsg(type, text) {
@@ -316,42 +311,38 @@
     let pageOffset = 0;
     let cachedMembers = [];
 
-    // Activation RPC (fixed)
     async function setActivation(uid, nextActive, checkboxEl) {
       if (!uid) return;
 
-      // optimistic + prevent loops
-      if (checkboxEl) {
-        checkboxEl.disabled = true;
-        checkboxEl.closest("tr")?.classList.add("saving");
-      }
+      if (checkboxEl) checkboxEl.disabled = true;
       setMsg("", "");
 
+      // ✅ FIXED: use the correct variables + correct payload keys
       const { error } = await sb.rpc("admin_set_user_activation", {
         p_user_id: uid,
-        p_is_activated: !!nextActive,
+        p_is_activated: nextActive,
         p_reason: "admin_toggle",
         p_metadata: {}
       });
 
       if (error) {
-        // revert UI on failure
         if (checkboxEl) {
           checkboxEl.checked = !nextActive;
           checkboxEl.disabled = false;
-          checkboxEl.closest("tr")?.classList.remove("saving");
         }
         setMsg("err", "Activation update failed: " + error.message);
         return;
       }
 
-      // reload so the "Activated only" filter stays correct + activated_at updates
-      await loadMembers();
-
-      if (checkboxEl) {
-        checkboxEl.disabled = false;
-        checkboxEl.closest("tr")?.classList.remove("saving");
+      // update local cache so the toggle doesn’t “flip back” on refresh
+      const i = cachedMembers.findIndex(m => String(m.user_id) === String(uid));
+      if (i >= 0) {
+        cachedMembers[i].is_activated = !!nextActive;
+        cachedMembers[i].activated_at = nextActive ? new Date().toISOString() : null;
       }
+      applySearchAndFilter();
+
+      if (checkboxEl) checkboxEl.disabled = false;
       setMsg("ok", `User ${uid} ${nextActive ? "activated" : "deactivated"}.`);
     }
 
@@ -383,7 +374,6 @@
         `;
       }).join("");
 
-      // select buttons
       [...body.querySelectorAll("[data-pick]")].forEach(btn => {
         btn.addEventListener("click", async () => {
           const uid = btn.getAttribute("data-pick");
@@ -392,7 +382,6 @@
         });
       });
 
-      // activation toggles (stable: use uid from dataset, no globals)
       [...body.querySelectorAll("input[data-activate]")].forEach(chk => {
         chk.addEventListener("change", async () => {
           const uid = chk.getAttribute("data-activate");
