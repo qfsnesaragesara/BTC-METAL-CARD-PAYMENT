@@ -1,750 +1,501 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Admin Console — QFS</title>
-<meta name="robots" content="noindex, nofollow">
-<link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — QFS</title>
 
-<script src="./config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="robots" content="noindex,nofollow" />
 
-<style>
-  :root{
-    --bg:#020617;
-    --text:#e5e7eb;
-    --muted:#9ca3af;
-    --accent:#38bdf8;
-    --accent2:#a855f7;
-    --good:#22c55e;
-    --bad:#ef4444;
-    --warn:#f59e0b;
-    --border:rgba(148,163,184,0.45);
-    --shadow:rgba(2,6,23,0.92);
-    --maxw:1200px;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; min-height:100vh; padding:24px;
-    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    color:var(--text);
-    background:
-      radial-gradient(circle at top, rgba(56,189,248,0.30), transparent 55%),
-      radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
-      var(--bg);
-  }
-  .wrap{ max-width:var(--maxw); margin:0 auto; }
+  <style>
+    :root{
+      --bg:#0b1220; --card:#0f1b33; --muted:#98a2b3; --text:#e6eaf2;
+      --line:rgba(255,255,255,.08); --btn:#2563eb; --btn2:#0b3aa6;
+      --good:#16a34a; --bad:#ef4444; --warn:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:radial-gradient(1200px 600px at 10% 0%, rgba(37,99,235,.28), transparent 60%), var(--bg); color:var(--text)}
+    .wrap{max-width:1180px;margin:0 auto;padding:24px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800}
+    h1{font-size:18px;margin:0}
+    .sub{color:var(--muted);font-size:12px;margin-top:2px}
+    .grid{display:grid;grid-template-columns: 1.2fr .8fr;gap:14px}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:rgba(15,27,51,.82);border:1px solid var(--line);border-radius:16px;padding:16px;backdrop-filter: blur(8px)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .btn{background:var(--btn);border:0;color:white;padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:700}
+    .btn:hover{background:var(--btn2)}
+    .btn.secondary{background:rgba(255,255,255,.06);border:1px solid var(--line)}
+    .btn.danger{background:#7f1d1d}
+    .btn.danger:hover{background:#991b1b}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);font-size:12px;color:var(--muted)}
+    input,select,textarea{
+      background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text);
+      border-radius:12px;padding:10px 12px;outline:none
+    }
+    input::placeholder,textarea::placeholder{color:rgba(230,234,242,.45)}
+    textarea{min-height:72px;resize:vertical}
+    .muted{color:var(--muted)}
+    .err{color:#fecaca;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);padding:10px 12px;border-radius:12px}
+    .ok{color:#bbf7d0;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);padding:10px 12px;border-radius:12px}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
+    th{color:var(--muted);font-weight:700}
+    tr:hover td{background:rgba(255,255,255,.03)}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    .right{display:flex;gap:10px;align-items:center;justify-content:flex-end}
+    .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .kpi .box{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,.03)}
+    .kpi .label{color:var(--muted);font-size:12px}
+    .kpi .val{font-weight:900;font-size:18px;margin-top:4px}
+    .small{font-size:12px}
 
-  .header{
-    display:flex; justify-content:space-between; align-items:center;
-    gap:14px; margin-bottom:16px;
-    background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.84));
-    border:1px solid var(--border);
-    border-radius:28px;
-    padding:16px 18px;
-    box-shadow: 0 28px 110px var(--shadow);
-    backdrop-filter: blur(26px);
-  }
-  .brand{ display:flex; align-items:center; gap:12px; }
-  .logo{
-    width:46px; height:46px; border-radius:14px; object-fit:cover;
-    box-shadow: 0 14px 44px rgba(2,6,23,0.95), 0 0 0 1px rgba(148,163,184,0.35);
-  }
-  .brand h1{ margin:0; font-size:16px; font-weight:900; letter-spacing:-0.02em; }
-  .brand .subline{ font-size:12px; color:var(--muted); margin-top:2px; }
-  .header-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-
-  .pill{
-    padding:6px 10px; border-radius:999px;
-    font-size:11px; font-weight:900; letter-spacing:0.06em; text-transform:uppercase;
-    border:1px solid rgba(148,163,184,0.30);
-    background:rgba(2,6,23,0.40);
-    color:#e5e7eb;
-    display:inline-flex; align-items:center; gap:8px;
-  }
-  .dot{ width:8px; height:8px; border-radius:999px; background:var(--warn); box-shadow:0 0 0 3px rgba(245,158,11,0.15); }
-  .pill.good .dot{ background:var(--good); box-shadow:0 0 0 3px rgba(34,197,94,0.16); }
-  .pill.bad .dot{ background:var(--bad); box-shadow:0 0 0 3px rgba(239,68,68,0.16); }
-
-  .btn{
-    padding:8px 12px; border-radius:999px;
-    border:1px solid rgba(148,163,184,0.35);
-    background:rgba(255,255,255,0.06);
-    color:var(--text); font-weight:900; font-size:12px; cursor:pointer;
-  }
-  .btn-primary{ background:linear-gradient(135deg, var(--accent), var(--accent2)); border:none; }
-  .btn-danger{ border-color: rgba(239,68,68,0.35); color:#fecdd3; }
-
-  .banner{
-    display:none; margin-bottom:12px;
-    padding:10px 12px; border-radius:14px;
-    background:rgba(2,6,23,0.45);
-    border:1px solid rgba(239,68,68,0.35);
-    color:#fecdd3;
-    white-space:pre-wrap;
-  }
-
-  .grid{ display:grid; grid-template-columns: 1.05fr 1fr; gap:16px; }
-  @media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
-
-  .card{
-    background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.84));
-    border:1px solid var(--border);
-    border-radius:28px;
-    padding:18px;
-    box-shadow: 0 28px 110px var(--shadow);
-    backdrop-filter: blur(26px);
-    position:relative; overflow:hidden;
-  }
-  .card:before{
-    content:""; position:absolute; inset:-120px -120px auto auto;
-    width:320px; height:320px;
-    background: radial-gradient(circle at center, rgba(56,189,248,0.18), transparent 60%);
-    pointer-events:none;
-  }
-  h2{ margin:0 0 6px; font-size:15px; font-weight:900; }
-  .sub{ font-size:12px; color:var(--muted); }
-
-  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
-  input, select, textarea{
-    width:100%;
-    padding:10px 12px;
-    border-radius:14px;
-    border:1px solid rgba(148,163,184,0.28);
-    background:rgba(2,6,23,0.35);
-    color:var(--text);
-    outline:none;
-  }
-  textarea{ min-height:78px; resize:vertical; }
-
-  table{ width:100%; border-collapse:collapse; margin-top:10px; font-size:12px; }
-  th, td{ padding:10px 8px; border-bottom:1px solid rgba(148,163,184,0.2); text-align:left; vertical-align:top; }
-  th{ color:var(--muted); font-weight:700; text-transform:uppercase; font-size:11px; }
-
-  .tag{
-    display:inline-flex; align-items:center; gap:6px;
-    padding:4px 10px; border-radius:999px;
-    border:1px solid rgba(148,163,184,0.25);
-    background:rgba(255,255,255,0.05);
-    font-weight:900; font-size:11px;
-  }
-  .tag.yes{ border-color: rgba(34,197,94,0.35); color:#bbf7d0; }
-  .tag.no{ border-color: rgba(239,68,68,0.35); color:#fecdd3; }
-  .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-
-  .memberRow{ cursor:pointer; }
-  .memberRow:hover{ background:rgba(255,255,255,0.03); }
-  .memberRow.active{ outline:1px solid rgba(56,189,248,0.35); background:rgba(56,189,248,0.06); }
-
-  .balances{
-    display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;
-  }
-  @media (max-width:540px){ .balances{ grid-template-columns:1fr; } }
-  .balanceBox{
-    border:1px solid rgba(148,163,184,0.25);
-    border-radius:18px;
-    padding:12px;
-    background:rgba(2,6,23,0.28);
-  }
-  .balanceBox .lbl{ font-size:11px; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:0.06em; }
-  .balanceBox .val{ font-size:18px; font-weight:950; margin-top:4px; }
-
-  .switch{
-    display:flex; align-items:center; gap:10px;
-    margin-top:12px;
-    padding:10px 12px;
-    border-radius:18px;
-    background:rgba(2,6,23,0.30);
-    border:1px solid rgba(148,163,184,0.25);
-  }
-  .toggle{
-    width:44px; height:24px;
-    border-radius:999px;
-    border:1px solid rgba(148,163,184,0.35);
-    background:rgba(255,255,255,0.06);
-    position:relative;
-    cursor:pointer;
-    flex:0 0 auto;
-  }
-  .toggle .knob{
-    width:20px; height:20px; border-radius:999px;
-    background:#cbd5e1;
-    position:absolute; top:1px; left:1px;
-    transition: all 140ms ease;
-  }
-  .toggle.on{ background:rgba(34,197,94,0.20); border-color: rgba(34,197,94,0.45); }
-  .toggle.on .knob{ left:21px; background:#bbf7d0; }
-
-  .mutedline{ color:var(--muted); font-size:12px; margin-top:10px; }
-
-  #toast{
-    position:fixed; left:12px; bottom:12px; z-index:9999999;
-    background:rgba(2,6,23,0.75);
-    border:1px solid rgba(148,163,184,0.35);
-    color:#cbd5e1;
-    padding:8px 10px; border-radius:12px; font-size:12px;
-    user-select:none; max-width:min(760px, 92vw); white-space:pre-wrap;
-  }
-</style>
+    /* Activation toggle */
+    .switch{position:relative;display:inline-block;width:42px;height:24px;vertical-align:middle}
+    .switch input{display:none}
+    .slider{
+      position:absolute;inset:0;cursor:pointer;background:rgba(255,255,255,.10);
+      border:1px solid var(--line);transition:.2s;border-radius:999px
+    }
+    .slider:before{
+      content:"";position:absolute;height:18px;width:18px;left:3px;top:2px;
+      background:rgba(255,255,255,.85);transition:.2s;border-radius:999px
+    }
+    .switch input:checked + .slider{background:rgba(34,197,94,.22);border-color:rgba(34,197,94,.35)}
+    .switch input:checked + .slider:before{transform:translateX(18px)}
+  </style>
 </head>
 
 <body>
-<div class="wrap">
-  <div class="header">
-    <div class="brand">
-      <img class="logo" src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="QFS" />
-      <div>
-        <h1>Admin Console</h1>
-        <div class="subline">Credit/Debit USD + BTC (sats) · View balances · View ledger</div>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo">Q</div>
+        <div>
+          <h1>Admin Console</h1>
+          <div class="sub">Credit/Debit USD + BTC (sats) • View balances • View ledger</div>
+        </div>
+      </div>
+      <div class="right">
+        <span id="sessionPill" class="pill">Checking session…</span>
+        <button class="btn secondary" id="btnRefresh" type="button">Refresh</button>
+        <button class="btn danger" id="btnLogout" type="button">Logout</button>
       </div>
     </div>
-    <div class="header-actions">
-      <span id="sessionPill" class="pill"><span class="dot"></span><span id="sessionText">Checking session…</span></span>
-      <button class="btn" id="refreshBtn" type="button">Refresh</button>
-      <button class="btn btn-danger" id="logoutBtn" type="button">Logout</button>
-    </div>
-  </div>
 
-  <div id="banner" class="banner"></div>
+    <div id="msg" style="margin-bottom:14px;"></div>
 
-  <div class="grid">
-    <div class="card">
-      <h2>Members</h2>
-      <div class="sub">Select a member to manage balances and activation</div>
-
-      <div class="row">
-        <div style="flex:1; min-width:220px;">
-          <input id="searchInput" placeholder="Search by email or user_id (UUID)..." />
-        </div>
-        <div style="width:200px; min-width:180px;">
-          <select id="filterSelect">
-            <option value="all">All</option>
-            <option value="activated">Activated only</option>
-            <option value="pending">Pending only</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" id="loadBtn" type="button">Load</button>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>User ID</th>
-            <th>Email</th>
-            <th>Tier</th>
-            <th>Qty</th>
-            <th>Active</th>
-          </tr>
-        </thead>
-        <tbody id="membersBody">
-          <tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>
-        </tbody>
-      </table>
-
-      <div class="row" style="justify-content:space-between;">
-        <div class="sub" id="pageNote">—</div>
-        <div class="row" style="margin-top:0;">
-          <button class="btn" id="prevBtn" type="button">Prev</button>
-          <button class="btn" id="nextBtn" type="button">Next</button>
-        </div>
-      </div>
-
-      <div class="mutedline mono" id="debugLine"></div>
-    </div>
-
-    <div class="card">
-      <h2>Selected Member</h2>
-      <div class="sub">Pick a member on the left, or paste a UUID below.</div>
-
-      <div class="row">
-        <div style="flex:1; min-width:260px;">
-          <input id="selectedUserId" class="mono" placeholder="Selected user_id (UUID)" />
-        </div>
-        <button class="btn btn-primary" id="loadSelectedBtn" type="button">Load</button>
-      </div>
-
-      <div class="balances">
-        <div class="balanceBox">
-          <div class="lbl">USD Balance</div>
-          <div class="val" id="usdBal">$0.00</div>
-          <div class="sub">stored as cents</div>
-        </div>
-        <div class="balanceBox">
-          <div class="lbl">BTC Balance</div>
-          <div class="val" id="btcBal">0 sats</div>
-          <div class="sub">stored as sats</div>
-        </div>
-      </div>
-
-      <div class="switch">
-        <div style="display:flex; flex-direction:column; gap:3px; flex:1;">
-          <div style="font-weight:950;">Activation</div>
-          <div class="sub" id="activationHint">—</div>
-        </div>
-        <div id="activationToggle" class="toggle" role="switch" aria-checked="false" title="Toggle activation">
-          <div class="knob"></div>
-        </div>
-        <span id="activationTag" class="tag no">PENDING</span>
-      </div>
-
-      <div class="row" style="margin-top:14px;">
-        <div style="width:140px; min-width:130px;">
-          <select id="currencySelect">
-            <option value="USD">USD</option>
-            <option value="BTC">BTC</option>
-          </select>
-        </div>
-        <div style="flex:1; min-width:180px;">
-          <input id="amountInput" placeholder="Amount (USD in dollars, BTC in sats)" />
-        </div>
-      </div>
-
-      <div class="row">
-        <div style="width:160px; min-width:140px;">
-          <select id="typeSelect">
-            <option value="credit">Credit</option>
-            <option value="debit">Debit</option>
-          </select>
-        </div>
-        <div style="flex:1; min-width:220px;">
-          <input id="reasonInput" placeholder="Reason (e.g. welcome_credit, manual_adjust)" />
-        </div>
-      </div>
-
-      <div class="row">
-        <textarea id="metaInput" class="mono" placeholder='Optional note/metadata (saved). Example:
-{"note":"manual top up"}'></textarea>
-      </div>
-
-      <div class="row" style="justify-content:flex-end;">
-        <button class="btn btn-primary" id="submitBtn" type="button">Submit</button>
-      </div>
-
-      <div class="mutedline">USD is converted to cents automatically. BTC expects sats.</div>
-
-      <div style="margin-top:16px;">
-        <div class="row" style="justify-content:space-between; margin-top:0;">
+    <div class="grid">
+      <!-- LEFT: Members list -->
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
           <div>
-            <h2 style="margin:0;">Recent Ledger</h2>
-            <div class="sub">Last 25 entries (selected member)</div>
+            <div style="font-weight:900">Members</div>
+            <div class="muted small">Select a member to manage balances</div>
           </div>
-          <button class="btn" id="ledgerRefreshBtn" type="button">Refresh</button>
+          <div class="row">
+            <input id="search" class="mono" placeholder="Search by user_id (UUID)..." style="min-width:320px" />
+            <select id="filterActivation">
+              <option value="activated">Activated only</option>
+              <option value="all">All</option>
+            </select>
+          </div>
         </div>
 
         <table>
           <thead>
             <tr>
-              <th>Time</th>
-              <th>Cur</th>
-              <th>Type</th>
-              <th class="mono">Amount</th>
-              <th>Reason</th>
+              <th>User ID</th>
+              <th>Tier</th>
+              <th>Activated</th>
+              <th>Activated At</th>
+              <th>Activate</th>
+              <th></th>
             </tr>
           </thead>
-          <tbody id="ledgerBody">
-            <tr><td colspan="5" style="color:var(--muted);">No member selected.</td></tr>
+          <tbody id="membersBody">
+            <tr><td colspan="6" class="muted">Loading…</td></tr>
           </tbody>
         </table>
+
+        <div class="row" style="justify-content:space-between;margin-top:12px">
+          <div class="muted small" id="pageInfo">—</div>
+          <div class="row">
+            <button class="btn secondary" id="prevPage" type="button">Prev</button>
+            <button class="btn secondary" id="nextPage" type="button">Next</button>
+          </div>
+        </div>
       </div>
 
+      <!-- RIGHT: Selected member actions -->
+      <div class="card">
+        <div style="font-weight:900">Selected Member</div>
+        <div class="muted small" style="margin-top:4px">Pick a member on the left, or paste a UUID below.</div>
+
+        <div class="row" style="margin-top:12px">
+          <input id="selectedUserId" class="mono" placeholder="Selected user_id (UUID)" style="flex:1;min-width:280px" />
+          <button class="btn secondary" id="loadBalances" type="button">Load</button>
+        </div>
+
+        <div class="kpi">
+          <div class="box">
+            <div class="label">USD Balance</div>
+            <div class="val" id="usdBal">$0.00</div>
+            <div class="muted small">stored as cents</div>
+          </div>
+          <div class="box">
+            <div class="label">BTC Balance</div>
+            <div class="val" id="btcBal">0 sats</div>
+            <div class="muted small">stored as sats</div>
+          </div>
+        </div>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
+
+        <div class="row">
+          <select id="currency">
+            <option value="USD">USD</option>
+            <option value="BTC">BTC</option>
+          </select>
+
+          <input id="amount" placeholder="Amount (USD in dollars, BTC in sats)" style="flex:1;min-width:240px" />
+
+          <select id="action">
+            <option value="credit">Credit</option>
+            <option value="debit">Debit</option>
+          </select>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <input id="reason" placeholder="Reason (e.g. welcome_credit, manual_adjust)" style="flex:1;min-width:260px" />
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <textarea id="note" placeholder='Optional note/metadata (saved). Example: {"note":"manual top up"}'></textarea>
+        </div>
+
+        <div class="row" style="margin-top:12px;justify-content:space-between">
+          <div class="muted small">USD is converted to cents automatically. BTC expects sats.</div>
+          <button class="btn" id="submitTxn" type="button">Submit</button>
+        </div>
+
+        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
+
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <div style="font-weight:900">Recent Ledger</div>
+            <div class="muted small">Last 25 entries (selected currency filter)</div>
+          </div>
+          <button class="btn secondary" id="refreshLedger" type="button">Refresh</button>
+        </div>
+
+        <div style="margin-top:10px;max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03)">
+          <table style="margin:0">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Cur</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerBody">
+              <tr><td colspan="5" class="muted">No member selected.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
     </div>
   </div>
-</div>
 
-<div id="toast">boot…</div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script>
-  const CFG = window.__QFS_CONFIG || {};
-  const SUPABASE_URL = CFG.SUPABASE_URL || "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "PASTE_ANON_KEY_HERE_IF_NO_CONFIG_JS";
+  <script>
+    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+    const sb = window.__sb || (window.__sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
+    const el = (id) => document.getElementById(id);
 
-  // Use Supabase client for AUTH only.
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  const $ = (id) => document.getElementById(id);
-  const toast = $("toast");
-  const say = (t) => { if(toast) toast.textContent = String(t || ""); };
-
-  const banner = $("banner");
-  function showBanner(msg){
-    banner.style.display = msg ? "block" : "none";
-    banner.textContent = msg ? String(msg) : "";
-  }
-
-  function esc(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  function setPill(kind, text){
-    const pill = $("sessionPill");
-    const st = $("sessionText");
-    pill.classList.remove("good","bad");
-    if(kind === "good") pill.classList.add("good");
-    if(kind === "bad") pill.classList.add("bad");
-    st.textContent = text;
-  }
-
-  function fmtUSDFromCents(cents){
-    const usd = Number(cents || 0) / 100;
-    return "$" + usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-  function fmtSats(sats){
-    return Number(sats || 0).toLocaleString() + " sats";
-  }
-
-  function parseMetaJson(){
-    const raw = String($("metaInput").value || "").trim();
-    if(!raw) return {};
-    try { return JSON.parse(raw); } catch { return { note: raw }; }
-  }
-
-  // --------- CRITICAL: RPC with explicit Authorization header ----------
-  async function rpc(name, args){
-    const { data: sdata, error: serr } = await sb.auth.getSession();
-    if(serr || !sdata?.session) throw new Error("No session. Please log in again.");
-    const token = sdata.session.access_token;
-
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
-      method: "POST",
-      headers: {
-        "apikey": SUPABASE_ANON_KEY,
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(args || {})
-    });
-
-    const text = await res.text();
-    let json = null;
-    try { json = text ? JSON.parse(text) : null; } catch { json = null; }
-
-    if(!res.ok){
-      const msg = json?.message || json?.error || text || `RPC ${name} failed (${res.status})`;
-      const code = json?.code ? ` [${json.code}]` : "";
-      throw new Error(`${msg}${code}`);
-    }
-    return json; // PostgREST returns JSON
-  }
-  // -------------------------------------------------------------------
-
-  let SESSION_USER = null;
-  let PAGE_OFFSET = 0;
-  const PAGE_LIMIT = 25;
-
-  let SELECTED = { user_id:null, is_active:false };
-
-  function setToggle(on){
-    const t = $("activationToggle");
-    t.classList.toggle("on", !!on);
-    t.setAttribute("aria-checked", on ? "true" : "false");
-    $("activationTag").classList.toggle("yes", !!on);
-    $("activationTag").classList.toggle("no", !on);
-    $("activationTag").textContent = on ? "ACTIVE" : "PENDING";
-    $("activationHint").textContent = on ? "Member is activated." : "Member is pending (locked).";
-  }
-
-  async function verifyAdminOrKick(){
-    const { data, error } = await sb.auth.getSession();
-    if(error || !data?.session){
-      setPill("bad","Not logged in");
-      return false;
+    function setMsg(type, text) {
+      const box = el("msg");
+      if (!text) { box.innerHTML = ""; return; }
+      box.innerHTML = `<div class="${type === "ok" ? "ok" : "err"}">${text}</div>`;
     }
 
-    const user = data.session.user || {};
-    const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
-    if(!verifiedAt){
-      try{ await sb.auth.signOut(); } catch {}
-      setPill("bad","Email not verified");
-      window.location.replace("login.html?msg=verify_email");
-      return false;
+    function fmtUsdFromCents(cents) {
+      const n = Number(cents || 0);
+      return "$" + (n / 100).toFixed(2);
+    }
+    function fmtSats(s) {
+      const n = Number(s || 0);
+      return `${n.toLocaleString()} sats`;
+    }
+    function safeJsonParse(str) {
+      const t = (str || "").trim();
+      if (!t) return {};
+      try { return JSON.parse(t); } catch { return { note_raw: t }; }
     }
 
-    SESSION_USER = user;
-
-    try{
-      const isAdmin = await rpc("is_admin", {});
-      if(!isAdmin){
-        setPill("bad","Not authorized");
-        showBanner(
-          "Not authorized: your account is not an admin.\n\n" +
-          "Logged in as: " + (user.email || "—") + "\n" +
-          "User ID: " + (user.id || "—") + "\n\n" +
-          "Fix: add this user_id to public.admin_users."
-        );
-        return false;
+    async function requireSession() {
+      const { data, error } = await sb.auth.getSession();
+      if (error) {
+        el("sessionPill").textContent = "Session error";
+        setMsg("err", "Session read failed: " + error.message);
+        return null;
       }
-    }catch(e){
-      setPill("bad","Admin check error");
-      showBanner("Admin check failed:\n" + (e?.message || e));
-      return false;
-    }
-
-    setPill("good","Logged in");
-    $("debugLine").textContent = `admin: true · email: ${user.email || "—"} · uid: ${user.id || "—"}`;
-    showBanner("");
-    return true;
-  }
-
-  async function loadMembers(){
-    const ok = await verifyAdminOrKick();
-    if(!ok) return;
-
-    say("Loading members…");
-    const q = String($("searchInput").value || "").trim();
-    const filter = String($("filterSelect").value || "all");
-
-    try{
-      const data = await rpc("admin_list_members", {
-        p_search: q || null,
-        p_filter: filter,
-        p_limit: PAGE_LIMIT,
-        p_offset: PAGE_OFFSET
-      });
-
-      const rows = data || [];
-      if(rows.length === 0){
-        $("membersBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No results.</td></tr>`;
-        $("pageNote").textContent = `Page offset ${PAGE_OFFSET} · 0 rows`;
-        say("No results");
-        return;
+      const session = data?.session || null;
+      if (!session) {
+        el("sessionPill").textContent = "Not logged in";
+        setMsg("err", "You are not logged in. Redirecting to admin-confirm…");
+        setTimeout(() => { window.location.href = "admin-confirm.html"; }, 700);
+        return null;
       }
-
-      $("membersBody").innerHTML = "";
-      rows.forEach(r => {
-        const active = !!r.is_active;
-        const tag = active ? `<span class="tag yes">YES</span>` : `<span class="tag no">NO</span>`;
-        const tr = document.createElement("tr");
-        tr.className = "memberRow";
-        tr.innerHTML = `
-          <td class="mono">${esc(r.user_id)}</td>
-          <td>${esc(r.email || "—")}</td>
-          <td>${esc(r.tier || "—")}</td>
-          <td>${esc(r.qty ?? "—")}</td>
-          <td>${tag}</td>
-        `;
-        tr.addEventListener("click", async () => {
-          document.querySelectorAll(".memberRow").forEach(x => x.classList.remove("active"));
-          tr.classList.add("active");
-          $("selectedUserId").value = r.user_id;
-          SELECTED.user_id = r.user_id;
-          SELECTED.is_active = !!r.is_active;
-          setToggle(SELECTED.is_active);
-          await loadSelected();
-        });
-        $("membersBody").appendChild(tr);
-      });
-
-      $("pageNote").textContent = `Page offset ${PAGE_OFFSET} · loaded ${rows.length}`;
-      say("Loaded ✅");
-    }catch(e){
-      showBanner("Load members failed:\n" + (e?.message || e));
-      $("membersBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Failed: ${esc(e?.message || e)}</td></tr>`;
-      say("Load failed");
-    }
-  }
-
-  async function loadSelected(){
-    const ok = await verifyAdminOrKick();
-    if(!ok) return;
-
-    const userId = String($("selectedUserId").value || "").trim();
-    if(!userId){
-      $("ledgerBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No member selected.</td></tr>`;
-      return;
+      el("sessionPill").textContent = "Logged in";
+      return session;
     }
 
-    say("Loading balances…");
-    showBanner("");
-
-    try{
-      const bals = await rpc("admin_get_user_balances", { p_user_id: userId });
-      const b = bals || [];
-      const usd = b.find(x => String(x.currency||"").toUpperCase() === "USD");
-      const btc = b.find(x => String(x.currency||"").toUpperCase() === "BTC");
-      $("usdBal").textContent = fmtUSDFromCents(usd?.balance_cents || 0);
-      $("btcBal").textContent = fmtSats(btc?.balance_sats || 0);
-    }catch(e){
-      showBanner("Load balances failed:\n" + (e?.message || e));
-      $("usdBal").textContent = "$0.00";
-      $("btcBal").textContent = "0 sats";
+    async function requireAdmin() {
+      const { data, error } = await sb.rpc("is_admin");
+      if (error) { setMsg("err", "Admin check failed: " + error.message); return false; }
+      if (data !== true) { setMsg("err", "Not authorized: your account is not an admin."); return false; }
+      return true;
     }
 
-    // activation truth
-    try{
-      const one = await rpc("admin_list_members", {
-        p_search: userId,
-        p_filter: "all",
-        p_limit: 1,
-        p_offset: 0
-      });
-      if(one && one[0]){
-        SELECTED.is_active = !!one[0].is_active;
-        setToggle(SELECTED.is_active);
-      }
-    }catch{}
+    let pageLimit = 25;
+    let pageOffset = 0;
+    let cachedMembers = [];
 
-    await loadLedger();
-    say("Loaded ✅");
-  }
+    async function setActivation(uid, nextActive, checkboxEl) {
+      if (!uid) return;
+      if (checkboxEl) checkboxEl.disabled = true;
+      setMsg("", "");
 
-  async function loadLedger(){
-    const ok = await verifyAdminOrKick();
-    if(!ok) return;
-
-    const userId = String($("selectedUserId").value || "").trim();
-    if(!userId){
-      $("ledgerBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No member selected.</td></tr>`;
-      return;
-    }
-
-    try{
-      const rows = await rpc("admin_get_user_ledger", { p_user_id: userId, p_limit: 25 });
-      if(!rows || rows.length === 0){
-        $("ledgerBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No ledger entries.</td></tr>`;
-        return;
-      }
-
-      $("ledgerBody").innerHTML = "";
-      rows.forEach(r => {
-        const dt = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
-        const cur = String(r.currency || "—").toUpperCase();
-        const type = String(r.entry_type || "—").toLowerCase();
-        const amt = cur === "USD" ? fmtUSDFromCents(r.amount_cents || 0) : fmtSats(r.amount_sats || 0);
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${esc(dt)}</td>
-          <td>${esc(cur)}</td>
-          <td>${esc(type)}</td>
-          <td class="mono">${esc(amt)}</td>
-          <td>${esc(r.reason || "—")}</td>
-        `;
-        $("ledgerBody").appendChild(tr);
-      });
-    }catch(e){
-      $("ledgerBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Ledger error: ${esc(e?.message || e)}</td></tr>`;
-    }
-  }
-
-  async function toggleActivation(){
-    const ok = await verifyAdminOrKick();
-    if(!ok) return;
-
-    const userId = String($("selectedUserId").value || "").trim();
-    if(!userId) return;
-
-    const next = !SELECTED.is_active;
-    say("Updating activation…");
-    showBanner("");
-
-    try{
-      await rpc("admin_set_user_activation", {
-        p_user_id: userId,
-        p_is_activated: next,
+      const { error } = await sb.rpc("admin_set_user_activation", {
+        p_user_id: uid,
+        p_is_activated: nextActive,
         p_reason: "admin_toggle",
-        p_metadata: { by: SESSION_USER?.email || null }
+        p_metadata: {}
       });
 
-      SELECTED.is_active = next;
-      setToggle(next);
+      if (error) {
+        if (checkboxEl) {
+          checkboxEl.checked = !nextActive;
+          checkboxEl.disabled = false;
+        }
+        setMsg("err", "Activation update failed: " + error.message);
+        return;
+      }
+
       await loadMembers();
-      await loadSelected();
-      say("Activation updated ✅");
-    }catch(e){
-      showBanner("Activation update failed:\n" + (e?.message || e));
-      say("Activation failed");
-    }
-  }
-
-  async function submitAdjustment(){
-    const ok = await verifyAdminOrKick();
-    if(!ok) return;
-
-    const userId = String($("selectedUserId").value || "").trim();
-    if(!userId){
-      showBanner("Pick a member first.");
-      return;
+      if (checkboxEl) checkboxEl.disabled = false;
+      setMsg("ok", `User ${uid} ${nextActive ? "activated" : "deactivated"}.`);
     }
 
-    const currency = String($("currencySelect").value || "USD").toUpperCase();
-    const type = String($("typeSelect").value || "credit").toLowerCase();
-    const reason = String($("reasonInput").value || "admin_adjust").trim() || "admin_adjust";
-    const meta = parseMetaJson();
+    function renderMembers(rows) {
+      const body = el("membersBody");
+      if (!rows || rows.length === 0) {
+        body.innerHTML = `<tr><td colspan="6" class="muted">No members found.</td></tr>`;
+        return;
+      }
 
-    const rawAmt = String($("amountInput").value || "").trim();
-    if(!rawAmt){
-      showBanner("Enter an amount.");
-      return;
+      body.innerHTML = rows.map(r => {
+        const act = r.is_activated ? "Yes" : "No";
+        const actAt = r.activated_at ? new Date(r.activated_at).toLocaleString() : "—";
+        const checked = r.is_activated ? "checked" : "";
+        return `
+          <tr>
+            <td class="mono">${r.user_id}</td>
+            <td>${r.tier || "—"}</td>
+            <td>${act}</td>
+            <td>${actAt}</td>
+            <td>
+              <label class="switch" title="Toggle activation">
+                <input type="checkbox" data-activate="${r.user_id}" ${checked} />
+                <span class="slider"></span>
+              </label>
+            </td>
+            <td><button class="btn secondary small" type="button" data-pick="${r.user_id}">Select</button></td>
+          </tr>
+        `;
+      }).join("");
+
+      [...body.querySelectorAll("[data-pick]")].forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const uid = btn.getAttribute("data-pick");
+          el("selectedUserId").value = uid;
+          await loadBalancesAndLedger();
+        });
+      });
+
+      [...body.querySelectorAll("input[data-activate]")].forEach(chk => {
+        chk.addEventListener("change", async () => {
+          const uid = chk.getAttribute("data-activate");
+          const next = chk.checked;
+          await setActivation(uid, next, chk);
+        });
+      });
     }
 
-    let amount = 0;
-    if(currency === "USD"){
-      const dollars = Number(rawAmt.replace(/,/g,""));
-      if(!Number.isFinite(dollars)){ showBanner("Invalid USD amount."); return; }
-      amount = Math.round(dollars * 100);
-    } else {
-      const sats = Number(rawAmt.replace(/,/g,""));
-      if(!Number.isFinite(sats)){ showBanner("Invalid sats amount."); return; }
-      amount = Math.round(sats);
+    function applySearchAndFilter() {
+      const q = (el("search").value || "").trim().toLowerCase();
+      const f = el("filterActivation").value;
+
+      let rows = [...cachedMembers];
+      if (f === "activated") rows = rows.filter(r => r.is_activated === true);
+      if (q) rows = rows.filter(r => String(r.user_id || "").toLowerCase().includes(q));
+
+      renderMembers(rows);
+      el("pageInfo").textContent = `Loaded ${cachedMembers.length} members (page offset ${pageOffset})`;
     }
 
-    amount = (type === "debit") ? -Math.abs(amount) : Math.abs(amount);
+    async function loadMembers() {
+      setMsg("", "");
+      const { data, error } = await sb.rpc("admin_list_members", { p_limit: pageLimit, p_offset: pageOffset });
+      if (error) {
+        setMsg("err", "Failed to load members: " + error.message);
+        el("membersBody").innerHTML = `<tr><td colspan="6" class="muted">Error loading members.</td></tr>`;
+        return;
+      }
+      cachedMembers = Array.isArray(data) ? data : [];
+      applySearchAndFilter();
+    }
 
-    say("Submitting…");
-    showBanner("");
+    async function loadBalancesAndLedger() {
+      const userId = (el("selectedUserId").value || "").trim();
+      if (!userId) { setMsg("err", "Paste/select a user_id first."); return; }
 
-    try{
-      await rpc("admin_credit_user", {
+      const { data: bal, error: balErr } = await sb.rpc("admin_get_user_balances", { p_user_id: userId });
+      if (balErr) { setMsg("err", "Balance load failed: " + balErr.message); return; }
+
+      el("usdBal").textContent = fmtUsdFromCents(bal?.usd_cents);
+      el("btcBal").textContent = fmtSats(bal?.btc_sats);
+
+      await loadLedger();
+    }
+
+    async function loadLedger() {
+      const userId = (el("selectedUserId").value || "").trim();
+      if (!userId) return;
+
+      const cur = (el("currency").value || "USD").toUpperCase();
+      const { data, error } = await sb.rpc("admin_get_user_ledger", {
+        p_user_id: userId,
+        p_currency: cur,
+        p_limit: 25
+      });
+
+      if (error) { setMsg("err", "Ledger load failed: " + error.message); return; }
+
+      const body = el("ledgerBody");
+      const rows = Array.isArray(data) ? data : [];
+      if (rows.length === 0) {
+        body.innerHTML = `<tr><td colspan="5" class="muted">No ledger entries.</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = rows.map(r => {
+        const time = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
+        const amt = r.currency === "USD" ? fmtUsdFromCents(r.amount_units) : fmtSats(r.amount_units);
+        return `
+          <tr>
+            <td class="small">${time}</td>
+            <td>${r.currency}</td>
+            <td>${r.entry_type}</td>
+            <td class="mono">${amt}</td>
+            <td>${r.reason || ""}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function submitTxn() {
+      const userId = (el("selectedUserId").value || "").trim();
+      if (!userId) { setMsg("err", "Select/paste a user_id first."); return; }
+
+      const currency = (el("currency").value || "USD").toUpperCase();
+      const action = (el("action").value || "credit").toLowerCase();
+      const reason = (el("reason").value || "").trim() || (action === "credit" ? "admin_credit" : "admin_debit");
+      const noteMeta = safeJsonParse(el("note").value);
+
+      const rawAmount = (el("amount").value || "").trim();
+      if (!rawAmount) { setMsg("err", "Enter an amount."); return; }
+
+      let amountUnits = 0;
+      if (currency === "USD") {
+        const dollars = Number(rawAmount);
+        if (!Number.isFinite(dollars) || dollars <= 0) { setMsg("err", "USD amount must be a positive number (dollars)."); return; }
+        amountUnits = Math.round(dollars * 100);
+      } else {
+        const sats = Number(rawAmount);
+        if (!Number.isFinite(sats) || sats <= 0 || !Number.isInteger(sats)) { setMsg("err", "BTC amount must be a positive whole number (sats)."); return; }
+        amountUnits = sats;
+      }
+
+      setMsg("", "");
+
+      const rpcName = action === "debit" ? "admin_debit_user" : "admin_credit_user";
+      const { data, error } = await sb.rpc(rpcName, {
         p_user_id: userId,
         p_currency: currency,
-        p_amount: amount,
+        p_amount_units: amountUnits,
         p_reason: reason,
-        p_metadata: meta
+        p_metadata: noteMeta
       });
 
-      $("amountInput").value = "";
-      $("reasonInput").value = "";
-      $("metaInput").value = "";
+      if (error) { setMsg("err", "Transaction failed: " + error.message); return; }
 
-      await loadSelected();
-      say("Saved ✅");
-    }catch(e){
-      showBanner("Submit failed:\n" + (e?.message || e));
-      say("Submit failed");
+      setMsg("ok", `Success: ${rpcName} • ${currency} • ${currency === "USD" ? fmtUsdFromCents(amountUnits) : fmtSats(amountUnits)} • entry: ${(data && data[0] && data[0].entry_id) ? data[0].entry_id : "ok"}`);
+      await loadBalancesAndLedger();
     }
-  }
 
-  $("loadBtn").addEventListener("click", () => { PAGE_OFFSET = 0; loadMembers(); });
-  $("prevBtn").addEventListener("click", () => { PAGE_OFFSET = Math.max(0, PAGE_OFFSET - PAGE_LIMIT); loadMembers(); });
-  $("nextBtn").addEventListener("click", () => { PAGE_OFFSET = PAGE_OFFSET + PAGE_LIMIT; loadMembers(); });
+    el("btnLogout").addEventListener("click", async () => {
+      try { await sb.auth.signOut(); } catch {}
+      window.location.href = "admin-confirm.html";
+    });
 
-  $("loadSelectedBtn").addEventListener("click", loadSelected);
-  $("ledgerRefreshBtn").addEventListener("click", loadLedger);
-  $("refreshBtn").addEventListener("click", async () => { await loadMembers(); await loadSelected(); });
+    el("btnRefresh").addEventListener("click", async () => {
+      setMsg("", "");
+      await boot();
+    });
 
-  $("activationToggle").addEventListener("click", toggleActivation);
-  $("submitBtn").addEventListener("click", submitAdjustment);
+    el("prevPage").addEventListener("click", async () => {
+      pageOffset = Math.max(0, pageOffset - pageLimit);
+      await loadMembers();
+    });
 
-  $("logoutBtn").addEventListener("click", async () => {
-    say("Signing out…");
-    try{ await sb.auth.signOut(); } catch {}
-    window.location.replace("login.html");
-  });
+    el("nextPage").addEventListener("click", async () => {
+      pageOffset = pageOffset + pageLimit;
+      await loadMembers();
+    });
 
-  (async () => {
-    say("Booting…");
-    const ok = await verifyAdminOrKick();
-    if(!ok) return;
-    await loadMembers();
-    say("Ready ✅");
-  })();
-</script>
+    el("search").addEventListener("input", () => applySearchAndFilter());
+    el("filterActivation").addEventListener("change", () => applySearchAndFilter());
 
+    el("loadBalances").addEventListener("click", async () => await loadBalancesAndLedger());
+    el("refreshLedger").addEventListener("click", async () => await loadLedger());
+    el("currency").addEventListener("change", async () => await loadLedger());
+    el("submitTxn").addEventListener("click", async () => await submitTxn());
+
+    async function boot() {
+      el("sessionPill").textContent = "Checking session…";
+      const session = await requireSession();
+      if (!session) return;
+
+      const okAdmin = await requireAdmin();
+      if (!okAdmin) return;
+
+      await loadMembers();
+      setMsg("ok", "Admin console ready.");
+    }
+
+    boot();
+  </script>
 </body>
 </html>
