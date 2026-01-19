@@ -28,18 +28,14 @@
     }
   </style>
 
-  <!-- ✅ ONE Supabase library -->
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
 
-  <!-- WHITE FORM CARD -->
   <div class="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-2xl">
-
-    <h2 class="text-2xl font-bold text-center mb-2">
-      QFS Registration Form
-    </h2>
+    <h2 class="text-2xl font-bold text-center mb-2">QFS Registration Form</h2>
     <p class="text-center text-slate-600 mb-6 text-sm">
       Create your portal login password below. After submitting, you can sign in on the Login page.
     </p>
@@ -49,45 +45,37 @@
           method="POST"
           class="space-y-6">
 
-      <!-- Redirect After Successful Submission -->
-      <input type="hidden"
-             name="_next"
-             value="https://qfsnesaragesara.github.io/BTC-METAL-CARD-PAYMENT/success-registration.html">
-
+      <input type="hidden" name="_next" value="https://qfsnesaragesara.org/success-registration.html">
       <input type="hidden" name="_captcha" value="false">
       <input type="hidden" name="_template" value="table">
       <input type="text" name="_honey" class="hidden" style="display:none">
 
-      <!-- NAME SECTION -->
+      <!-- NAME -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="font-semibold">First Name</label>
           <input id="firstName" type="text" name="first_name" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
-
         <div>
           <label class="font-semibold">Middle Name</label>
           <input id="middleName" type="text" name="middle_name" class="w-full mt-1 p-3 border rounded-lg">
         </div>
-
         <div>
           <label class="font-semibold">Last Name</label>
           <input id="lastName" type="text" name="last_name" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
       </div>
 
-      <!-- DOB, PHONE, GENDER -->
+      <!-- DOB / PHONE / GENDER -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="font-semibold">Date of Birth</label>
           <input type="date" name="dob" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
-
         <div>
           <label class="font-semibold">Phone Number</label>
           <input type="tel" name="phone" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
-
         <div>
           <label class="font-semibold">Gender</label>
           <select name="gender" required class="w-full mt-1 p-3 border rounded-lg">
@@ -100,20 +88,19 @@
         </div>
       </div>
 
-      <!-- EMAIL + A NUMBER -->
+      <!-- EMAIL + OPTIONAL -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="font-semibold">Email Address</label>
           <input id="regEmail" type="email" name="email" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
-
         <div>
           <label class="font-semibold">A Number (Optional)</label>
           <input type="text" name="a_number" class="w-full mt-1 p-3 border rounded-lg">
         </div>
       </div>
 
-      <!-- ✅ PASSWORD (for Supabase login) -->
+      <!-- PASSWORD -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="font-semibold">Create Password</label>
@@ -157,12 +144,10 @@
           <label class="font-semibold">Place of Birth</label>
           <input type="text" name="place_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
-
         <div>
           <label class="font-semibold">City of Birth</label>
           <input type="text" name="city_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
-
         <div>
           <label class="font-semibold">State/Province of Birth</label>
           <input type="text" name="state_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
@@ -197,12 +182,10 @@
           <label class="font-semibold">City</label>
           <input type="text" name="city" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
-
         <div>
           <label class="font-semibold">State / Province</label>
           <input type="text" name="state" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
-
         <div>
           <label class="font-semibold">ZIP / Postal Code</label>
           <input type="text" name="zip" required class="w-full mt-1 p-3 border rounded-lg">
@@ -211,4 +194,151 @@
 
       <div>
         <label class="font-semibold">Country</label>
-        <input type="text" name="country" required class="w-full mt-1 p-3 border
+        <input type="text" name="country" required class="w-full mt-1 p-3 border rounded-lg">
+      </div>
+
+      <!-- FAMILY -->
+      <div>
+        <label class="font-semibold">Number of Family Members (Spouse or Children under 21)</label>
+        <input type="number" name="family_members" min="0" required class="w-full mt-1 p-3 border rounded-lg">
+      </div>
+
+      <div id="regMsg" class="text-sm text-center hidden"></div>
+
+      <button id="regSubmit" type="submit"
+              class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition">
+        Submit Registration
+      </button>
+    </form>
+  </div>
+
+<script>
+(() => {
+  const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
+  const supabase = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
+
+  const form = document.getElementById("regForm");
+  const emailEl = document.getElementById("regEmail");
+  const p1 = document.getElementById("regPass1");
+  const p2 = document.getElementById("regPass2");
+  const regFor = document.getElementById("regFor");
+  const msg = document.getElementById("regMsg");
+  const btn = document.getElementById("regSubmit");
+
+  const firstNameEl = document.getElementById("firstName");
+  const middleNameEl = document.getElementById("middleName");
+  const lastNameEl = document.getElementById("lastName");
+
+  function show(text, ok=true){
+    msg.className = "text-sm text-center " + (ok ? "text-emerald-600" : "text-red-600");
+    msg.textContent = text;
+    msg.classList.remove("hidden");
+  }
+
+  function inferTierFromRegisteringFor(registeringForText) {
+    const v = (registeringForText || "").toLowerCase();
+    if (v.includes("gold")) return "gold";
+    if (v.includes("black")) return "black";
+    if (v.includes("silver")) return "silver";
+    return "silver";
+  }
+
+  async function postFormSubmit() {
+    // Send the same form fields to FormSubmit WITHOUT leaving the page early
+    const action = form.getAttribute("action");
+    const method = (form.getAttribute("method") || "POST").toUpperCase();
+    const fd = new FormData(form);
+
+    const res = await fetch(action, {
+      method,
+      body: fd,
+      headers: { "Accept": "text/html" }
+    });
+
+    // FormSubmit often returns HTML; we just need it to succeed.
+    if (!res.ok) throw new Error("Form submit failed (" + res.status + ")");
+  }
+
+  let busy = false;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault(); // ✅ critical: stop navigation so signUp can't get cancelled
+    if (busy) return;
+    busy = true;
+
+    const email = (emailEl.value || "").trim().toLowerCase();
+    const pwA = (p1.value || "").trim();
+    const pwB = (p2.value || "").trim();
+    const registering_for = (regFor.value || "").trim();
+
+    const first = String(firstNameEl?.value || "").trim();
+    const middle = String(middleNameEl?.value || "").trim();
+    const last = String(lastNameEl?.value || "").trim();
+    const full_name = [first, middle, last].filter(Boolean).join(" ").trim();
+
+    if (pwA.length < 8) {
+      busy = false;
+      return show("Password must be at least 8 characters.", false);
+    }
+    if (pwA !== pwB) {
+      busy = false;
+      return show("Passwords do not match.", false);
+    }
+    if (!email || !registering_for) {
+      busy = false;
+      return show("Please complete required fields.", false);
+    }
+
+    const selectedTier = inferTierFromRegisteringFor(registering_for);
+
+    try {
+      localStorage.setItem("qfs_registering_for", registering_for);
+      localStorage.setItem("qfs_selected_tier", selectedTier);
+    } catch {}
+
+    btn.disabled = true;
+    show("Creating your portal account…");
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: pwA,
+      options: {
+        data: {
+          registering_for,
+          selected_tier: selectedTier,
+          first_name: first || null,
+          middle_name: middle || null,
+          last_name: last || null,
+          full_name: full_name || null
+        },
+        emailRedirectTo: "https://qfsnesaragesara.org/login.html"
+      }
+    });
+
+    if (error) {
+      btn.disabled = false;
+      busy = false;
+      return show("Signup failed: " + error.message, false);
+    }
+
+    // ✅ At this point Auth user is created (may be pending email confirmation)
+    show("Account created ✅ Submitting your registration…");
+
+    try {
+      await postFormSubmit();
+    } catch (err) {
+      // Auth account is still created even if email submit fails
+      console.warn(err);
+      show("Account created ✅ (Email submission failed, but login is created.)", true);
+    }
+
+    // Redirect to success page
+    window.location.href = "https://qfsnesaragesara.org/success-registration.html";
+  });
+})();
+</script>
+
+</body>
+</html>
