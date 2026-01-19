@@ -4,571 +4,436 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin — QFS</title>
-
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <meta name="robots" content="noindex,nofollow" />
-
   <style>
-    :root{
-      --bg:#0b1220; --card:#0f1b33; --muted:#98a2b3; --text:#e6eaf2;
-      --line:rgba(255,255,255,.08); --btn:#2563eb; --btn2:#0b3aa6;
-      --good:#16a34a; --bad:#ef4444; --warn:#f59e0b;
+    :root { color-scheme: dark; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#071024; color:#e8eefc; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid rgba(255,255,255,.08); }
+    .pill { padding:6px 10px; border:1px solid rgba(255,255,255,.15); border-radius:999px; font-size:12px; opacity:.9 }
+    .wrap { max-width:1100px; margin:0 auto; padding:24px; }
+    .banner { margin:16px 0; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); }
+    .banner.err { border-color: rgba(255,80,80,.35); background: rgba(255,80,80,.12); }
+    .grid { display:grid; grid-template-columns: 1.25fr 1fr; gap:18px; }
+    .card { border-radius:16px; border:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.05); padding:16px; }
+    h2 { margin:0 0 8px; font-size:16px; }
+    .sub { margin:0 0 14px; opacity:.8; font-size:12px; }
+    .row { display:flex; gap:10px; align-items:center; }
+    input, select, button, textarea {
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #e8eefc;
+      outline: none;
     }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:radial-gradient(1200px 600px at 10% 0%, rgba(37,99,235,.28), transparent 60%), var(--bg); color:var(--text)}
-    .wrap{max-width:1180px;margin:0 auto;padding:24px}
-    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
-    .brand{display:flex;align-items:center;gap:12px}
-    .logo{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800}
-    h1{font-size:18px;margin:0}
-    .sub{color:var(--muted);font-size:12px;margin-top:2px}
-    .grid{display:grid;grid-template-columns: 1.2fr .8fr;gap:14px}
-    @media(max-width:980px){.grid{grid-template-columns:1fr}}
-    .card{background:rgba(15,27,51,.82);border:1px solid var(--line);border-radius:16px;padding:16px;backdrop-filter: blur(8px)}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .btn{background:var(--btn);border:0;color:white;padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:700}
-    .btn:hover{background:var(--btn2)}
-    .btn.secondary{background:rgba(255,255,255,.06);border:1px solid var(--line)}
-    .btn.danger{background:#7f1d1d}
-    .btn.danger:hover{background:#991b1b}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);font-size:12px;color:var(--muted)}
-    input,select,textarea{
-      background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text);
-      border-radius:12px;padding:10px 12px;outline:none
+    input::placeholder, textarea::placeholder { color: rgba(232,238,252,.55); }
+    button { cursor:pointer; background: rgba(90,140,255,.25); border-color: rgba(90,140,255,.35); }
+    button:hover { background: rgba(90,140,255,.35); }
+    .list { margin-top:12px; border-top:1px solid rgba(255,255,255,.08); }
+    .member { display:grid; grid-template-columns: 1.6fr .7fr .5fr .7fr .5fr; gap:10px; padding:12px 0; border-bottom:1px solid rgba(255,255,255,.08); align-items:center; }
+    .muted { opacity:.75; font-size:12px; }
+    .small { font-size:12px; opacity:.85; }
+    .toggle {
+      width:46px; height:26px; border-radius:999px; position:relative; border:1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.08);
     }
-    input::placeholder,textarea::placeholder{color:rgba(230,234,242,.45)}
-    textarea{min-height:72px;resize:vertical}
-    .muted{color:var(--muted)}
-    .err{color:#fecaca;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);padding:10px 12px;border-radius:12px}
-    .ok{color:#bbf7d0;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);padding:10px 12px;border-radius:12px}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
-    th{color:var(--muted);font-weight:700}
-    tr:hover td{background:rgba(255,255,255,.03)}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
-    .right{display:flex;gap:10px;align-items:center;justify-content:flex-end}
-    .kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-    .kpi .box{border:1px solid var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,.03)}
-    .kpi .label{color:var(--muted);font-size:12px}
-    .kpi .val{font-weight:900;font-size:18px;margin-top:4px}
-    .small{font-size:12px}
-
-    /* ===== Activation toggle (added) ===== */
-    .switch{
-      position:relative;
-      display:inline-block;
-      width:42px;
-      height:24px;
-      vertical-align:middle;
-    }
-    .switch input{display:none;}
-    .slider{
-      position:absolute;
-      inset:0;
-      cursor:pointer;
-      background:rgba(255,255,255,.10);
-      border:1px solid var(--line);
-      transition:.2s;
-      border-radius:999px;
-    }
-    .slider:before{
-      content:"";
-      position:absolute;
-      height:18px;
-      width:18px;
-      left:3px;
-      top:2px;
-      background:rgba(255,255,255,.85);
-      transition:.2s;
-      border-radius:999px;
-    }
-    .switch input:checked + .slider{
-      background:rgba(34,197,94,.22);
-      border-color:rgba(34,197,94,.35);
-    }
-    .switch input:checked + .slider:before{
-      transform:translateX(18px);
-    }
+    .toggle input { display:none; }
+    .knob { width:22px; height:22px; position:absolute; top:1px; left:1px; border-radius:999px; background: rgba(255,255,255,.85); transition: transform .15s ease; }
+    .toggle.on { background: rgba(60,220,160,.18); border-color: rgba(60,220,160,.35); }
+    .toggle.on .knob { transform: translateX(20px); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size:12px; }
+    .right { text-align:right; }
   </style>
+
+  <!-- Supabase UMD -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="top">
-      <div class="brand">
-        <div class="logo">Q</div>
-        <div>
-          <h1>Admin Console</h1>
-          <div class="sub">Credit/Debit USD + BTC (sats) • View balances • View ledger</div>
-        </div>
-      </div>
-      <div class="right">
-        <span id="sessionPill" class="pill">Checking session…</span>
-        <button class="btn secondary" id="btnRefresh" type="button">Refresh</button>
-        <button class="btn danger" id="btnLogout" type="button">Logout</button>
-      </div>
+  <div class="topbar">
+    <div>
+      <div style="font-weight:700">Admin Console</div>
+      <div class="muted">Credit/Debit USD + BTC (sats) · View balances · View ledger</div>
     </div>
+    <div class="row">
+      <span id="statusPill" class="pill">Loading…</span>
+      <button id="btnRefresh">Refresh</button>
+      <button id="btnLogout">Logout</button>
+    </div>
+  </div>
 
-    <div id="msg" style="margin-bottom:14px;"></div>
+  <div class="wrap">
+    <div id="banner" class="banner" style="display:none"></div>
 
     <div class="grid">
-      <!-- LEFT: Members list -->
+      <!-- Members -->
       <div class="card">
-        <div class="row" style="justify-content:space-between">
-          <div>
-            <div style="font-weight:900">Members</div>
-            <div class="muted small">Select a member to manage balances</div>
-          </div>
-          <div class="row">
-            <input id="search" class="mono" placeholder="Search by user_id (UUID)..." style="min-width:320px" />
-            <select id="filterActivation">
-              <option value="activated">Activated only</option>
-              <option value="all">All</option>
-            </select>
-          </div>
+        <h2>Members</h2>
+        <p class="sub">Select a member to manage balances</p>
+
+        <div class="row">
+          <input id="search" placeholder="Search by user_id (UUID)..." style="flex:1" />
+          <select id="filter">
+            <option value="all">All</option>
+            <option value="activated">Activated only</option>
+            <option value="inactive">Inactive only</option>
+          </select>
+          <button id="btnLoadMembers">Load</button>
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th>User ID</th>
-              <th>Tier</th>
-              <th>Activated</th>
-              <th>Activated At</th>
-              <th>Activate</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="membersBody">
-            <tr><td colspan="6" class="muted">Loading…</td></tr>
-          </tbody>
-        </table>
-
-        <div class="row" style="justify-content:space-between;margin-top:12px">
-          <div class="muted small" id="pageInfo">—</div>
-          <div class="row">
-            <button class="btn secondary" id="prevPage" type="button">Prev</button>
-            <button class="btn secondary" id="nextPage" type="button">Next</button>
+        <div class="list">
+          <div class="member muted" style="border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:10px;">
+            <div>User ID</div><div>Tier</div><div>Activated</div><div>Activated At</div><div class="right">Activate</div>
           </div>
+          <div id="members"></div>
+          <div class="muted" id="membersMeta" style="padding-top:10px;">—</div>
         </div>
       </div>
 
-      <!-- RIGHT: Selected member actions -->
+      <!-- Selected member -->
       <div class="card">
-        <div style="font-weight:900">Selected Member</div>
-        <div class="muted small" style="margin-top:4px">Pick a member on the left, or paste a UUID below.</div>
-
-        <div class="row" style="margin-top:12px">
-          <input id="selectedUserId" class="mono" placeholder="Selected user_id (UUID)" style="flex:1;min-width:280px" />
-          <button class="btn secondary" id="loadBalances" type="button">Load</button>
-        </div>
-
-        <div class="kpi">
-          <div class="box">
-            <div class="label">USD Balance</div>
-            <div class="val" id="usdBal">$0.00</div>
-            <div class="muted small">stored as cents</div>
-          </div>
-          <div class="box">
-            <div class="label">BTC Balance</div>
-            <div class="val" id="btcBal">0 sats</div>
-            <div class="muted small">stored as sats</div>
-          </div>
-        </div>
-
-        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
+        <h2>Selected Member</h2>
+        <p class="sub">Pick a member on the left, or paste a UUID below.</p>
 
         <div class="row">
-          <select id="currency">
+          <input id="selectedUserId" placeholder="Selected user_id (UUID)" style="flex:1" />
+          <button id="btnLoadSelected">Load</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+          <div class="card" style="padding:12px;">
+            <div class="muted">USD Balance</div>
+            <div style="font-size:20px; font-weight:700" id="usdBal">$0.00</div>
+            <div class="muted">stored as cents</div>
+          </div>
+          <div class="card" style="padding:12px;">
+            <div class="muted">BTC Balance</div>
+            <div style="font-size:20px; font-weight:700" id="btcBal">0 sats</div>
+            <div class="muted">stored as sats</div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px;">
+          <select id="cur">
             <option value="USD">USD</option>
             <option value="BTC">BTC</option>
           </select>
+          <input id="amount" placeholder="Amount (USD dollars, BTC in sats)" style="flex:1" />
+        </div>
 
-          <input id="amount" placeholder="Amount (USD in dollars, BTC in sats)" style="flex:1;min-width:240px" />
-
-          <select id="action">
+        <div class="row" style="margin-top:10px;">
+          <select id="type">
             <option value="credit">Credit</option>
             <option value="debit">Debit</option>
           </select>
+          <input id="reason" placeholder="Reason (e.g. welcome_credit, manual_adjust)" style="flex:1" />
         </div>
 
-        <div class="row" style="margin-top:10px">
-          <input id="reason" placeholder="Reason (e.g. welcome_credit, manual_adjust)" style="flex:1;min-width:260px" />
+        <textarea id="metadata" rows="4" style="margin-top:10px; width:100%; resize:vertical"
+          placeholder='Optional note/metadata (saved). Example:
+{"note":"manual top up"}'></textarea>
+
+        <div class="row" style="margin-top:10px; justify-content:space-between;">
+          <div class="muted">USD is converted to cents automatically. BTC expects sats.</div>
+          <button id="btnSubmit">Submit</button>
         </div>
 
-        <div class="row" style="margin-top:10px">
-          <textarea id="note" placeholder='Optional note/metadata (saved). Example: {"note":"manual top up"}'></textarea>
-        </div>
-
-        <div class="row" style="margin-top:12px;justify-content:space-between">
-          <div class="muted small">USD is converted to cents automatically. BTC expects sats.</div>
-          <button class="btn" id="submitTxn" type="button">Submit</button>
-        </div>
-
-        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0" />
-
-        <div class="row" style="justify-content:space-between">
-          <div>
-            <div style="font-weight:900">Recent Ledger</div>
-            <div class="muted small">Last 25 entries (selected currency filter)</div>
+        <div style="margin-top:14px;">
+          <div class="row" style="justify-content:space-between; align-items:flex-end;">
+            <div>
+              <div style="font-weight:700">Recent Ledger</div>
+              <div class="muted">Last 25 entries (selected currency filter)</div>
+            </div>
+            <button id="btnRefreshLedger">Refresh</button>
           </div>
-          <button class="btn secondary" id="refreshLedger" type="button">Refresh</button>
+          <div id="ledger" class="muted" style="margin-top:8px;">No member selected.</div>
         </div>
-
-        <div style="margin-top:10px;max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03)">
-          <table style="margin:0">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Cur</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Reason</th>
-              </tr>
-            </thead>
-            <tbody id="ledgerBody">
-              <tr><td colspan="5" class="muted">No member selected.</td></tr>
-            </tbody>
-          </table>
-        </div>
-
       </div>
     </div>
   </div>
 
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <script>
-    // ======== CONFIG ========
-    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+    // ========= CONFIG (fill these) =========
+    const SUPABASE_URL = "YOUR_SUPABASE_URL";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    // ======================================
 
-    const sb = window.__sb || (window.__sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const el = (id) => document.getElementById(id);
+    const banner = el("banner");
+    const statusPill = el("statusPill");
+    const membersEl = el("members");
+    const membersMeta = el("membersMeta");
 
-    function setMsg(type, text) {
-      const box = el("msg");
-      if (!text) { box.innerHTML = ""; return; }
-      box.innerHTML = `<div class="${type === "ok" ? "ok" : "err"}">${text}</div>`;
+    let session = null;
+    let selectedUserId = null;
+
+    function showBanner(msg, isErr=false) {
+      banner.style.display = "block";
+      banner.className = "banner" + (isErr ? " err" : "");
+      banner.textContent = msg;
+    }
+    function clearBanner() {
+      banner.style.display = "none";
+      banner.textContent = "";
     }
 
-    function fmtUsdFromCents(cents) {
-      const n = Number(cents || 0);
-      const dollars = (n / 100).toFixed(2);
-      return "$" + dollars;
-    }
-
-    function fmtSats(s) {
-      const n = Number(s || 0);
-      return `${n.toLocaleString()} sats`;
-    }
-
-    function safeJsonParse(str) {
-      const t = (str || "").trim();
-      if (!t) return {};
-      try { return JSON.parse(t); } catch { return { note_raw: t }; }
-    }
-
-    // ======== AUTH / ADMIN CHECK ========
-    async function requireSession() {
+    async function ensureSessionReady() {
+      // IMPORTANT: wait for session hydration on refresh/incognito
       const { data, error } = await sb.auth.getSession();
-      if (error) {
-        el("sessionPill").textContent = "Session error";
-        setMsg("err", "Session read failed: " + error.message);
-        return null;
-      }
-
-      const session = data?.session || null;
-      if (!session) {
-        el("sessionPill").textContent = "Not logged in";
-        setMsg("err", "You are not logged in. Redirecting to admin-confirm…");
-        setTimeout(() => { window.location.href = "admin-confirm.html"; }, 700);
-        return null;
-      }
-
-      el("sessionPill").textContent = "Logged in";
+      if (error) throw error;
+      session = data.session;
+      if (!session) throw new Error("Not authenticated (no session).");
       return session;
     }
 
-    async function requireAdmin() {
+    async function ensureAdmin() {
+      await ensureSessionReady();
       const { data, error } = await sb.rpc("is_admin");
-      if (error) {
-        setMsg("err", "Admin check failed: " + error.message);
-        return false;
-      }
-      if (data !== true) {
-        setMsg("err", "Not authorized: your account is not an admin.");
-        return false;
-      }
+      if (error) throw error;
+      if (!data) throw new Error("Not authorized: your account is not an admin.");
       return true;
     }
 
-    // ======== MEMBERS LIST ========
-    let pageLimit = 25;
-    let pageOffset = 0;
-    let cachedMembers = [];
-
-    async function setActivation(uid, nextActive, checkboxEl) {
-      if (!uid) return;
-
-      if (checkboxEl) checkboxEl.disabled = true;
-      setMsg("", "");
-
-      // ✅ FIXED: correct param names + correct variables
-      const { error } = await sb.rpc("admin_set_user_activation", {
-        p_user_id: uid,
-        p_is_activated: nextActive,
-        p_reason: "admin_toggle",
-        p_metadata: {}
-      });
-
-      if (error) {
-        if (checkboxEl) {
-          checkboxEl.checked = !nextActive;
-          checkboxEl.disabled = false;
-        }
-        setMsg("err", "Activation update failed: " + error.message);
-        return;
-      }
-
-      await loadMembers();
-      if (checkboxEl) checkboxEl.disabled = false;
-
-      setMsg("ok", `User ${uid} ${nextActive ? "activated" : "deactivated"}.`);
-    }
-
     function renderMembers(rows) {
-      const body = el("membersBody");
-      if (!rows || rows.length === 0) {
-        body.innerHTML = `<tr><td colspan="6" class="muted">No members found.</td></tr>`;
-        return;
-      }
-
-      body.innerHTML = rows.map(r => {
-        const act = r.is_activated ? "Yes" : "No";
-        const actAt = r.activated_at ? new Date(r.activated_at).toLocaleString() : "—";
-        const checked = r.is_activated ? "checked" : "";
-        return `
-          <tr>
-            <td class="mono">${r.user_id}</td>
-            <td>${r.tier || "—"}</td>
-            <td>${act}</td>
-            <td>${actAt}</td>
-            <td>
-              <label class="switch" title="Toggle activation">
-                <input type="checkbox" data-activate="${r.user_id}" ${checked} />
-                <span class="slider"></span>
-              </label>
-            </td>
-            <td><button class="btn secondary small" type="button" data-pick="${r.user_id}">Select</button></td>
-          </tr>
+      membersEl.innerHTML = "";
+      for (const r of rows) {
+        const row = document.createElement("div");
+        row.className = "member";
+        const activated = !!r.is_active;
+        row.innerHTML = `
+          <div class="mono">${r.id || ""}</div>
+          <div class="small">${r.tier || "-"}</div>
+          <div class="small">${activated ? "Yes" : "No"}</div>
+          <div class="small">${r.activated_at || r.created_at || "-"}</div>
+          <div class="right">
+            <label class="toggle ${activated ? "on" : ""}">
+              <input type="checkbox" ${activated ? "checked" : ""} />
+              <span class="knob"></span>
+            </label>
+          </div>
         `;
-      }).join("");
 
-      [...body.querySelectorAll("[data-pick]")].forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const uid = btn.getAttribute("data-pick");
-          el("selectedUserId").value = uid;
-          await loadBalancesAndLedger();
+        // Select on click (except toggle)
+        row.addEventListener("click", (e) => {
+          if (e.target && (e.target.tagName === "INPUT" || e.target.classList.contains("knob"))) return;
+          selectedUserId = r.id;
+          el("selectedUserId").value = r.id;
+          loadSelected();
         });
-      });
 
-      [...body.querySelectorAll("input[data-activate]")].forEach(chk => {
-        chk.addEventListener("change", async () => {
-          const uid = chk.getAttribute("data-activate");
-          const next = chk.checked;
-          await setActivation(uid, next, chk);
+        // Toggle activation
+        const toggle = row.querySelector("label.toggle");
+        const input = row.querySelector("input[type=checkbox]");
+        input.addEventListener("change", async () => {
+          clearBanner();
+          try {
+            await ensureAdmin();
+
+            const newState = input.checked;
+
+            // RPC call with EXACT parameter names
+            const { error } = await sb.rpc("admin_set_user_activation", {
+              p_user_id: r.id,
+              p_is_activated: newState,
+              p_reason: "admin_toggle",
+              p_metadata: {}
+            });
+
+            if (error) throw error;
+
+            // update UI state
+            toggle.classList.toggle("on", newState);
+            await loadMembers(); // refresh list from DB
+          } catch (e) {
+            // rollback UI toggle if fail
+            input.checked = !input.checked;
+            toggle.classList.toggle("on", input.checked);
+            showBanner("Activation update failed: " + (e?.message || String(e)), true);
+          }
         });
-      });
-    }
 
-    function applySearchAndFilter() {
-      const q = (el("search").value || "").trim().toLowerCase();
-      const f = el("filterActivation").value;
-
-      let rows = [...cachedMembers];
-      if (f === "activated") rows = rows.filter(r => r.is_activated === true);
-      if (q) rows = rows.filter(r => String(r.user_id || "").toLowerCase().includes(q));
-
-      renderMembers(rows);
-      el("pageInfo").textContent = `Loaded ${cachedMembers.length} members (page offset ${pageOffset})`;
+        membersEl.appendChild(row);
+      }
     }
 
     async function loadMembers() {
-      setMsg("", "");
-      const { data, error } = await sb.rpc("admin_list_members", { p_limit: pageLimit, p_offset: pageOffset });
-      if (error) {
-        setMsg("err", "Failed to load members: " + error.message);
-        el("membersBody").innerHTML = `<tr><td colspan="6" class="muted">Error loading members.</td></tr>`;
-        return;
+      clearBanner();
+      try {
+        await ensureAdmin();
+        statusPill.textContent = "Admin OK";
+
+        const filter = el("filter").value;
+        const search = (el("search").value || "").trim();
+
+        // Use your existing RPC if you have it
+        // Expected return fields: id, tier, is_active, created_at (and optionally activated_at)
+        const { data, error } = await sb.rpc("admin_list_members", {
+          p_filter: filter,
+          p_search: search
+        });
+
+        if (error) throw error;
+
+        renderMembers(data || []);
+        membersMeta.textContent = `Loaded ${data?.length || 0} members.`;
+      } catch (e) {
+        statusPill.textContent = "Not authorized";
+        renderMembers([]);
+        membersMeta.textContent = "—";
+        showBanner(e?.message || String(e), true);
       }
-      cachedMembers = Array.isArray(data) ? data : [];
-      applySearchAndFilter();
     }
 
-    // ======== BALANCES + LEDGER ========
-    async function loadBalancesAndLedger() {
-      const userId = (el("selectedUserId").value || "").trim();
-      if (!userId) {
-        setMsg("err", "Paste/select a user_id first.");
-        return;
-      }
+    async function loadSelected() {
+      clearBanner();
+      try {
+        await ensureAdmin();
 
-      const { data: bal, error: balErr } = await sb.rpc("admin_get_user_balances", { p_user_id: userId });
-      if (balErr) {
-        setMsg("err", "Balance load failed: " + balErr.message);
-        return;
-      }
-      el("usdBal").textContent = fmtUsdFromCents(bal?.usd_cents);
-      el("btcBal").textContent = fmtSats(bal?.btc_sats);
+        const uid = (el("selectedUserId").value || "").trim();
+        if (!uid) return;
 
-      await loadLedger();
+        selectedUserId = uid;
+
+        // balances
+        const { data: bal, error: balErr } = await sb.rpc("admin_get_user_balances", { p_user_id: uid });
+        if (balErr) throw balErr;
+
+        const usd = Number(bal?.usd_cents || 0) / 100;
+        el("usdBal").textContent = usd.toLocaleString(undefined, { style:"currency", currency:"USD" });
+        el("btcBal").textContent = `${Number(bal?.btc_sats || 0).toLocaleString()} sats`;
+
+        // ledger (optional)
+        await loadLedger();
+      } catch (e) {
+        showBanner(e?.message || String(e), true);
+      }
     }
 
     async function loadLedger() {
-      const userId = (el("selectedUserId").value || "").trim();
-      if (!userId) return;
+      const uid = selectedUserId;
+      if (!uid) { el("ledger").textContent = "No member selected."; return; }
 
-      const cur = (el("currency").value || "USD").toUpperCase();
-      const { data, error } = await sb.rpc("admin_get_user_ledger", {
-        p_user_id: userId,
-        p_currency: cur,
-        p_limit: 25
+      const cur = el("cur").value;
+      const { data, error } = await sb.rpc("admin_get_user_ledger", { p_user_id: uid, p_currency: cur, p_limit: 25 });
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        el("ledger").textContent = "No ledger entries.";
+        return;
+      }
+
+      const lines = data.map(x => {
+        const amt = (cur === "USD")
+          ? (Number(x.amount_cents || 0) / 100).toLocaleString(undefined, { style:"currency", currency:"USD" })
+          : `${Number(x.amount_sats || 0).toLocaleString()} sats`;
+        return `${x.created_at} | ${x.entry_type} | ${amt} | ${x.reason || ""}`;
       });
 
-      if (error) {
-        setMsg("err", "Ledger load failed: " + error.message);
-        return;
-      }
-
-      const body = el("ledgerBody");
-      const rows = Array.isArray(data) ? data : [];
-      if (rows.length === 0) {
-        body.innerHTML = `<tr><td colspan="5" class="muted">No ledger entries.</td></tr>`;
-        return;
-      }
-
-      body.innerHTML = rows.map(r => {
-        const time = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
-        const amt = r.currency === "USD"
-          ? fmtUsdFromCents(r.amount_units)
-          : fmtSats(r.amount_units);
-
-        return `
-          <tr>
-            <td class="small">${time}</td>
-            <td>${r.currency}</td>
-            <td>${r.entry_type}</td>
-            <td class="mono">${amt}</td>
-            <td>${r.reason}</td>
-          </tr>
-        `;
-      }).join("");
+      el("ledger").innerHTML = `<div class="mono" style="white-space:pre-wrap; line-height:1.5">${lines.join("\n")}</div>`;
     }
 
-    // ======== CREDIT/DEBIT SUBMIT ========
-    async function submitTxn() {
-      const userId = (el("selectedUserId").value || "").trim();
-      if (!userId) { setMsg("err", "Select/paste a user_id first."); return; }
+    async function submitAdjust() {
+      clearBanner();
+      try {
+        await ensureAdmin();
 
-      const currency = (el("currency").value || "USD").toUpperCase();
-      const action = (el("action").value || "credit").toLowerCase();
-      const reason = (el("reason").value || "").trim() || (action === "credit" ? "admin_credit" : "admin_debit");
-      const noteMeta = safeJsonParse(el("note").value);
+        const uid = (el("selectedUserId").value || "").trim();
+        if (!uid) throw new Error("Select a member first.");
 
-      const rawAmount = (el("amount").value || "").trim();
-      if (!rawAmount) { setMsg("err", "Enter an amount."); return; }
+        const currency = el("cur").value;
+        const type = el("type").value; // credit/debit
+        const reason = (el("reason").value || "").trim() || "manual_adjust";
+        const amtRaw = (el("amount").value || "").trim();
 
-      let amountUnits = 0;
+        if (!amtRaw) throw new Error("Enter an amount.");
 
-      if (currency === "USD") {
-        const dollars = Number(rawAmount);
-        if (!Number.isFinite(dollars) || dollars <= 0) { setMsg("err", "USD amount must be a positive number (dollars)."); return; }
-        amountUnits = Math.round(dollars * 100);
-      } else {
-        const sats = Number(rawAmount);
-        if (!Number.isFinite(sats) || sats <= 0 || !Number.isInteger(sats)) { setMsg("err", "BTC amount must be a positive whole number (sats)."); return; }
-        amountUnits = sats;
+        let amountBigInt;
+        if (currency === "USD") {
+          // USD entered as dollars (can include decimals)
+          const dollars = Number(amtRaw);
+          if (!Number.isFinite(dollars)) throw new Error("Invalid USD amount.");
+          amountBigInt = BigInt(Math.round(dollars * 100));
+        } else {
+          // BTC entered as sats integer
+          const sats = Number(amtRaw);
+          if (!Number.isFinite(sats)) throw new Error("Invalid BTC sats.");
+          amountBigInt = BigInt(Math.trunc(sats));
+        }
+
+        let metadata = {};
+        const metaRaw = (el("metadata").value || "").trim();
+        if (metaRaw) {
+          try { metadata = JSON.parse(metaRaw); }
+          catch { throw new Error("Metadata must be valid JSON."); }
+        }
+
+        const fn = (type === "credit") ? "admin_credit_user" : "admin_debit_user";
+
+        const { error } = await sb.rpc(fn, {
+          p_user_id: uid,
+          p_currency: currency,
+          p_amount: amountBigInt.toString(),
+          p_reason: reason,
+          p_metadata: metadata
+        });
+
+        if (error) throw error;
+
+        await loadSelected();
+        showBanner("Success.", false);
+      } catch (e) {
+        showBanner(e?.message || String(e), true);
       }
+    }
 
-      setMsg("", "");
+    async function logout() {
+      await sb.auth.signOut();
+      statusPill.textContent = "Logged out";
+      showBanner("Logged out.", false);
+      membersEl.innerHTML = "";
+    }
 
-      const rpcName = action === "debit" ? "admin_debit_user" : "admin_credit_user";
-      const { data, error } = await sb.rpc(rpcName, {
-        p_user_id: userId,
-        p_currency: currency,
-        p_amount_units: amountUnits,
-        p_reason: reason,
-        p_metadata: noteMeta
-      });
+    // Events
+    el("btnLoadMembers").addEventListener("click", loadMembers);
+    el("btnLoadSelected").addEventListener("click", loadSelected);
+    el("btnSubmit").addEventListener("click", submitAdjust);
+    el("btnRefreshLedger").addEventListener("click", loadLedger);
+    el("btnRefresh").addEventListener("click", () => { loadMembers(); loadSelected(); });
+    el("btnLogout").addEventListener("click", logout);
 
-      if (error) {
-        setMsg("err", "Transaction failed: " + error.message);
+    // Auth restore + rerender
+    sb.auth.onAuthStateChange(async (_event, _session) => {
+      session = _session;
+      if (!session) {
+        statusPill.textContent = "Not logged in";
         return;
       }
-
-      setMsg("ok", `Success: ${rpcName} • ${currency} • ${currency === "USD" ? fmtUsdFromCents(amountUnits) : fmtSats(amountUnits)} • entry/ref: ${data?.entry_id || data?.ref || "ok"}`);
-      await loadBalancesAndLedger();
-    }
-
-    // ======== UI EVENTS ========
-    el("btnLogout").addEventListener("click", async () => {
-      try { await sb.auth.signOut(); } catch {}
-      window.location.href = "admin-confirm.html";
+      // Only run once session exists
+      try {
+        await ensureAdmin();
+        statusPill.textContent = "Admin OK";
+        await loadMembers();
+      } catch (e) {
+        statusPill.textContent = "Not authorized";
+        showBanner(e?.message || String(e), true);
+      }
     });
 
-    el("btnRefresh").addEventListener("click", async () => {
-      setMsg("", "");
-      await boot();
-    });
-
-    el("prevPage").addEventListener("click", async () => {
-      pageOffset = Math.max(0, pageOffset - pageLimit);
-      await loadMembers();
-    });
-
-    el("nextPage").addEventListener("click", async () => {
-      pageOffset = pageOffset + pageLimit;
-      await loadMembers();
-    });
-
-    el("search").addEventListener("input", () => applySearchAndFilter());
-    el("filterActivation").addEventListener("change", () => applySearchAndFilter());
-
-    el("loadBalances").addEventListener("click", async () => {
-      await loadBalancesAndLedger();
-    });
-
-    el("refreshLedger").addEventListener("click", async () => {
-      await loadLedger();
-    });
-
-    el("currency").addEventListener("change", async () => {
-      await loadLedger();
-    });
-
-    el("submitTxn").addEventListener("click", async () => {
-      await submitTxn();
-    });
-
-    // ======== BOOT ========
-    async function boot() {
-      el("sessionPill").textContent = "Checking session…";
-
-      const session = await requireSession();
-      if (!session) return;
-
-      const okAdmin = await requireAdmin();
-      if (!okAdmin) return;
-
-      await loadMembers();
-      setMsg("ok", "Admin console ready.");
-    }
-
-    boot();
+    // Initial load (wait for session hydration!)
+    (async () => {
+      clearBanner();
+      try {
+        statusPill.textContent = "Checking session…";
+        await ensureSessionReady();
+        await ensureAdmin();
+        statusPill.textContent = "Admin OK";
+        await loadMembers();
+      } catch (e) {
+        statusPill.textContent = "Not authorized";
+        showBanner(e?.message || String(e), true);
+      }
+    })();
   </script>
 </body>
 </html>
