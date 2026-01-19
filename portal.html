@@ -1,886 +1,720 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Member Portal — QFS</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Member Portal — QFS</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
 
-  <style>
-    :root{
-      color-scheme: dark;
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-      --bg0:#030816;
-      --bg1:#061a3a;
+<style>
+  :root{
+    --bg:#020617;
+    --text:#e5e7eb;
+    --muted:#9ca3af;
+    --accent:#38bdf8;
+    --accent2:#a855f7;
+    --glass:rgba(15,23,42,0.88);
+    --border:rgba(148,163,184,0.45);
+    --shadow:rgba(2,6,23,0.9);
+    --radius:18px;
+    --maxw:1100px;
 
-      --card: rgba(255,255,255,.08);
-      --card2: rgba(255,255,255,.05);
+    /* tx colors */
+    --tx-green:#22c55e;
+    --tx-red:#ef4444;
+  }
 
-      --stroke: rgba(255,255,255,.12);
-      --stroke2: rgba(255,255,255,.18);
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    padding:24px;
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(circle at top, rgba(56,189,248,0.30), transparent 55%),
+      radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
+      var(--bg);
+  }
 
-      --text:#eaf0ff;
-      --muted: rgba(234,240,255,.75);
-      --muted2: rgba(234,240,255,.55);
+  .wrap{ max-width:var(--maxw); margin:0 auto; position:relative; z-index:1; }
 
-      --accent: rgba(90,140,255,.55);
-      --accent2: rgba(90,140,255,.80);
+  .header,.header-actions,.pill,.badge,#logoutBtn,#refreshBtn{
+    position:relative; z-index:999999; pointer-events:auto !important;
+  }
+  .header{
+    display:flex; justify-content:space-between; align-items:center;
+    gap:14px; margin-bottom:18px;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .logo{
+    width:54px; height:54px; border-radius:14px; object-fit:cover;
+    box-shadow: 0 14px 44px rgba(2,6,23,0.95), 0 0 0 1px rgba(148,163,184,0.35);
+    background: rgba(255,255,255,0.06);
+  }
+  .brand h1{ margin:0; font-size:18px; font-weight:900; letter-spacing:-0.02em; }
+  .brand .subline{
+    font-size:12px; color:var(--muted); display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:2px;
+  }
+  .hello{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 10px; border-radius:999px;
+    border:1px solid rgba(148,163,184,0.25);
+    background:rgba(255,255,255,0.05);
+    color:#dbeafe; font-weight:850; font-size:12px;
+  }
+  .header-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
 
-      --green: #2be6a6;
-      --greenBg: rgba(43,230,166,.15);
-      --red: #ff4b4b;
-      --redBg: rgba(255,75,75,.15);
-      --amber:#ffcc66;
+  .actionBtn{
+    padding:8px 12px; border-radius:999px;
+    border:1px solid rgba(148,163,184,0.35);
+    background:rgba(255,255,255,0.06);
+    color:var(--text); font-weight:900; font-size:12px; cursor:pointer;
+  }
+  #logoutBtn{ background: rgba(255,255,255,0.06); }
+  #refreshBtn{ background: rgba(255,255,255,0.06); }
 
-      --shadow: 0 22px 60px rgba(0,0,0,.55);
+  .badge{
+    padding:6px 10px; border-radius:999px;
+    font-size:11px; font-weight:900; letter-spacing:0.06em; text-transform:uppercase;
+    border:1px solid rgba(148,163,184,0.30);
+    background:rgba(2,6,23,0.40);
+    color:#e5e7eb;
+  }
+  .badge.pending{ border-color: rgba(251,191,36,0.35); color:#fde68a; }
+  .badge.active{ border-color: rgba(34,197,94,0.35); color:#bbf7d0; }
+  .badge.rejected{ border-color: rgba(244,63,94,0.35); color:#fecdd3; }
 
-      --r18: 18px;
-      --r14: 14px;
-      --r12: 12px;
-    }
+  .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+  @media (max-width:860px){ .grid{ grid-template-columns:1fr; } }
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(1100px 520px at 12% 8%, rgba(255,70,70,.22), transparent 58%),
-        radial-gradient(1000px 600px at 88% 15%, rgba(40,230,160,.14), transparent 60%),
-        radial-gradient(1200px 720px at 55% 105%, rgba(90,140,255,.18), transparent 65%),
-        linear-gradient(180deg, var(--bg1), var(--bg0));
-      overflow-x:hidden;
-    }
+  .card{
+    background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.84));
+    border:1px solid var(--border);
+    border-radius:28px;
+    padding:20px;
+    box-shadow: 0 28px 110px var(--shadow);
+    backdrop-filter: blur(26px);
+    position:relative; overflow:hidden; z-index:1;
+  }
+  .card:before{
+    content:""; position:absolute; inset:-120px -120px auto auto;
+    width:320px; height:320px;
+    background: radial-gradient(circle at center, rgba(56,189,248,0.18), transparent 60%);
+    pointer-events:none;
+  }
+  .card h2{ margin:0 0 6px; font-size:16px; font-weight:900; }
+  .sub{ font-size:12px; color:var(--muted); }
 
-    /* Topbar */
-    .topbar{
-      position:sticky; top:0; z-index:50;
-      background: rgba(5,12,30,.72);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255,255,255,.10);
-    }
-    .topbar-inner{
-      max-width: 1160px;
-      margin:0 auto;
-      padding: 14px 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
+  .balance{
+    font-size:34px; font-weight:900; margin:12px 0 4px;
+    background:linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .btc{ font-size:13px; color:#cbd5f5; line-height:1.55; }
 
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width:0;
-    }
-    .logo{
-      width:36px; height:36px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.06);
-      display:flex; align-items:center; justify-content:center;
-      overflow:hidden;
-      flex: 0 0 auto;
-    }
-    .logo img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-    }
-    .brand-text{
-      display:flex; flex-direction:column; gap:2px; min-width:0;
-    }
-    .brand-title{
-      font-weight:900;
-      letter-spacing:.3px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .brand-sub{
-      font-size:12px;
-      color: var(--muted2);
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
+  .actions{ display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; }
+  .btn{
+    flex:1; padding:12px 14px; border-radius:999px; border:none;
+    cursor:pointer; font-weight:900; font-size:13px; letter-spacing:0.04em; position:relative; z-index:2;
+  }
+  .btn-primary{ background:linear-gradient(135deg, var(--accent), var(--accent2)); color:#fff; }
+  .btn-disabled{
+    background:rgba(255,255,255,0.06);
+    border:1px dashed rgba(148,163,184,0.45);
+    color:var(--muted);
+    cursor:not-allowed;
+  }
 
-    .top-actions{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
+  .status{
+    margin-top:10px; padding:10px 12px; border-radius:14px;
+    background:rgba(2,6,23,0.45);
+    border:1px solid rgba(148,163,184,0.35);
+    font-size:12px;
+  }
 
-    .pill{
-      font-size:12px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--stroke2);
-      background: rgba(255,255,255,.06);
-      color: var(--muted);
-      white-space:nowrap;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-    }
-    .dot{
-      width:8px; height:8px;
-      border-radius:999px;
-      background: rgba(255,255,255,.45);
-      box-shadow: 0 0 0 3px rgba(255,255,255,.10);
-    }
-    .pill.ok{ border-color: rgba(43,230,166,.40); background: rgba(43,230,166,.12); color: var(--text); }
-    .pill.ok .dot{ background: var(--green); box-shadow: 0 0 0 3px rgba(43,230,166,.18); }
+  table{ width:100%; border-collapse:collapse; margin-top:10px; font-size:12px; }
+  th, td{ padding:10px 8px; border-bottom:1px solid rgba(148,163,184,0.2); text-align:left; vertical-align:top; }
+  th{ color:var(--muted); font-weight:700; text-transform:uppercase; font-size:11px; }
 
-    .pill.bad{ border-color: rgba(255,75,75,.40); background: rgba(255,75,75,.12); color: var(--text); }
-    .pill.bad .dot{ background: var(--red); box-shadow: 0 0 0 3px rgba(255,75,75,.18); }
+  .mutedline{ color:var(--muted); font-size:12px; margin-top:8px; }
 
-    .btn{
-      cursor:pointer;
-      border-radius: 999px;
-      padding: 10px 14px;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.07);
-      color: var(--text);
-      box-shadow: 0 8px 22px rgba(0,0,0,.25);
-      transition: transform .08s ease, background .15s ease, border-color .15s ease;
-    }
-    .btn:hover{
-      background: rgba(255,255,255,.11);
-      border-color: rgba(255,255,255,.22);
-      transform: translateY(-1px);
-    }
-    .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
-    .btn.primary{
-      border-color: rgba(90,140,255,.35);
-      background: rgba(90,140,255,.18);
-    }
-    .btn.primary:hover{
-      border-color: rgba(90,140,255,.55);
-      background: rgba(90,140,255,.26);
-    }
-    .btn.danger{
-      border-color: rgba(255,75,75,.35);
-      background: rgba(255,75,75,.14);
-    }
-    .btn.danger:hover{
-      border-color: rgba(255,75,75,.55);
-      background: rgba(255,75,75,.20);
-    }
+  /* tx styling */
+  .tx-amt{ font-weight:900; }
+  .tx-credit{ color: var(--tx-green); }
+  .tx-debit{ color: var(--tx-red); }
+  .tx-pill{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:3px 8px; border-radius:999px;
+    border:1px solid rgba(148,163,184,0.28);
+    background: rgba(255,255,255,0.04);
+    font-weight:900; font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+  }
+  .tx-pill.credit{ border-color: rgba(34,197,94,0.35); color:#bbf7d0; }
+  .tx-pill.debit{ border-color: rgba(239,68,68,0.35); color:#fecaca; }
 
-    /* Layout */
-    .wrap{
-      max-width: 1160px;
-      margin: 0 auto;
-      padding: 18px 16px 32px;
-    }
+  /* better mobile */
+  @media (max-width:520px){
+    body{ padding:14px; }
+    .header{ flex-direction:column; align-items:flex-start; }
+    .header-actions{ width:100%; justify-content:space-between; }
+    .logo{ width:46px; height:46px; border-radius:12px; }
+    .balance{ font-size:30px; }
+    .card{ padding:16px; border-radius:24px; }
+    th, td{ padding:9px 6px; }
+  }
 
-    .banner{
-      display:none;
-      margin: 12px 0 0;
-      padding: 12px 14px;
-      border-radius: var(--r14);
-      border:1px solid var(--stroke2);
-      background: rgba(255,255,255,.06);
-      white-space: pre-wrap;
-      line-height:1.35;
-    }
-    .banner.err{ border-color: rgba(255,75,75,.55); background: rgba(255,75,75,.12); }
-    .banner.ok{ border-color: rgba(43,230,166,.45); background: rgba(43,230,166,.10); }
-
-    .grid{
-      margin-top: 16px;
-      display:grid;
-      grid-template-columns: 1.35fr .85fr;
-      gap: 16px;
-      align-items:stretch;
-    }
-
-    .card{
-      border-radius: var(--r18);
-      border: 1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
-      box-shadow: var(--shadow);
-      padding: 16px;
-      min-width:0;
-      position:relative;
-      overflow:hidden;
-    }
-    .card::before{
-      content:"";
-      position:absolute;
-      inset:-60px -60px auto auto;
-      width:240px; height:240px;
-      background: radial-gradient(circle at 30% 30%, rgba(255,70,70,.18), transparent 60%);
-      filter: blur(0px);
-      pointer-events:none;
-    }
-    .card::after{
-      content:"";
-      position:absolute;
-      inset:auto auto -80px -80px;
-      width:280px; height:280px;
-      background: radial-gradient(circle at 60% 40%, rgba(40,230,160,.14), transparent 60%);
-      pointer-events:none;
-    }
-
-    .card h3{
-      margin:0 0 6px;
-      font-size:13px;
-      letter-spacing:.25px;
-      color: var(--muted);
-      font-weight:800;
-      text-transform:uppercase;
-    }
-    .balance{
-      font-size: clamp(30px, 4.5vw, 50px);
-      font-weight: 950;
-      margin: 2px 0 6px;
-      line-height:1.05;
-      letter-spacing: .3px;
-    }
-    .muted{ color: var(--muted); font-size:12px; }
-    .muted2{ color: var(--muted2); font-size:12px; }
-
-    .actions{
-      display:flex;
-      gap:10px;
-      margin-top: 12px;
-      flex-wrap:wrap;
-      position:relative;
-      z-index:1;
-    }
-    .actions .btn{
-      border-radius: 12px;
-      padding: 10px 14px;
-      box-shadow:none;
-    }
-
-    .status-box{
-      margin-top: 14px;
-      border-radius: var(--r14);
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-      padding: 12px;
-      position:relative;
-      z-index:1;
-    }
-
-    .kv{
-      display:grid;
-      grid-template-columns: 110px 1fr;
-      gap: 8px 10px;
-      margin-top: 10px;
-      align-items:center;
-      position:relative;
-      z-index:1;
-    }
-    .k{ color: var(--muted2); font-size:12px; letter-spacing:.2px; }
-    .v{ color: var(--text); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-
-    .full{ margin-top: 16px; }
-    .tx{ margin-top: 12px; display:flex; flex-direction:column; gap:10px; position:relative; z-index:1; }
-
-    .tx-row{
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-      padding: 10px 12px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:space-between;
-    }
-
-    .tx-left{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      min-width:0;
-    }
-
-    .tag{
-      font-size:11px;
-      padding: 4px 9px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: var(--muted);
-      white-space:nowrap;
-    }
-    .tag.credit{ border-color: rgba(43,230,166,.35); background: rgba(43,230,166,.10); color: var(--text); }
-    .tag.debit{ border-color: rgba(255,75,75,.35); background: rgba(255,75,75,.10); color: var(--text); }
-
-    .mono{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size:12px;
-      color: var(--muted);
-      white-space:nowrap;
-    }
-
-    .amount{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 13px;
-      font-weight: 800;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      white-space:nowrap;
-    }
-    .amount.credit{ color: var(--green); border-color: rgba(43,230,166,.35); background: var(--greenBg); }
-    .amount.debit{ color: var(--red); border-color: rgba(255,75,75,.35); background: var(--redBg); }
-
-    /* Modal */
-    .modal-backdrop{
-      position:fixed; inset:0;
-      background: rgba(0,0,0,.65);
-      backdrop-filter: blur(6px);
-      display:none;
-      z-index:100;
-      padding: 18px;
-    }
-    .modal{
-      max-width: 640px;
-      margin: 8vh auto 0;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(10,16,32,.92);
-      box-shadow: 0 30px 90px rgba(0,0,0,.65);
-      overflow:hidden;
-    }
-    .modal-head{
-      padding: 14px 14px 12px;
-      border-bottom: 1px solid rgba(255,255,255,.10);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .modal-title{ font-weight:900; letter-spacing:.2px; }
-    .modal-body{ padding: 14px; }
-    .modal-body p{ margin: 0 0 10px; color: var(--muted); line-height:1.35; }
-    .field{
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.05);
-      border-radius: 14px;
-      padding: 10px 12px;
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:space-between;
-      margin: 10px 0;
-    }
-    .field .val{
-      color: var(--text);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 12px;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-      min-width:0;
-    }
-    .modal-actions{
-      display:flex; gap:10px; flex-wrap:wrap;
-      padding: 0 14px 14px;
-    }
-
-    @media (max-width: 980px){
-      .grid{ grid-template-columns: 1fr; }
-      .kv{ grid-template-columns: 100px 1fr; }
-      .modal{ margin-top: 4vh; }
-    }
-    @media (max-width: 520px){
-      .wrap{ padding: 14px 12px 24px; }
-      .topbar-inner{ padding: 12px 12px; }
-      .kv{ grid-template-columns: 1fr; }
-      .v{ white-space:normal; }
-      .logo{ width:34px; height:34px; }
-    }
-  </style>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  #toast{
+    position:fixed; left:12px; bottom:12px; z-index:9999999;
+    background:rgba(2,6,23,0.75);
+    border:1px solid rgba(148,163,184,0.35);
+    color:#cbd5e1;
+    padding:8px 10px; border-radius:12px; font-size:12px;
+    user-select:none; max-width:min(520px, 92vw); white-space:pre-wrap;
+  }
+  .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+</style>
 </head>
 
 <body>
-  <div class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <div class="logo" id="logoBox" title="Logo">
-          <span style="color:rgba(255,255,255,.65);font-weight:900;">Q</span>
-        </div>
-        <div class="brand-text">
-          <div class="brand-title">Member Portal</div>
-          <div class="brand-sub">QFS NESARA GESARA</div>
-        </div>
-      </div>
+<div class="wrap">
 
-      <div class="top-actions">
-        <span id="statusPill" class="pill"><span class="dot"></span><span>Checking…</span></span>
-        <button id="btnRefresh" class="btn primary">Refresh</button>
-        <button id="btnLogout" class="btn danger">Logout</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="wrap">
-    <div id="banner" class="banner"></div>
-
-    <div class="grid">
-      <div class="card">
-        <h3>Available Balance</h3>
-        <div id="balUSD" class="balance">$0.00</div>
-        <div id="balBTC" class="muted2">0 sats</div>
-
-        <div class="actions">
-          <button id="btnSend" class="btn" disabled>Send</button>
-          <button id="btnReceive" class="btn" disabled>Receive</button>
-        </div>
-
-        <div class="status-box">
-          <div id="activeLine" class="muted">Loading…</div>
-          <div id="lastChecked" class="muted2"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Account Details</h3>
-        <div class="muted2">Your Membership</div>
-
-        <div class="kv">
-          <div class="k">NAME</div><div id="nameVal" class="v">—</div>
-          <div class="k">EMAIL</div><div id="emailVal" class="v">—</div>
-          <div class="k">TIER</div><div id="tierVal" class="v">—</div>
-          <div class="k">QUANTITY</div><div id="qtyVal" class="v">—</div>
-          <div class="k">STATUS</div><div id="statusVal" class="v">—</div>
-        </div>
-
-        <div style="margin-top:12px" class="status-box">
-          <div class="muted">Member ID</div>
-          <div id="uidVal" class="mono" style="margin-top:6px;word-break:break-all;white-space:normal;">—</div>
+  <header class="header">
+    <div class="brand">
+      <img class="logo"
+        src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true"
+        alt="QFS NESARA GESARA"
+        onerror="this.onerror=null; this.src='https://via.placeholder.com/54x54.png?text=QFS';" />
+      <div>
+        <h1>Member Portal</h1>
+        <div class="subline">
+          <span>QFS NESARA GESARA</span>
+          <span class="hello" id="helloName" style="display:none;">Hi, —</span>
         </div>
       </div>
     </div>
 
-    <div class="card full">
-      <h3>Recent Transactions</h3>
-      <div class="muted2">Credits show green, debits show red</div>
-      <div id="tx" class="tx">
-        <div class="muted">Loading…</div>
-      </div>
+    <div class="header-actions">
+      <span id="statusBadge" class="badge pending">Pending</span>
+      <button id="refreshBtn" class="actionBtn" type="button">Refresh</button>
+      <button id="logoutBtn" class="actionBtn" type="button">Logout</button>
     </div>
-  </div>
+  </header>
 
-  <!-- Receive Modal -->
-  <div id="modalReceive" class="modal-backdrop" role="dialog" aria-modal="true">
-    <div class="modal">
-      <div class="modal-head">
-        <div class="modal-title">Receive</div>
-        <button class="btn" id="closeReceive">Close</button>
+  <section class="grid">
+
+    <div class="card">
+      <h2>Available Balance</h2>
+      <div class="sub" id="balanceHelp">Balance becomes active after your card payment is confirmed</div>
+
+      <div class="balance" id="balance">$0.00</div>
+      <div class="btc" id="btcBalance">—</div>
+
+      <div class="actions">
+        <button id="sendBtn" class="btn btn-disabled" disabled>Send</button>
+        <button id="receiveBtn" class="btn btn-disabled" disabled>Receive</button>
       </div>
-      <div class="modal-body">
-        <p>Use the details below to identify your account for deposits/credits.</p>
 
-        <div class="field">
-          <div class="val" id="recvEmail">—</div>
-          <button class="btn primary" id="copyEmail">Copy</button>
-        </div>
-
-        <div class="field">
-          <div class="val" id="recvUid">—</div>
-          <button class="btn primary" id="copyUid">Copy</button>
-        </div>
-
-        <p class="muted2">If you expect BTC deposits, you’ll need a BTC address feature. This portal currently displays balances and history from your database.</p>
+      <div class="status" id="lockNote">
+        🔒 Send & Receive are locked until your account is activated with the QR code at the back of your Card.
       </div>
-      <div class="modal-actions">
-        <button class="btn primary" id="recvDone">Done</button>
-      </div>
+
+      <div class="mutedline" id="lastChecked">Checking status…</div>
     </div>
-  </div>
 
-  <!-- Send Modal -->
-  <div id="modalSend" class="modal-backdrop" role="dialog" aria-modal="true">
-    <div class="modal">
-      <div class="modal-head">
-        <div class="modal-title">Send</div>
-        <button class="btn" id="closeSend">Close</button>
-      </div>
-      <div class="modal-body">
-        <p><b>Send is not wired to transfers yet.</b> Your current backend tables/functions are for admin credit/debit + balances.</p>
-        <p class="muted2">If you want real “send”, you’ll need a transfer table + function (and rules) to move funds between users.</p>
+    <div class="card">
+      <h2>Account Details</h2>
+      <div class="sub">Your Membership</div>
 
-        <div class="status-box" style="margin-top:12px">
-          <div class="muted">What I can implement next (properly):</div>
-          <div class="muted2" style="margin-top:6px;line-height:1.35">
-            • Transfer USD between members (ledger + atomic balance updates)<br/>
-            • BTC transfer support (sats)<br/>
-            • Recipient lookup by email<br/>
-            • Confirmation + limits + receipts
-          </div>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn primary" id="sendOk">OK</button>
-      </div>
+      <table>
+        <tr><th>Name</th><td id="nameCell">—</td></tr>
+        <tr><th>Email</th><td id="emailCell">—</td></tr>
+        <tr><th>Tier</th><td id="tierCell">—</td></tr>
+        <tr><th>Quantity</th><td id="qtyCell">—</td></tr>
+        <tr><th>Status</th><td id="statusCell">Pending</td></tr>
+      </table>
     </div>
-  </div>
 
-  <script>
-    // ========= CONFIG (SET THESE) =========
-    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+    <div class="card" style="grid-column:1 / -1;">
+      <h2>Recent Transactions</h2>
+      <div class="sub">Credits show <span style="color:var(--tx-green);font-weight:900;">green</span>, debits show <span style="color:var(--tx-red);font-weight:900;">red</span></div>
 
-    // Put your logo somewhere public, then set it here.
-    // Examples:
-    // const LOGO_URL = "/logo.png";
-    // const LOGO_URL = "https://your-site.com/assets/logo.png";
-    const LOGO_URL = "/logo.png";
-    // =====================================
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Type</th>
+            <th>Currency</th>
+            <th class="mono">Amount</th>
+          </tr>
+        </thead>
+        <tbody id="ordersBody">
+          <tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
 
-    const el = (id) => document.getElementById(id);
+  </section>
+</div>
 
-    const banner = el("banner");
-    const statusPill = el("statusPill");
+<div id="toast">boot…</div>
 
-    function setPill(text, mode){
-      statusPill.classList.remove("ok","bad");
-      const dot = statusPill.querySelector(".dot");
-      const t = statusPill.querySelector("span:last-child");
-      t.textContent = text;
+<script>
+  const CFG = window.__QFS_CONFIG || {};
+  const SUPABASE_URL = CFG.SUPABASE_URL || "https://qagktukzxtwbjrdgiben.supabase.co";
+  const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "PASTE_ANON_KEY_HERE_IF_NO_CONFIG_JS";
 
-      if (mode === "ok") statusPill.classList.add("ok");
-      if (mode === "bad") statusPill.classList.add("bad");
-      if (!dot) return;
+  const $ = (id) => document.getElementById(id);
+  const toast = $("toast");
+  const say = (t) => { if(toast) toast.textContent = String(t || ""); };
+
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function normTier(v){
+    const s = String(v || "").trim().toLowerCase();
+    return (s === "gold" || s === "silver" || s === "black") ? s : "";
+  }
+
+  function pickNameFromUser(user){
+    const md = user?.user_metadata || {};
+    const raw = md.full_name || md.name || md.first_name || md.username || md.display_name || "";
+    const cleaned = String(raw || "").trim();
+    if(cleaned) return cleaned;
+
+    const email = String(user?.email || "").trim();
+    if(email && email.includes("@")){
+      const left = email.split("@")[0] || "";
+      const pretty = left.replace(/[._-]+/g, " ").replace(/\s+/g, " ").trim();
+      if(pretty) return pretty.charAt(0).toUpperCase() + pretty.slice(1);
     }
+    return "Member";
+  }
 
-    function showBanner(msg, type){
-      banner.style.display = "block";
-      banner.className = "banner" + (type ? (" " + type) : "");
-      banner.textContent = msg;
+  function setBadge(active){
+    const b = $("statusBadge");
+    b.classList.remove("pending","active","rejected");
+    if(active){
+      b.textContent = "Active";
+      b.classList.add("active");
+    } else {
+      b.textContent = "Pending";
+      b.classList.add("pending");
     }
-    function clearBanner(){
-      banner.style.display = "none";
-      banner.textContent = "";
-      banner.className = "banner";
+  }
+
+  function lockActions(){
+    $("sendBtn").disabled = true;
+    $("receiveBtn").disabled = true;
+    $("sendBtn").classList.add("btn-disabled");
+    $("receiveBtn").classList.add("btn-disabled");
+    $("sendBtn").classList.remove("btn-primary");
+    $("receiveBtn").classList.remove("btn-primary");
+    $("lockNote").style.display = "block";
+    $("lockNote").textContent = "🔒 Send & Receive are locked until your account is activated with the QR code at the back of your Card.";
+    $("balanceHelp").style.display = "block";
+  }
+
+  function unlockActions(){
+    $("sendBtn").disabled = false;
+    $("receiveBtn").disabled = false;
+    $("sendBtn").classList.remove("btn-disabled");
+    $("receiveBtn").classList.remove("btn-disabled");
+    $("sendBtn").classList.add("btn-primary");
+    $("receiveBtn").classList.add("btn-primary");
+    $("balanceHelp").style.display = "none";
+    $("lockNote").style.display = "block";
+    $("lockNote").textContent = "✅ Account Active — Send & Receive are unlocked.";
+  }
+
+  function fmtUSD(n){
+    return "$" + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function fmtAmount(currency, amountCents, amountSats){
+    const cur = String(currency || "").toUpperCase();
+    if(cur === "USD"){
+      const cents = Number(amountCents || 0);
+      const usd = cents / 100;
+      return fmtUSD(usd);
     }
-
-    function fmtUSDFromCents(cents){
-      const n = Number(cents || 0) / 100;
-      return n.toLocaleString(undefined, { style:"currency", currency:"USD" });
+    if(cur === "BTC"){
+      const sats = Number(amountSats || 0);
+      return `${sats.toLocaleString()} sats`;
     }
+    return "—";
+  }
 
-    function openModal(id){ el(id).style.display = "block"; }
-    function closeModal(id){ el(id).style.display = "none"; }
-
-    function copyText(txt){
-      return navigator.clipboard.writeText(txt);
+  async function fetchBtcUsd(){
+    try{
+      const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+      const j = await r.json();
+      return Number(j?.bitcoin?.usd || 0);
+    } catch {
+      return 0;
     }
+  }
 
-    function setActiveUI(isActive){
-      if (isActive){
-        setPill("ACTIVE", "ok");
-        el("btnSend").disabled = false;
-        el("btnReceive").disabled = false;
-        el("activeLine").textContent = "Account Active — Send & Receive are unlocked.";
-        el("statusVal").textContent = "Active";
+  function hardToLogin(){
+    try{
+      localStorage.removeItem("qfsEmail");
+      localStorage.removeItem("memberEmail");
+      localStorage.removeItem("qfs_registering_for");
+      localStorage.removeItem("qfs_selected_tier");
+    } catch {}
+    window.location.replace("login.html");
+  }
+
+  function esc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  async function getSessionOrKick(){
+    const { data, error } = await sb.auth.getSession();
+    if(error || !data?.session) return null;
+    return data.session;
+  }
+
+  async function getDbProfileByEmail(email){
+    return await sb
+      .from("portal_users")
+      .select("id, email, tier, selected_tier, qty, is_active")
+      .eq("email", email)
+      .maybeSingle();
+  }
+
+  async function getAccountsByUserId(userId){
+    return await sb
+      .from("portal_accounts")
+      .select("id, currency, balance_cents, balance_sats")
+      .eq("user_id", userId);
+  }
+
+  function getAccount(accounts, currency){
+    const cur = String(currency || "").toUpperCase();
+    return (accounts || []).find(a => String(a.currency || "").toUpperCase() === cur) || null;
+  }
+
+  async function renderBalanceFromDb(tierUpper, accounts){
+    const tier = (tierUpper || "").toUpperCase();
+
+    $("balance").textContent = "$0.00";
+    $("btcBalance").textContent = "—";
+
+    const usdAcc = getAccount(accounts, "USD");
+    const btcAcc = getAccount(accounts, "BTC");
+
+    const btcUsd = await fetchBtcUsd();
+
+    if (tier === "SILVER") {
+      const cents = Number(usdAcc?.balance_cents || 0);
+      const usd = cents / 100;
+      $("balance").textContent = fmtUSD(usd);
+
+      if (btcUsd && usd > 0) {
+        const btcEq = usd / btcUsd;
+        $("btcBalance").textContent = `≈ ${btcEq.toFixed(8)} BTC (live BTC price)`;
       } else {
-        setPill("INACTIVE", "bad");
-        el("btnSend").disabled = true;
-        el("btnReceive").disabled = true;
-        el("activeLine").textContent = "Account Inactive — Send & Receive are locked.";
-        el("statusVal").textContent = "Inactive";
+        $("btcBalance").textContent = "—";
       }
-      el("lastChecked").textContent = "Last checked: " + new Date().toLocaleString();
+      return;
     }
 
-    function isCreditLike(row){
-      const t = String(row.entry_type || row.type || row.kind || row.action || "").toLowerCase();
-      if (t.includes("credit") || t.includes("deposit") || t.includes("add")) return true;
-      if (t.includes("debit") || t.includes("withdraw") || t.includes("subtract")) return false;
+    if (tier === "BLACK") {
+      const sats = Number(btcAcc?.balance_sats || 0);
+      const btc = sats / 1e8;
 
-      // Fall back to amount sign
-      const cents = Number(row.amount_cents ?? row.cents ?? row.amount ?? 0);
-      const sats  = Number(row.amount_sats ?? row.sats ?? 0);
-      if (!Number.isNaN(cents) && cents !== 0) return cents > 0;
-      if (!Number.isNaN(sats) && sats !== 0) return sats > 0;
+      $("balance").textContent = (btc === 0 ? "0 BTC" : `${btc.toLocaleString(undefined, { maximumFractionDigits: 8 })} BTC`);
 
-      return true;
-    }
-
-    function pickTime(row){
-      return row.created_at || row.time || row.ts || row.timestamp || row.inserted_at || null;
-    }
-    function pickCurrency(row){
-      return (row.currency || row.cur || row.asset || row.coin || "").toString().toUpperCase();
-    }
-    function pickReason(row){
-      return row.reason || row.note || row.description || row.memo || row.details || "";
-    }
-    function pickAmountText(row, currency, credit){
-      const sign = credit ? "+" : "-";
-
-      if (currency === "USD"){
-        const cents = Number(row.amount_cents ?? row.cents ?? row.usd_cents ?? row.amount ?? 0);
-        const abs = Math.abs(Number.isFinite(cents) ? cents : 0);
-        return sign + fmtUSDFromCents(abs).replace("$", "$");
+      if (btcUsd && btc > 0) {
+        const usdEq = btc * btcUsd;
+        $("btcBalance").textContent = `≈ ${fmtUSD(usdEq)} (live BTC price)`;
+      } else {
+        $("btcBalance").textContent = "USD equivalent unavailable";
       }
-
-      if (currency === "BTC"){
-        const sats = Number(row.amount_sats ?? row.sats ?? row.btc_sats ?? row.amount ?? 0);
-        const abs = Math.abs(Number.isFinite(sats) ? sats : 0);
-        return sign + abs.toLocaleString() + " sats";
-      }
-
-      // Unknown currency: try generic amount
-      const a = Number(row.amount ?? row.value ?? 0);
-      const abs = Math.abs(Number.isFinite(a) ? a : 0);
-      return sign + abs.toLocaleString();
+      return;
     }
 
-    function renderTx(rows){
-      const tx = el("tx");
-      tx.innerHTML = "";
+    $("btcBalance").textContent = "—";
+  }
 
-      if (!rows || rows.length === 0){
-        tx.innerHTML = `<div class="muted">No transactions.</div>`;
-        return;
-      }
+  function isCreditLike(entryType){
+    const t = String(entryType || "").toLowerCase();
+    if(t.includes("credit")) return true;
+    if(t.includes("debit")) return false;
+    if(t.includes("add")) return true;
+    if(t.includes("sub")) return false;
+    if(t.includes("deposit")) return true;
+    if(t.includes("withdraw")) return false;
+    return null; // unknown
+  }
 
-      for (const r of rows){
-        const credit = isCreditLike(r);
+  function amountWithSign(cur, cents, sats, credit){
+    const base = fmtAmount(cur, cents, sats);
+    if(base === "—") return base;
+    if(credit === true) return "+ " + base;
+    if(credit === false) return "− " + base;
+    return base;
+  }
 
-        const cur = pickCurrency(r) || (r.amount_cents != null ? "USD" : (r.amount_sats != null ? "BTC" : ""));
-        const time = pickTime(r);
-        const reason = pickReason(r);
+  async function loadRecentTransactionsByUserId(userId){
+    const body = $("ordersBody");
+    if(!body) return;
 
-        const row = document.createElement("div");
-        row.className = "tx-row";
+    body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>`;
 
-        const left = document.createElement("div");
-        left.className = "tx-left";
+    // 1) Get this user's account IDs (USD/BTC accounts)
+    const { data: accRows, error: accErr } = await sb
+      .from("portal_accounts")
+      .select("id")
+      .eq("user_id", userId);
 
-        const typ = document.createElement("span");
-        typ.className = "tag " + (credit ? "credit" : "debit");
-        typ.textContent = credit ? "CREDIT" : "DEBIT";
-
-        const curTag = document.createElement("span");
-        curTag.className = "tag";
-        curTag.textContent = (cur || "—");
-
-        const timeEl = document.createElement("span");
-        timeEl.className = "mono";
-        timeEl.textContent = time ? new Date(time).toLocaleString() : "";
-
-        const reasonEl = document.createElement("span");
-        reasonEl.className = "muted";
-        reasonEl.style.maxWidth = "420px";
-        reasonEl.style.overflow = "hidden";
-        reasonEl.style.textOverflow = "ellipsis";
-        reasonEl.style.whiteSpace = "nowrap";
-        reasonEl.textContent = reason || "";
-
-        left.appendChild(typ);
-        left.appendChild(curTag);
-        if (timeEl.textContent) left.appendChild(timeEl);
-        if (reasonEl.textContent) left.appendChild(reasonEl);
-
-        const amt = document.createElement("div");
-        amt.className = "amount " + (credit ? "credit" : "debit");
-        amt.textContent = pickAmountText(r, cur, credit);
-
-        row.appendChild(left);
-        row.appendChild(amt);
-        tx.appendChild(row);
-      }
+    if(accErr){
+      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Transactions blocked (RLS): ${esc(accErr.message)}</td></tr>`;
+      return;
     }
 
-    async function loadAll(sb){
-      clearBanner();
-      setPill("Loading…");
+    const accountIds = (accRows || []).map(r => r.id).filter(Boolean);
 
-      const { data: ses, error: sesErr } = await sb.auth.getSession();
-      if (sesErr) throw sesErr;
+    if(accountIds.length === 0){
+      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No transactions yet.</td></tr>`;
+      return;
+    }
 
-      if (!ses.session){
-        setPill("Not logged in", "bad");
-        showBanner("You are not logged in on this domain.\nLog in first, then refresh.", "err");
-        return;
-      }
+    // 2) Pull ledger entries for those accounts
+    // IMPORTANT: We query by account_id (NOT portal_ledger.user_id).
+    // We also try a fallback select if your column names differ.
+    let rows = null;
+    let lastErr = null;
 
-      const user = ses.session.user;
-      const uid = user.id;
-      const email = user.email || "";
+    // Attempt A (expected)
+    {
+      const { data, error } = await sb
+        .from("portal_ledger")
+        .select("created_at, entry_type, currency, amount_cents, amount_sats, reason, account_id")
+        .in("account_id", accountIds)
+        .order("created_at", { ascending:false })
+        .limit(25);
 
-      el("uidVal").textContent = uid || "—";
-      el("emailVal").textContent = email || "—";
-      el("nameVal").textContent =
-        user.user_metadata?.name ||
-        user.user_metadata?.full_name ||
-        "—";
+      if(!error){ rows = data || []; }
+      else { lastErr = error; }
+    }
 
-      // Wire modal details
-      el("recvEmail").textContent = email || "—";
-      el("recvUid").textContent = uid || "—";
-
-      // 1) portal_users by email
-      let portalUser = null;
-      try{
+    // Attempt B fallback (some schemas use "type" instead of "entry_type")
+    if(rows === null){
+      const msg = String(lastErr?.message || "");
+      if(msg.toLowerCase().includes("entry_type") || msg.toLowerCase().includes("column")){
         const { data, error } = await sb
-          .from("portal_users")
-          .select("id,email,tier,qty,is_active,selected_tier,balance_label")
-          .eq("email", email)
-          .maybeSingle();
-
-        if (error) throw error;
-        portalUser = data;
-      } catch(e){
-        console.error("portal_users load failed:", e);
-        showBanner(
-          "Could not load portal_users row.\nThis is usually RLS or missing row.\n\n" +
-          "Details: " + (e?.message || String(e)),
-          "err"
-        );
-      }
-
-      if (portalUser){
-        el("tierVal").textContent = portalUser.tier || portalUser.selected_tier || "—";
-        el("qtyVal").textContent = (portalUser.qty ?? "—");
-        setActiveUI(!!portalUser.is_active);
-      } else {
-        el("tierVal").textContent = "—";
-        el("qtyVal").textContent = "—";
-        setActiveUI(false);
-      }
-
-      // 2) portal_accounts balances by auth.uid()
-      let usdCents = 0;
-      let btcSats = 0;
-
-      try{
-        const { data: accts, error: acctErr } = await sb
-          .from("portal_accounts")
-          .select("currency,balance_cents,balance_sats")
-          .eq("user_id", uid);
-
-        if (acctErr) throw acctErr;
-
-        for (const a of (accts || [])){
-          const cur = String(a.currency || "").toUpperCase();
-          if (cur === "USD") usdCents = Number(a.balance_cents || 0);
-          if (cur === "BTC") btcSats = Number(a.balance_sats || 0);
-        }
-      } catch(e){
-        console.error("portal_accounts load failed:", e);
-        showBanner(
-          (banner.style.display === "block" ? banner.textContent + "\n\n" : "") +
-          "Could not load portal_accounts.\nDetails: " + (e?.message || String(e)),
-          "err"
-        );
-      }
-
-      el("balUSD").textContent = fmtUSDFromCents(usdCents);
-      el("balBTC").textContent = `${btcSats.toLocaleString()} sats`;
-
-      // 3) portal_ledger (ROBUST): select('*') + map fields
-      try{
-        const { data: rows, error: ledErr } = await sb
           .from("portal_ledger")
-          .select("*")
-          .eq("user_id", uid)
-          .order("created_at", { ascending: false })
+          .select("created_at, type, currency, amount_cents, amount_sats, reason, account_id")
+          .in("account_id", accountIds)
+          .order("created_at", { ascending:false })
           .limit(25);
 
-        if (ledErr) throw ledErr;
-        renderTx(rows || []);
-      } catch(e){
-        console.error("portal_ledger load failed:", e);
-        el("tx").innerHTML = `<div class="muted">Ledger failed to load.</div>`;
-        // Show the REAL reason so we can fix it fast (schema or RLS)
-        showBanner(
-          (banner.style.display === "block" ? banner.textContent + "\n\n" : "") +
-          "Ledger error:\n" + (e?.message || String(e)),
-          "err"
-        );
+        if(!error){
+          // normalize to entry_type
+          rows = (data || []).map(r => ({ ...r, entry_type: r.type }));
+          lastErr = null;
+        } else {
+          lastErr = error;
+        }
       }
-
-      // Final pill state
-      if (portalUser?.is_active) setPill("ACTIVE", "ok");
-      else setPill("READY");
     }
 
-    async function main(){
-      // Logo
-      if (LOGO_URL && typeof LOGO_URL === "string"){
-        const logoBox = el("logoBox");
-        logoBox.innerHTML = "";
-        const img = document.createElement("img");
-        img.src = LOGO_URL;
-        img.alt = "Logo";
-        img.onerror = () => {
-          logoBox.innerHTML = `<span style="color:rgba(255,255,255,.65);font-weight:900;">Q</span>`;
-        };
-        logoBox.appendChild(img);
+    if(rows === null){
+      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Ledger failed to load: ${esc(lastErr?.message || "Unknown error")}</td></tr>`;
+      return;
+    }
+
+    if(!rows || rows.length === 0){
+      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No transactions yet.</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = "";
+    rows.forEach(r => {
+      const dt = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
+      const desc = String(r.reason || "—");
+      const typeRaw = String(r.entry_type || "—");
+      const type = typeRaw.toLowerCase();
+      const cur = String(r.currency || "—").toUpperCase();
+
+      const creditLike = isCreditLike(typeRaw);
+      const signedAmt = amountWithSign(cur, r.amount_cents, r.amount_sats, creditLike);
+
+      const pill = (creditLike === true)
+        ? `<span class="tx-pill credit">credit</span>`
+        : (creditLike === false)
+          ? `<span class="tx-pill debit">debit</span>`
+          : `<span class="tx-pill">entry</span>`;
+
+      const amtClass = (creditLike === true)
+        ? "tx-amt tx-credit mono"
+        : (creditLike === false)
+          ? "tx-amt tx-debit mono"
+          : "tx-amt mono";
+
+      body.insertAdjacentHTML("beforeend", `
+        <tr>
+          <td>${esc(dt)}</td>
+          <td>${esc(desc)}</td>
+          <td>${pill} <span style="opacity:.85;margin-left:6px;">${esc(type)}</span></td>
+          <td>${esc(cur)}</td>
+          <td class="${amtClass}">${esc(signedAmt)}</td>
+        </tr>
+      `);
+    });
+  }
+
+  async function refreshUI(profile, userId){
+    const now = new Date();
+    $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
+
+    const tier = (profile?.tier || profile?.selected_tier || "").toUpperCase();
+    let qty = Number(profile?.qty || 0) || 0;
+
+    if (tier === "BLACK") qty = 1;
+    if (!Number.isFinite(qty) || qty < 1) qty = 1;
+
+    $("tierCell").textContent = tier || "—";
+    $("qtyCell").textContent = String(qty);
+
+    const isActive = profile?.is_active === true;
+    $("statusCell").textContent = isActive ? "Active" : "Pending";
+    setBadge(isActive);
+
+    if(isActive) unlockActions();
+    else lockActions();
+
+    const { data: accounts, error: accErr } = await getAccountsByUserId(userId);
+    if(accErr){
+      $("balance").textContent = "$0.00";
+      $("btcBalance").textContent = "Balance blocked (RLS)";
+      return;
+    }
+
+    await renderBalanceFromDb(tier, accounts || []);
+  }
+
+  $("sendBtn").addEventListener("click", () => {
+    alert("Send is enabled for Active accounts. (Next step: build real Send flow.)");
+  });
+  $("receiveBtn").addEventListener("click", () => {
+    alert("Receive is enabled for Active accounts. (Next step: build real Receive flow.)");
+  });
+
+  $("logoutBtn").addEventListener("click", async () => {
+    say("Signing out…");
+    try{ await sb.auth.signOut(); } catch {}
+    hardToLogin();
+  });
+
+  // Manual refresh
+  $("refreshBtn").addEventListener("click", async () => {
+    try{
+      $("refreshBtn").disabled = true;
+      say("Refreshing…");
+      const session = await getSessionOrKick();
+      if(!session) return hardToLogin();
+      const email = (session.user?.email || "").trim().toLowerCase();
+      const userId = session.user?.id;
+      if(!email || !userId) return hardToLogin();
+
+      const { data: profile } = await getDbProfileByEmail(email);
+      if(profile){
+        const t2 = normTier(profile.tier) || normTier(profile.selected_tier);
+        if(t2 === "gold") return window.location.replace("portal-gold.html");
+        await refreshUI(profile, userId);
+        await loadRecentTransactionsByUserId(userId);
+      }
+      say("Refreshed ✅");
+    } catch(e){
+      say("Refresh error: " + (e?.message || e));
+    } finally {
+      $("refreshBtn").disabled = false;
+    }
+  });
+
+  (async () => {
+    try{
+      say("Checking session…");
+      const session = await getSessionOrKick();
+      if(!session) return hardToLogin();
+
+      const user = session.user || {};
+      const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
+      if(!verifiedAt){
+        try{ await sb.auth.signOut(); } catch {}
+        return window.location.replace("login.html?msg=verify_email");
       }
 
-      // Config check
-      if (SUPABASE_URL.includes("YOUR_SUPABASE") || SUPABASE_ANON_KEY.includes("YOUR_SUPABASE")){
-        setPill("CONFIG", "bad");
-        showBanner("Portal config missing.\nSet SUPABASE_URL and SUPABASE_ANON_KEY inside portal.html.", "err");
+      const email = (user.email || "").trim().toLowerCase();
+      const userId = user.id;
+      if(!email || !userId) return hardToLogin();
+
+      const name = pickNameFromUser(user);
+      $("nameCell").textContent = name;
+      const hello = $("helloName");
+      if(hello){
+        hello.style.display = "inline-flex";
+        hello.textContent = "Hi, " + name;
+      }
+
+      $("emailCell").textContent = email;
+      try{
+        localStorage.setItem("qfsEmail", email);
+        localStorage.setItem("memberEmail", email);
+      } catch {}
+
+      say("Fetching profile…");
+      const { data: profile, error } = await getDbProfileByEmail(email);
+
+      if(error){
+        say("Profile SELECT blocked (RLS). portal_users read policy must allow this email.");
+        lockActions();
         return;
       }
 
-      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      if(!profile){
+        say("No profile row → registration");
+        return window.location.replace("registration.html");
+      }
 
-      // Buttons
-      el("btnRefresh").onclick = () => loadAll(sb);
+      const effectiveTier = normTier(profile.tier) || normTier(profile.selected_tier);
+      if(effectiveTier === "gold"){
+        say("Gold detected → redirect portal-gold.html");
+        return window.location.replace("portal-gold.html");
+      }
 
-      el("btnLogout").onclick = async () => {
-        await sb.auth.signOut();
-        setPill("Logged out");
-        showBanner("Logged out.", "ok");
-      };
+      await refreshUI(profile, userId);
+      await loadRecentTransactionsByUserId(userId);
+      say("Loaded ✅");
 
-      // Modals
-      el("btnReceive").onclick = () => openModal("modalReceive");
-      el("closeReceive").onclick = () => closeModal("modalReceive");
-      el("recvDone").onclick = () => closeModal("modalReceive");
-      el("modalReceive").addEventListener("click", (e) => {
-        if (e.target === el("modalReceive")) closeModal("modalReceive");
-      });
+      setInterval(async () => {
+        const { data: p2 } = await getDbProfileByEmail(email);
+        if(p2){
+          const t2 = normTier(p2.tier) || normTier(p2.selected_tier);
+          if(t2 === "gold") return window.location.replace("portal-gold.html");
+          await refreshUI(p2, userId);
+          await loadRecentTransactionsByUserId(userId);
+        }
+      }, 20000);
 
-      el("btnSend").onclick = () => openModal("modalSend");
-      el("closeSend").onclick = () => closeModal("modalSend");
-      el("sendOk").onclick = () => closeModal("modalSend");
-      el("modalSend").addEventListener("click", (e) => {
-        if (e.target === el("modalSend")) closeModal("modalSend");
-      });
-
-      el("copyEmail").onclick = async () => {
-        const t = el("recvEmail").textContent || "";
-        await copyText(t);
-        showBanner("Copied email.", "ok");
-        setTimeout(clearBanner, 1200);
-      };
-      el("copyUid").onclick = async () => {
-        const t = el("recvUid").textContent || "";
-        await copyText(t);
-        showBanner("Copied Member ID.", "ok");
-        setTimeout(clearBanner, 1200);
-      };
-
-      // Initial load
-      await loadAll(sb);
+    } catch(e){
+      say("Boot error: " + (e?.message || e));
     }
+  })();
+</script>
 
-    main().catch((e) => {
-      console.error(e);
-      setPill("ERROR", "bad");
-      showBanner(e?.message || String(e), "err");
-    });
-  </script>
 </body>
 </html>
