@@ -26,7 +26,6 @@
       --r14: 14px;
       --r12: 12px;
     }
-
     *{ box-sizing:border-box; }
     body{
       margin:0;
@@ -57,26 +56,9 @@
       align-items:center;
       justify-content:space-between;
     }
-    .brand{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-      min-width:0;
-    }
-    .brand .title{
-      font-weight:800;
-      letter-spacing:.2px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .brand .sub{
-      font-size:12px;
-      color: var(--muted2);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
+    .brand{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .brand .title{ font-weight:800; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .brand .sub{ font-size:12px; color: var(--muted2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
     .top-actions{
       display:flex;
@@ -110,11 +92,7 @@
     button:hover{ background: rgba(90,140,255,.28); border-color: var(--blue2); }
     button:disabled{ opacity:.5; cursor:not-allowed; }
 
-    .wrap{
-      max-width:1100px;
-      margin: 0 auto;
-      padding: 18px;
-    }
+    .wrap{ max-width:1100px; margin: 0 auto; padding: 18px; }
 
     .banner{
       display:none;
@@ -123,11 +101,9 @@
       border-radius: var(--r14);
       border:1px solid var(--stroke2);
       background: rgba(255,255,255,.06);
+      white-space: pre-wrap;
     }
-    .banner.err{
-      border-color: var(--red);
-      background: rgba(255,80,80,.10);
-    }
+    .banner.err{ border-color: var(--red); background: rgba(255,80,80,.10); }
 
     .grid{
       margin-top: 16px;
@@ -146,30 +122,12 @@
       min-width:0;
     }
 
-    .card h3{
-      margin:0 0 6px;
-      font-size:14px;
-      letter-spacing:.2px;
-      color: var(--muted);
-      font-weight:700;
-    }
-
-    .balance{
-      font-size: clamp(26px, 4vw, 44px);
-      font-weight: 900;
-      margin: 2px 0 8px;
-      line-height:1.05;
-    }
-
+    .card h3{ margin:0 0 6px; font-size:14px; letter-spacing:.2px; color: var(--muted); font-weight:700; }
+    .balance{ font-size: clamp(26px, 4vw, 44px); font-weight: 900; margin: 2px 0 8px; line-height:1.05; }
     .muted{ color: var(--muted); font-size:12px; }
     .muted2{ color: var(--muted2); font-size:12px; }
 
-    .actions{
-      display:flex;
-      gap:10px;
-      margin-top: 12px;
-      flex-wrap:wrap;
-    }
+    .actions{ display:flex; gap:10px; margin-top: 12px; flex-wrap:wrap; }
     .actions button{
       border-radius: 12px;
       padding: 10px 14px;
@@ -197,16 +155,9 @@
     .k{ color: var(--muted2); font-size:12px; }
     .v{ color: var(--text); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-    .full{
-      margin-top: 16px;
-    }
+    .full{ margin-top: 16px; }
+    .tx{ margin-top: 12px; display:flex; flex-direction:column; gap:10px; }
 
-    .tx{
-      margin-top: 12px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
     .tx-row{
       border-radius: 12px;
       border: 1px solid rgba(255,255,255,.10);
@@ -218,13 +169,7 @@
       align-items:center;
       justify-content:space-between;
     }
-    .tx-left{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      min-width:0;
-    }
+    .tx-left{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; min-width:0; }
     .tag{
       font-size:11px;
       padding: 4px 8px;
@@ -241,7 +186,6 @@
       white-space:nowrap;
     }
 
-    /* Responsive */
     @media (max-width: 980px){
       .grid{ grid-template-columns: 1fr; }
       .kv{ grid-template-columns: 100px 1fr; }
@@ -277,11 +221,10 @@
     <div id="banner" class="banner"></div>
 
     <div class="grid">
-      <!-- LEFT: Balance -->
       <div class="card">
         <h3>Available Balance</h3>
-        <div id="bal" class="balance">$0.00</div>
-        <div id="btcLine" class="muted2">—</div>
+        <div id="balUSD" class="balance">$0.00</div>
+        <div id="balBTC" class="muted2">0 sats</div>
 
         <div class="actions">
           <button id="btnSend" disabled>Send</button>
@@ -294,7 +237,6 @@
         </div>
       </div>
 
-      <!-- RIGHT: Account details -->
       <div class="card">
         <h3>Account Details</h3>
         <div class="muted2">Your Membership</div>
@@ -309,7 +251,6 @@
       </div>
     </div>
 
-    <!-- FULL WIDTH: Recent transactions -->
     <div class="card full">
       <h3>Recent Transactions</h3>
       <div class="muted2">Your recent account activity</div>
@@ -320,18 +261,14 @@
   </div>
 
   <script>
-    // ========= CONFIG (fill these) =========
-    const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
-    // ======================================
-
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // ========= CONFIG (SET THESE) =========
+    const SUPABASE_URL = "YOUR_SUPABASE_URL";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    // =====================================
 
     const el = (id) => document.getElementById(id);
     const banner = el("banner");
     const statusPill = el("statusPill");
-
-    let session = null;
 
     function showBanner(msg, isErr=false){
       banner.style.display = "block";
@@ -343,12 +280,9 @@
       banner.textContent = "";
     }
 
-    async function ensureSessionReady(){
-      const { data, error } = await sb.auth.getSession();
-      if (error) throw error;
-      session = data.session;
-      if (!session) throw new Error("Not authenticated (no session).");
-      return session;
+    function fmtUSDFromCents(cents){
+      const n = Number(cents || 0) / 100;
+      return n.toLocaleString(undefined, { style:"currency", currency:"USD" });
     }
 
     function setActiveUI(isActive){
@@ -389,15 +323,15 @@
 
         const tag = document.createElement("span");
         tag.className = "tag";
-        tag.textContent = (r.entry_type || "entry").toUpperCase();
+        tag.textContent = String(r.entry_type || r.type || "entry").toUpperCase();
 
         const cur = document.createElement("span");
         cur.className = "tag";
-        cur.textContent = (r.currency || "").toUpperCase();
+        cur.textContent = String(r.currency || "").toUpperCase();
 
         const time = document.createElement("span");
         time.className = "mono";
-        time.textContent = r.created_at || "";
+        time.textContent = r.created_at ? new Date(r.created_at).toLocaleString() : "";
 
         const reason = document.createElement("span");
         reason.className = "muted";
@@ -405,7 +339,7 @@
         reason.style.overflow = "hidden";
         reason.style.textOverflow = "ellipsis";
         reason.style.whiteSpace = "nowrap";
-        reason.textContent = r.reason || "";
+        reason.textContent = r.reason || r.note || "";
 
         left.appendChild(tag);
         left.appendChild(cur);
@@ -415,9 +349,8 @@
         const right = document.createElement("div");
         right.className = "mono";
 
-        if ((r.currency || "").toUpperCase() === "USD"){
-          const usd = Number(r.amount_cents || 0) / 100;
-          right.textContent = usd.toLocaleString(undefined, { style:"currency", currency:"USD" });
+        if (String(r.currency || "").toUpperCase() === "USD"){
+          right.textContent = fmtUSDFromCents(r.amount_cents);
         } else {
           right.textContent = `${Number(r.amount_sats || 0).toLocaleString()} sats`;
         }
@@ -428,93 +361,137 @@
       }
     }
 
-    async function loadPortal(){
+    async function main(){
       clearBanner();
 
-      await ensureSessionReady();
+      if (SUPABASE_URL.includes("YOUR_SUPABASE") || SUPABASE_ANON_KEY.includes("YOUR_SUPABASE")){
+        statusPill.textContent = "CONFIG";
+        statusPill.classList.add("bad");
+        showBanner("Portal config missing.\nSet SUPABASE_URL and SUPABASE_ANON_KEY inside portal.html.", true);
+        return;
+      }
 
-      const uid = session.user.id;
-      const email = session.user.email;
+      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      // Always check session first
+      const { data: ses, error: sesErr } = await sb.auth.getSession();
+      if (sesErr) throw sesErr;
+
+      if (!ses.session){
+        statusPill.textContent = "Not logged in";
+        statusPill.classList.remove("ok","bad");
+        showBanner("You are not logged in on this domain.\nLog in first, then refresh this page.", true);
+        return;
+      }
+
+      const user = ses.session.user;
+      const uid = user.id;
+      const email = user.email || "";
 
       el("emailVal").textContent = email || "—";
       el("nameVal").textContent =
-        session.user.user_metadata?.name ||
-        session.user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.user_metadata?.full_name ||
         "—";
 
-      // portal user row
-      const { data: userRow, error } = await sb
-        .from("portal_users")
-        .select("id,email,tier,qty,is_active")
-        .eq("id", uid)
-        .maybeSingle();
+      statusPill.textContent = "Loading…";
 
-      if (error) throw error;
-
-      el("tierVal").textContent = userRow?.tier || "—";
-      el("qtyVal").textContent = (userRow?.qty ?? "—");
-      setActiveUI(!!userRow?.is_active);
-
-      // balances (optional RPCs — safe if they don't exist)
+      // 1) portal_users: your policies showed it often gates by email, so query by email
+      let portalUser = null;
       try{
-        const { data: bal } = await sb.rpc("get_my_balances");
-        if (bal){
-          const usd = Number(bal.usd_cents || 0) / 100;
-          el("bal").textContent = usd.toLocaleString(undefined, { style:"currency", currency:"USD" });
-          el("btcLine").textContent = `${Number(bal.btc_sats || 0).toLocaleString()} sats`;
+        const { data, error } = await sb
+          .from("portal_users")
+          .select("id,email,tier,qty,is_active,selected_tier,balance_label")
+          .eq("email", email)
+          .maybeSingle();
+
+        if (error) throw error;
+        portalUser = data;
+      } catch(e){
+        // If this fails, we still show balances and basic auth info
+        console.error("portal_users load failed:", e);
+        showBanner(
+          "Could not load portal_users row (RLS or missing row).\n\n" +
+          "If this is a new user, you likely need a server-side signup trigger that inserts portal_users.\n" +
+          "Error: " + (e?.message || String(e)),
+          true
+        );
+      }
+
+      if (portalUser){
+        el("tierVal").textContent = portalUser.tier || portalUser.selected_tier || "—";
+        el("qtyVal").textContent = (portalUser.qty ?? "—");
+        setActiveUI(!!portalUser.is_active);
+      } else {
+        el("tierVal").textContent = "—";
+        el("qtyVal").textContent = "—";
+        setActiveUI(false);
+      }
+
+      // 2) portal_accounts balances (these are driven by your admin_credit_user/admin_debit_user flow)
+      let usdCents = 0;
+      let btcSats = 0;
+
+      try{
+        const { data: accts, error: acctErr } = await sb
+          .from("portal_accounts")
+          .select("currency,balance_cents,balance_sats")
+          .eq("user_id", uid);
+
+        if (acctErr) throw acctErr;
+
+        for (const a of (accts || [])){
+          const cur = String(a.currency || "").toUpperCase();
+          if (cur === "USD") usdCents = Number(a.balance_cents || 0);
+          if (cur === "BTC") btcSats = Number(a.balance_sats || 0);
         }
-      }catch(_){ /* ignore */ }
-
-      // ledger (optional RPC)
-      try{
-        const { data: tx } = await sb.rpc("get_my_ledger", { p_limit: 10 });
-        renderTx(tx || []);
-      }catch(_){
-        el("tx").innerHTML = `<div class="muted">—</div>`;
-      }
-    }
-
-    async function logout(){
-      await sb.auth.signOut();
-      statusPill.textContent = "Logged out";
-      statusPill.classList.remove("ok","bad");
-      showBanner("Logged out.", false);
-    }
-
-    el("btnLogout").addEventListener("click", logout);
-
-    // React to auth changes (important on refresh)
-    sb.auth.onAuthStateChange(async (_event, _session) => {
-      session = _session;
-      if (!session){
-        statusPill.textContent = "Not logged in";
-        statusPill.classList.remove("ok","bad");
-        return;
-      }
-      try{
-        statusPill.textContent = "Loading…";
-        await loadPortal();
       } catch(e){
-        statusPill.textContent = "ERROR";
-        statusPill.classList.add("bad");
-        showBanner(e?.message || String(e), true);
-        console.error(e);
+        console.error("portal_accounts load failed:", e);
+        showBanner(
+          (banner.style.display === "block" ? banner.textContent + "\n\n" : "") +
+          "Could not load portal_accounts (RLS or table mismatch).\nError: " + (e?.message || String(e)),
+          true
+        );
       }
+
+      el("balUSD").textContent = fmtUSDFromCents(usdCents);
+      el("balBTC").textContent = `${btcSats.toLocaleString()} sats`;
+
+      // 3) portal_ledger (best effort; if your columns differ we won’t crash the whole portal)
+      try{
+        const { data: rows, error: ledErr } = await sb
+          .from("portal_ledger")
+          .select("created_at,currency,entry_type,type,amount_cents,amount_sats,reason,note")
+          .eq("user_id", uid)
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        if (ledErr) throw ledErr;
+        renderTx(rows || []);
+      } catch(e){
+        console.error("portal_ledger load failed:", e);
+        el("tx").innerHTML = `<div class="muted">Could not load ledger.</div>`;
+      }
+
+      // Logout
+      el("btnLogout").onclick = async () => {
+        await sb.auth.signOut();
+        statusPill.textContent = "Logged out";
+        statusPill.classList.remove("ok","bad");
+        showBanner("Logged out.", false);
+      };
+
+      // Final
+      statusPill.textContent = portalUser?.is_active ? "ACTIVE" : "READY";
+      if (portalUser?.is_active) statusPill.classList.add("ok");
+    }
+
+    main().catch((e) => {
+      console.error(e);
+      statusPill.textContent = "ERROR";
+      statusPill.classList.add("bad");
+      showBanner(e?.message || String(e), true);
     });
-
-    // Initial load
-    (async () => {
-      try{
-        statusPill.textContent = "Loading…";
-        await loadPortal();
-      } catch(e){
-        statusPill.textContent = "Not logged in";
-        statusPill.classList.remove("ok","bad");
-        // Don't spam a scary banner if user is simply logged out
-        console.error(e);
-      }
-    })();
   </script>
 </body>
 </html>
-
