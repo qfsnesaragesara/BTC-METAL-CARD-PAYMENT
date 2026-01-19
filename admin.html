@@ -20,17 +20,13 @@
     --good:#22c55e;
     --bad:#ef4444;
     --warn:#f59e0b;
-    --glass:rgba(15,23,42,0.88);
     --border:rgba(148,163,184,0.45);
     --shadow:rgba(2,6,23,0.92);
-    --radius:18px;
     --maxw:1200px;
   }
   *{box-sizing:border-box}
   body{
-    margin:0;
-    min-height:100vh;
-    padding:24px;
+    margin:0; min-height:100vh; padding:24px;
     font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     color:var(--text);
     background:
@@ -38,7 +34,7 @@
       radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
       var(--bg);
   }
-  .wrap{ max-width:var(--maxw); margin:0 auto; position:relative; z-index:1; }
+  .wrap{ max-width:var(--maxw); margin:0 auto; }
 
   .header{
     display:flex; justify-content:space-between; align-items:center;
@@ -80,11 +76,16 @@
   .btn-primary{ background:linear-gradient(135deg, var(--accent), var(--accent2)); border:none; }
   .btn-danger{ border-color: rgba(239,68,68,0.35); color:#fecdd3; }
 
-  .grid{
-    display:grid;
-    grid-template-columns: 1.05fr 1fr;
-    gap:16px;
+  .banner{
+    display:none; margin-bottom:12px;
+    padding:10px 12px; border-radius:14px;
+    background:rgba(2,6,23,0.45);
+    border:1px solid rgba(239,68,68,0.35);
+    color:#fecdd3;
+    white-space:pre-wrap;
   }
+
+  .grid{ display:grid; grid-template-columns: 1.05fr 1fr; gap:16px; }
   @media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
 
   .card{
@@ -94,7 +95,7 @@
     padding:18px;
     box-shadow: 0 28px 110px var(--shadow);
     backdrop-filter: blur(26px);
-    position:relative; overflow:hidden; z-index:1;
+    position:relative; overflow:hidden;
   }
   .card:before{
     content:""; position:absolute; inset:-120px -120px auto auto;
@@ -104,17 +105,6 @@
   }
   h2{ margin:0 0 6px; font-size:15px; font-weight:900; }
   .sub{ font-size:12px; color:var(--muted); }
-
-  .banner{
-    display:none;
-    margin-bottom:12px;
-    padding:10px 12px;
-    border-radius:14px;
-    background:rgba(2,6,23,0.45);
-    border:1px solid rgba(239,68,68,0.35);
-    color:#fecdd3;
-    white-space:pre-wrap;
-  }
 
   .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
   input, select, textarea{
@@ -148,10 +138,7 @@
   .memberRow.active{ outline:1px solid rgba(56,189,248,0.35); background:rgba(56,189,248,0.06); }
 
   .balances{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:10px;
-    margin-top:10px;
+    display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;
   }
   @media (max-width:540px){ .balances{ grid-template-columns:1fr; } }
   .balanceBox{
@@ -197,7 +184,7 @@
     border:1px solid rgba(148,163,184,0.35);
     color:#cbd5e1;
     padding:8px 10px; border-radius:12px; font-size:12px;
-    user-select:none; max-width:min(720px, 92vw); white-space:pre-wrap;
+    user-select:none; max-width:min(760px, 92vw); white-space:pre-wrap;
   }
 </style>
 </head>
@@ -372,6 +359,7 @@
   const SUPABASE_URL = CFG.SUPABASE_URL || "https://qagktukzxtwbjrdgiben.supabase.co";
   const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "PASTE_ANON_KEY_HERE_IF_NO_CONFIG_JS";
 
+  // Use Supabase client for AUTH only.
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const $ = (id) => document.getElementById(id);
@@ -416,17 +404,40 @@
     try { return JSON.parse(raw); } catch { return { note: raw }; }
   }
 
+  // --------- CRITICAL: RPC with explicit Authorization header ----------
+  async function rpc(name, args){
+    const { data: sdata, error: serr } = await sb.auth.getSession();
+    if(serr || !sdata?.session) throw new Error("No session. Please log in again.");
+    const token = sdata.session.access_token;
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(args || {})
+    });
+
+    const text = await res.text();
+    let json = null;
+    try { json = text ? JSON.parse(text) : null; } catch { json = null; }
+
+    if(!res.ok){
+      const msg = json?.message || json?.error || text || `RPC ${name} failed (${res.status})`;
+      const code = json?.code ? ` [${json.code}]` : "";
+      throw new Error(`${msg}${code}`);
+    }
+    return json; // PostgREST returns JSON
+  }
+  // -------------------------------------------------------------------
+
   let SESSION_USER = null;
   let PAGE_OFFSET = 0;
   const PAGE_LIMIT = 25;
 
-  let SELECTED = {
-    user_id: null,
-    email: null,
-    tier: null,
-    qty: null,
-    is_active: false
-  };
+  let SELECTED = { user_id:null, is_active:false };
 
   function setToggle(on){
     const t = $("activationToggle");
@@ -438,19 +449,14 @@
     $("activationHint").textContent = on ? "Member is activated." : "Member is pending (locked).";
   }
 
-  async function requireSession(){
-    const { data, error } = await sb.auth.getSession();
-    if(error || !data?.session) return null;
-    return data.session;
-  }
-
   async function verifyAdminOrKick(){
-    const session = await requireSession();
-    if(!session){
+    const { data, error } = await sb.auth.getSession();
+    if(error || !data?.session){
       setPill("bad","Not logged in");
       return false;
     }
-    const user = session.user || {};
+
+    const user = data.session.user || {};
     const verifiedAt = user.email_confirmed_at || user.confirmed_at || null;
     if(!verifiedAt){
       try{ await sb.auth.signOut(); } catch {}
@@ -461,21 +467,21 @@
 
     SESSION_USER = user;
 
-    // Admin check
-    const { data: isAdmin, error: adminErr } = await sb.rpc("is_admin");
-    if(adminErr){
+    try{
+      const isAdmin = await rpc("is_admin", {});
+      if(!isAdmin){
+        setPill("bad","Not authorized");
+        showBanner(
+          "Not authorized: your account is not an admin.\n\n" +
+          "Logged in as: " + (user.email || "—") + "\n" +
+          "User ID: " + (user.id || "—") + "\n\n" +
+          "Fix: add this user_id to public.admin_users."
+        );
+        return false;
+      }
+    }catch(e){
       setPill("bad","Admin check error");
-      showBanner("Admin check failed:\n" + (adminErr.message || JSON.stringify(adminErr)));
-      return false;
-    }
-    if(!isAdmin){
-      setPill("bad","Not authorized");
-      showBanner(
-        "Not authorized: your account is not an admin.\n\n" +
-        "Logged in as: " + (user.email || "—") + "\n" +
-        "User ID: " + (user.id || "—") + "\n\n" +
-        "Fix: add this user_id to public.admin_users."
-      );
+      showBanner("Admin check failed:\n" + (e?.message || e));
       return false;
     }
 
@@ -493,58 +499,54 @@
     const q = String($("searchInput").value || "").trim();
     const filter = String($("filterSelect").value || "all");
 
-    const { data, error } = await sb.rpc("admin_list_members", {
-      p_search: q || null,
-      p_filter: filter,
-      p_limit: PAGE_LIMIT,
-      p_offset: PAGE_OFFSET
-    });
-
-    if(error){
-      showBanner("Load members failed:\n" + error.message);
-      $("membersBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Failed: ${esc(error.message)}</td></tr>`;
-      say("Load failed");
-      return;
-    }
-
-    const rows = data || [];
-    if(rows.length === 0){
-      $("membersBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No results.</td></tr>`;
-      $("pageNote").textContent = `Page offset ${PAGE_OFFSET} · 0 rows`;
-      say("No results");
-      return;
-    }
-
-    $("membersBody").innerHTML = "";
-    rows.forEach(r => {
-      const active = !!r.is_active;
-      const tag = active ? `<span class="tag yes">YES</span>` : `<span class="tag no">NO</span>`;
-      const tr = document.createElement("tr");
-      tr.className = "memberRow";
-      tr.innerHTML = `
-        <td class="mono">${esc(r.user_id)}</td>
-        <td>${esc(r.email || "—")}</td>
-        <td>${esc(r.tier || "—")}</td>
-        <td>${esc(r.qty ?? "—")}</td>
-        <td>${tag}</td>
-      `;
-      tr.addEventListener("click", async () => {
-        document.querySelectorAll(".memberRow").forEach(x => x.classList.remove("active"));
-        tr.classList.add("active");
-        $("selectedUserId").value = r.user_id;
-        SELECTED.user_id = r.user_id;
-        SELECTED.email = r.email;
-        SELECTED.tier = r.tier;
-        SELECTED.qty = r.qty;
-        SELECTED.is_active = !!r.is_active;
-        setToggle(SELECTED.is_active);
-        await loadSelected();
+    try{
+      const data = await rpc("admin_list_members", {
+        p_search: q || null,
+        p_filter: filter,
+        p_limit: PAGE_LIMIT,
+        p_offset: PAGE_OFFSET
       });
-      $("membersBody").appendChild(tr);
-    });
 
-    $("pageNote").textContent = `Page offset ${PAGE_OFFSET} · loaded ${rows.length}`;
-    say("Loaded ✅");
+      const rows = data || [];
+      if(rows.length === 0){
+        $("membersBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No results.</td></tr>`;
+        $("pageNote").textContent = `Page offset ${PAGE_OFFSET} · 0 rows`;
+        say("No results");
+        return;
+      }
+
+      $("membersBody").innerHTML = "";
+      rows.forEach(r => {
+        const active = !!r.is_active;
+        const tag = active ? `<span class="tag yes">YES</span>` : `<span class="tag no">NO</span>`;
+        const tr = document.createElement("tr");
+        tr.className = "memberRow";
+        tr.innerHTML = `
+          <td class="mono">${esc(r.user_id)}</td>
+          <td>${esc(r.email || "—")}</td>
+          <td>${esc(r.tier || "—")}</td>
+          <td>${esc(r.qty ?? "—")}</td>
+          <td>${tag}</td>
+        `;
+        tr.addEventListener("click", async () => {
+          document.querySelectorAll(".memberRow").forEach(x => x.classList.remove("active"));
+          tr.classList.add("active");
+          $("selectedUserId").value = r.user_id;
+          SELECTED.user_id = r.user_id;
+          SELECTED.is_active = !!r.is_active;
+          setToggle(SELECTED.is_active);
+          await loadSelected();
+        });
+        $("membersBody").appendChild(tr);
+      });
+
+      $("pageNote").textContent = `Page offset ${PAGE_OFFSET} · loaded ${rows.length}`;
+      say("Loaded ✅");
+    }catch(e){
+      showBanner("Load members failed:\n" + (e?.message || e));
+      $("membersBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Failed: ${esc(e?.message || e)}</td></tr>`;
+      say("Load failed");
+    }
   }
 
   async function loadSelected(){
@@ -558,32 +560,34 @@
     }
 
     say("Loading balances…");
+    showBanner("");
 
-    // balances
-    const { data: bals, error: balErr } = await sb.rpc("admin_get_user_balances", { p_user_id: userId });
-    if(balErr){
-      showBanner("Load balances failed:\n" + balErr.message);
-      $("usdBal").textContent = "$0.00";
-      $("btcBal").textContent = "0 sats";
-    } else {
+    try{
+      const bals = await rpc("admin_get_user_balances", { p_user_id: userId });
       const b = bals || [];
       const usd = b.find(x => String(x.currency||"").toUpperCase() === "USD");
       const btc = b.find(x => String(x.currency||"").toUpperCase() === "BTC");
       $("usdBal").textContent = fmtUSDFromCents(usd?.balance_cents || 0);
       $("btcBal").textContent = fmtSats(btc?.balance_sats || 0);
+    }catch(e){
+      showBanner("Load balances failed:\n" + (e?.message || e));
+      $("usdBal").textContent = "$0.00";
+      $("btcBal").textContent = "0 sats";
     }
 
-    // activation state (re-fetch from members list by calling list with search=userId for truth)
-    const { data: one, error: oneErr } = await sb.rpc("admin_list_members", {
-      p_search: userId,
-      p_filter: "all",
-      p_limit: 1,
-      p_offset: 0
-    });
-    if(!oneErr && one && one[0]){
-      SELECTED.is_active = !!one[0].is_active;
-      setToggle(SELECTED.is_active);
-    }
+    // activation truth
+    try{
+      const one = await rpc("admin_list_members", {
+        p_search: userId,
+        p_filter: "all",
+        p_limit: 1,
+        p_offset: 0
+      });
+      if(one && one[0]){
+        SELECTED.is_active = !!one[0].is_active;
+        setToggle(SELECTED.is_active);
+      }
+    }catch{}
 
     await loadLedger();
     say("Loaded ✅");
@@ -599,37 +603,33 @@
       return;
     }
 
-    const { data, error } = await sb.rpc("admin_get_user_ledger", { p_user_id: userId, p_limit: 25 });
-    if(error){
-      $("ledgerBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Ledger error: ${esc(error.message)}</td></tr>`;
-      return;
+    try{
+      const rows = await rpc("admin_get_user_ledger", { p_user_id: userId, p_limit: 25 });
+      if(!rows || rows.length === 0){
+        $("ledgerBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No ledger entries.</td></tr>`;
+        return;
+      }
+
+      $("ledgerBody").innerHTML = "";
+      rows.forEach(r => {
+        const dt = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
+        const cur = String(r.currency || "—").toUpperCase();
+        const type = String(r.entry_type || "—").toLowerCase();
+        const amt = cur === "USD" ? fmtUSDFromCents(r.amount_cents || 0) : fmtSats(r.amount_sats || 0);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${esc(dt)}</td>
+          <td>${esc(cur)}</td>
+          <td>${esc(type)}</td>
+          <td class="mono">${esc(amt)}</td>
+          <td>${esc(r.reason || "—")}</td>
+        `;
+        $("ledgerBody").appendChild(tr);
+      });
+    }catch(e){
+      $("ledgerBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Ledger error: ${esc(e?.message || e)}</td></tr>`;
     }
-
-    const rows = data || [];
-    if(rows.length === 0){
-      $("ledgerBody").innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No ledger entries.</td></tr>`;
-      return;
-    }
-
-    $("ledgerBody").innerHTML = "";
-    rows.forEach(r => {
-      const dt = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
-      const cur = String(r.currency || "—").toUpperCase();
-      const type = String(r.entry_type || "—").toLowerCase();
-      const amt = cur === "USD"
-        ? fmtUSDFromCents(r.amount_cents || 0)
-        : fmtSats(r.amount_sats || 0);
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${esc(dt)}</td>
-        <td>${esc(cur)}</td>
-        <td>${esc(type)}</td>
-        <td class="mono">${esc(amt)}</td>
-        <td>${esc(r.reason || "—")}</td>
-      `;
-      $("ledgerBody").appendChild(tr);
-    });
   }
 
   async function toggleActivation(){
@@ -640,28 +640,26 @@
     if(!userId) return;
 
     const next = !SELECTED.is_active;
-
     say("Updating activation…");
     showBanner("");
 
-    const { error } = await sb.rpc("admin_set_user_activation", {
-      p_user_id: userId,
-      p_is_activated: next,
-      p_reason: "admin_toggle",
-      p_metadata: { by: SESSION_USER?.email || null }
-    });
+    try{
+      await rpc("admin_set_user_activation", {
+        p_user_id: userId,
+        p_is_activated: next,
+        p_reason: "admin_toggle",
+        p_metadata: { by: SESSION_USER?.email || null }
+      });
 
-    if(error){
-      // This is where you were seeing "not allowed"
-      showBanner("Activation update failed:\n" + (error.message || JSON.stringify(error)));
+      SELECTED.is_active = next;
+      setToggle(next);
+      await loadMembers();
+      await loadSelected();
+      say("Activation updated ✅");
+    }catch(e){
+      showBanner("Activation update failed:\n" + (e?.message || e));
       say("Activation failed");
-      return;
     }
-
-    SELECTED.is_active = next;
-    setToggle(next);
-    await loadMembers();   // refresh list badges
-    say("Activation updated ✅");
   }
 
   async function submitAdjustment(){
@@ -686,51 +684,40 @@
     }
 
     let amount = 0;
-
     if(currency === "USD"){
-      // USD entered as dollars → convert to cents
       const dollars = Number(rawAmt.replace(/,/g,""));
-      if(!Number.isFinite(dollars)){
-        showBanner("Invalid USD amount.");
-        return;
-      }
+      if(!Number.isFinite(dollars)){ showBanner("Invalid USD amount."); return; }
       amount = Math.round(dollars * 100);
     } else {
-      // BTC entered as sats (integer)
       const sats = Number(rawAmt.replace(/,/g,""));
-      if(!Number.isFinite(sats)){
-        showBanner("Invalid sats amount.");
-        return;
-      }
+      if(!Number.isFinite(sats)){ showBanner("Invalid sats amount."); return; }
       amount = Math.round(sats);
     }
 
-    if(type === "debit") amount = -Math.abs(amount);
-    else amount = Math.abs(amount);
+    amount = (type === "debit") ? -Math.abs(amount) : Math.abs(amount);
 
     say("Submitting…");
     showBanner("");
 
-    const { error } = await sb.rpc("admin_credit_user", {
-      p_user_id: userId,
-      p_currency: currency,
-      p_amount: amount,
-      p_reason: reason,
-      p_metadata: meta
-    });
+    try{
+      await rpc("admin_credit_user", {
+        p_user_id: userId,
+        p_currency: currency,
+        p_amount: amount,
+        p_reason: reason,
+        p_metadata: meta
+      });
 
-    if(error){
-      showBanner("Submit failed:\n" + (error.message || JSON.stringify(error)));
+      $("amountInput").value = "";
+      $("reasonInput").value = "";
+      $("metaInput").value = "";
+
+      await loadSelected();
+      say("Saved ✅");
+    }catch(e){
+      showBanner("Submit failed:\n" + (e?.message || e));
       say("Submit failed");
-      return;
     }
-
-    $("amountInput").value = "";
-    $("reasonInput").value = "";
-    $("metaInput").value = "";
-
-    await loadSelected();
-    say("Saved ✅");
   }
 
   $("loadBtn").addEventListener("click", () => { PAGE_OFFSET = 0; loadMembers(); });
