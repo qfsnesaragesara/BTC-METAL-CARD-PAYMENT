@@ -2,82 +2,320 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Member Portal — QFS</title>
+
   <style>
-    :root { color-scheme: dark; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#071024; color:#e8eefc; }
-    .top { display:flex; justify-content:space-between; align-items:center; padding:18px 24px; border-bottom:1px solid rgba(255,255,255,.08); }
-    .wrap { max-width:1100px; margin:0 auto; padding:24px; }
-    .pill { padding:6px 10px; border:1px solid rgba(255,255,255,.15); border-radius:999px; font-size:12px; }
-    .pill.active { border-color: rgba(60,220,160,.35); background: rgba(60,220,160,.12); }
-    .pill.inactive { border-color: rgba(255,80,80,.35); background: rgba(255,80,80,.12); }
-    .grid { display:grid; grid-template-columns: 1.2fr .8fr; gap:18px; margin-top:18px; }
-    .card { border-radius:16px; border:1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.05); padding:16px; }
-    .big { font-size:34px; font-weight:800; margin:6px 0; }
-    .muted { opacity:.75; font-size:12px; }
-    button {
-      cursor:pointer; padding:12px 14px; border-radius:12px;
-      background: rgba(90,140,255,.25); border:1px solid rgba(90,140,255,.35); color:#e8eefc;
+    :root{
+      color-scheme: dark;
+      --bg0:#06102a;
+      --bg1:#050a18;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.04);
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(255,255,255,.14);
+      --text:#eaf0ff;
+      --muted: rgba(234,240,255,.72);
+      --muted2: rgba(234,240,255,.55);
+      --blue: rgba(90,140,255,.35);
+      --blue2: rgba(90,140,255,.55);
+      --green: rgba(60,220,160,.35);
+      --red: rgba(255,80,80,.35);
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --r16: 16px;
+      --r14: 14px;
+      --r12: 12px;
     }
-    button:hover { background: rgba(90,140,255,.35); }
-    .row { display:flex; gap:10px; align-items:center; }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(70,120,255,.25), transparent 55%),
+        radial-gradient(900px 520px at 80% 20%, rgba(70,220,180,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:20;
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(6,16,42,.65);
+      backdrop-filter: blur(10px);
+    }
+    .topbar-inner{
+      max-width: 1100px;
+      margin:0 auto;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+    .brand .title{
+      font-weight:800;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .brand .sub{
+      font-size:12px;
+      color: var(--muted2);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      font-size:12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke2);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .pill.ok{ border-color: var(--green); background: rgba(60,220,160,.12); color: var(--text); }
+    .pill.bad{ border-color: var(--red); background: rgba(255,80,80,.12); color: var(--text); }
+
+    button{
+      cursor:pointer;
+      border-radius: 999px;
+      padding: 10px 14px;
+      border: 1px solid var(--blue);
+      background: rgba(90,140,255,.18);
+      color: var(--text);
+      box-shadow: 0 6px 18px rgba(0,0,0,.22);
+    }
+    button:hover{ background: rgba(90,140,255,.28); border-color: var(--blue2); }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
+
+    .wrap{
+      max-width:1100px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .banner{
+      display:none;
+      margin: 14px 0 0;
+      padding: 12px 14px;
+      border-radius: var(--r14);
+      border:1px solid var(--stroke2);
+      background: rgba(255,255,255,.06);
+    }
+    .banner.err{
+      border-color: var(--red);
+      background: rgba(255,80,80,.10);
+    }
+
+    .grid{
+      margin-top: 16px;
+      display:grid;
+      grid-template-columns: 1.25fr .85fr;
+      gap: 16px;
+      align-items:stretch;
+    }
+
+    .card{
+      border-radius: var(--r16);
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      min-width:0;
+    }
+
+    .card h3{
+      margin:0 0 6px;
+      font-size:14px;
+      letter-spacing:.2px;
+      color: var(--muted);
+      font-weight:700;
+    }
+
+    .balance{
+      font-size: clamp(26px, 4vw, 44px);
+      font-weight: 900;
+      margin: 2px 0 8px;
+      line-height:1.05;
+    }
+
+    .muted{ color: var(--muted); font-size:12px; }
+    .muted2{ color: var(--muted2); font-size:12px; }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+      flex-wrap:wrap;
+    }
+    .actions button{
+      border-radius: 12px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      box-shadow:none;
+    }
+    .actions button:hover{ background: rgba(255,255,255,.10); }
+
+    .status-box{
+      margin-top: 14px;
+      border-radius: var(--r14);
+      border: 1px solid rgba(255,255,255,.10);
+      background: var(--card2);
+      padding: 12px;
+    }
+
+    .kv{
+      display:grid;
+      grid-template-columns: 110px 1fr;
+      gap: 8px 10px;
+      margin-top: 10px;
+      align-items:center;
+    }
+    .k{ color: var(--muted2); font-size:12px; }
+    .v{ color: var(--text); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    .full{
+      margin-top: 16px;
+    }
+
+    .tx{
+      margin-top: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .tx-row{
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      padding: 10px 12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .tx-left{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      min-width:0;
+    }
+    .tag{
+      font-size:11px;
+      padding: 4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:12px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .kv{ grid-template-columns: 100px 1fr; }
+    }
+    @media (max-width: 520px){
+      .wrap{ padding: 14px; }
+      .top-actions{ gap:8px; }
+      button{ padding: 10px 12px; }
+      .kv{ grid-template-columns: 1fr; }
+      .v{ white-space:normal; }
+    }
   </style>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
-  <div class="top">
-    <div>
-      <div style="font-weight:800">Member Portal</div>
-      <div class="muted">QFS NESARA GESARA</div>
-    </div>
-    <div class="row">
-      <span id="statusPill" class="pill">Checking…</span>
-      <button id="btnLogout">Logout</button>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="title">Member Portal</div>
+        <div class="sub">QFS NESARA GESARA</div>
+      </div>
+
+      <div class="top-actions">
+        <span id="statusPill" class="pill">Checking…</span>
+        <button id="btnLogout">Logout</button>
+      </div>
     </div>
   </div>
 
   <div class="wrap">
-    <div class="grid">
-      <div class="card">
-        <div class="muted">Available Balance</div>
-        <div class="big" id="bal">$0.00</div>
-        <div class="muted" id="btcLine">—</div>
+    <div id="banner" class="banner"></div>
 
-        <div class="row" style="margin-top:12px;">
+    <div class="grid">
+      <!-- LEFT: Balance -->
+      <div class="card">
+        <h3>Available Balance</h3>
+        <div id="bal" class="balance">$0.00</div>
+        <div id="btcLine" class="muted2">—</div>
+
+        <div class="actions">
           <button id="btnSend" disabled>Send</button>
           <button id="btnReceive" disabled>Receive</button>
         </div>
 
-        <div class="card" style="margin-top:12px; padding:12px;">
+        <div class="status-box">
           <div id="activeLine" class="muted">Loading…</div>
-          <div class="muted" id="lastChecked"></div>
+          <div id="lastChecked" class="muted2"></div>
         </div>
       </div>
 
+      <!-- RIGHT: Account details -->
       <div class="card">
-        <div style="font-weight:800; margin-bottom:10px;">Account Details</div>
-        <div class="muted">Your Membership</div>
-        <div style="margin-top:12px;">
-          <div class="muted">NAME</div>
-          <div id="nameVal">—</div>
-          <div class="muted" style="margin-top:10px;">EMAIL</div>
-          <div id="emailVal">—</div>
-          <div class="muted" style="margin-top:10px;">TIER</div>
-          <div id="tierVal">—</div>
-          <div class="muted" style="margin-top:10px;">QUANTITY</div>
-          <div id="qtyVal">—</div>
-          <div class="muted" style="margin-top:10px;">STATUS</div>
-          <div id="statusVal">—</div>
+        <h3>Account Details</h3>
+        <div class="muted2">Your Membership</div>
+
+        <div class="kv">
+          <div class="k">NAME</div><div id="nameVal" class="v">—</div>
+          <div class="k">EMAIL</div><div id="emailVal" class="v">—</div>
+          <div class="k">TIER</div><div id="tierVal" class="v">—</div>
+          <div class="k">QUANTITY</div><div id="qtyVal" class="v">—</div>
+          <div class="k">STATUS</div><div id="statusVal" class="v">—</div>
         </div>
       </div>
     </div>
 
-    <div class="card" style="margin-top:18px;">
-      <div style="font-weight:800">Recent Transactions</div>
-      <div class="muted">Your recent account activity</div>
-      <div id="tx" class="muted" style="margin-top:12px;">Loading…</div>
+    <!-- FULL WIDTH: Recent transactions -->
+    <div class="card full">
+      <h3>Recent Transactions</h3>
+      <div class="muted2">Your recent account activity</div>
+      <div id="tx" class="tx">
+        <div class="muted">Loading…</div>
+      </div>
     </div>
   </div>
 
@@ -90,11 +328,22 @@
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const el = (id) => document.getElementById(id);
+    const banner = el("banner");
     const statusPill = el("statusPill");
 
     let session = null;
 
-    async function ensureSessionReady() {
+    function showBanner(msg, isErr=false){
+      banner.style.display = "block";
+      banner.className = "banner" + (isErr ? " err" : "");
+      banner.textContent = msg;
+    }
+    function clearBanner(){
+      banner.style.display = "none";
+      banner.textContent = "";
+    }
+
+    async function ensureSessionReady(){
       const { data, error } = await sb.auth.getSession();
       if (error) throw error;
       session = data.session;
@@ -102,19 +351,18 @@
       return session;
     }
 
-    function setActiveUI(isActive) {
-      const pill = statusPill;
-      pill.classList.remove("active", "inactive");
-      if (isActive) {
-        pill.textContent = "ACTIVE";
-        pill.classList.add("active");
+    function setActiveUI(isActive){
+      statusPill.classList.remove("ok","bad");
+      if (isActive){
+        statusPill.textContent = "ACTIVE";
+        statusPill.classList.add("ok");
         el("btnSend").disabled = false;
         el("btnReceive").disabled = false;
         el("activeLine").textContent = "Account Active — Send & Receive are unlocked.";
         el("statusVal").textContent = "Active";
       } else {
-        pill.textContent = "INACTIVE";
-        pill.classList.add("inactive");
+        statusPill.textContent = "INACTIVE";
+        statusPill.classList.add("bad");
         el("btnSend").disabled = true;
         el("btnReceive").disabled = true;
         el("activeLine").textContent = "Account Inactive — Send & Receive are locked.";
@@ -123,16 +371,78 @@
       el("lastChecked").textContent = "Last checked: " + new Date().toLocaleString();
     }
 
-    async function loadPortal() {
+    function renderTx(rows){
+      const tx = el("tx");
+      tx.innerHTML = "";
+
+      if (!rows || rows.length === 0){
+        tx.innerHTML = `<div class="muted">No transactions.</div>`;
+        return;
+      }
+
+      for (const r of rows){
+        const row = document.createElement("div");
+        row.className = "tx-row";
+
+        const left = document.createElement("div");
+        left.className = "tx-left";
+
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.textContent = (r.entry_type || "entry").toUpperCase();
+
+        const cur = document.createElement("span");
+        cur.className = "tag";
+        cur.textContent = (r.currency || "").toUpperCase();
+
+        const time = document.createElement("span");
+        time.className = "mono";
+        time.textContent = r.created_at || "";
+
+        const reason = document.createElement("span");
+        reason.className = "muted";
+        reason.style.minWidth = "120px";
+        reason.style.overflow = "hidden";
+        reason.style.textOverflow = "ellipsis";
+        reason.style.whiteSpace = "nowrap";
+        reason.textContent = r.reason || "";
+
+        left.appendChild(tag);
+        left.appendChild(cur);
+        left.appendChild(time);
+        left.appendChild(reason);
+
+        const right = document.createElement("div");
+        right.className = "mono";
+
+        if ((r.currency || "").toUpperCase() === "USD"){
+          const usd = Number(r.amount_cents || 0) / 100;
+          right.textContent = usd.toLocaleString(undefined, { style:"currency", currency:"USD" });
+        } else {
+          right.textContent = `${Number(r.amount_sats || 0).toLocaleString()} sats`;
+        }
+
+        row.appendChild(left);
+        row.appendChild(right);
+        tx.appendChild(row);
+      }
+    }
+
+    async function loadPortal(){
+      clearBanner();
+
       await ensureSessionReady();
 
       const uid = session.user.id;
       const email = session.user.email;
 
       el("emailVal").textContent = email || "—";
-      el("nameVal").textContent = session.user.user_metadata?.name || session.user.user_metadata?.full_name || "—";
+      el("nameVal").textContent =
+        session.user.user_metadata?.name ||
+        session.user.user_metadata?.full_name ||
+        "—";
 
-      // pull the portal user row
+      // portal user row
       const { data: userRow, error } = await sb
         .from("portal_users")
         .select("id,email,tier,qty,is_active")
@@ -145,57 +455,62 @@
       el("qtyVal").textContent = (userRow?.qty ?? "—");
       setActiveUI(!!userRow?.is_active);
 
-      // balances via RPC (if you have it)
-      const { data: bal, error: balErr } = await sb.rpc("get_my_balances");
-      if (!balErr && bal) {
-        const usd = Number(bal.usd_cents || 0) / 100;
-        el("bal").textContent = usd.toLocaleString(undefined, { style:"currency", currency:"USD" });
-        el("btcLine").textContent = `≈ ${Number(bal.btc_sats || 0).toLocaleString()} sats (live BTC price)`;
-      }
+      // balances (optional RPCs — safe if they don't exist)
+      try{
+        const { data: bal } = await sb.rpc("get_my_balances");
+        if (bal){
+          const usd = Number(bal.usd_cents || 0) / 100;
+          el("bal").textContent = usd.toLocaleString(undefined, { style:"currency", currency:"USD" });
+          el("btcLine").textContent = `${Number(bal.btc_sats || 0).toLocaleString()} sats`;
+        }
+      }catch(_){ /* ignore */ }
 
-      // recent ledger via RPC (optional)
-      const { data: tx, error: txErr } = await sb.rpc("get_my_ledger", { p_limit: 10 });
-      if (txErr || !tx) {
-        el("tx").textContent = "—";
-      } else if (tx.length === 0) {
-        el("tx").textContent = "No transactions.";
-      } else {
-        el("tx").innerHTML = tx.map(x => {
-          const amt = x.currency === "USD"
-            ? (Number(x.amount_cents || 0) / 100).toLocaleString(undefined, { style:"currency", currency:"USD" })
-            : `${Number(x.amount_sats || 0).toLocaleString()} sats`;
-          return `<div class="muted">${x.created_at} — ${x.entry_type} — ${x.currency} ${amt}</div>`;
-        }).join("");
+      // ledger (optional RPC)
+      try{
+        const { data: tx } = await sb.rpc("get_my_ledger", { p_limit: 10 });
+        renderTx(tx || []);
+      }catch(_){
+        el("tx").innerHTML = `<div class="muted">—</div>`;
       }
     }
 
-    async function logout() {
+    async function logout(){
       await sb.auth.signOut();
       statusPill.textContent = "Logged out";
+      statusPill.classList.remove("ok","bad");
+      showBanner("Logged out.", false);
     }
 
     el("btnLogout").addEventListener("click", logout);
 
+    // React to auth changes (important on refresh)
     sb.auth.onAuthStateChange(async (_event, _session) => {
       session = _session;
-      if (!session) {
+      if (!session){
         statusPill.textContent = "Not logged in";
+        statusPill.classList.remove("ok","bad");
         return;
       }
-      try {
+      try{
+        statusPill.textContent = "Loading…";
         await loadPortal();
-      } catch (e) {
+      } catch(e){
         statusPill.textContent = "ERROR";
+        statusPill.classList.add("bad");
+        showBanner(e?.message || String(e), true);
         console.error(e);
       }
     });
 
+    // Initial load
     (async () => {
-      try {
-        statusPill.textContent = "Checking…";
+      try{
+        statusPill.textContent = "Loading…";
         await loadPortal();
-      } catch (e) {
+      } catch(e){
         statusPill.textContent = "Not logged in";
+        statusPill.classList.remove("ok","bad");
+        // Don't spam a scary banner if user is simply logged out
         console.error(e);
       }
     })();
