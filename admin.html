@@ -55,7 +55,7 @@
     .kpi .val{font-weight:900;font-size:18px;margin-top:4px}
     .small{font-size:12px}
 
-    /* ===== Activation toggle ===== */
+    /* ===== Activation toggle (added) ===== */
     .switch{
       position:relative;
       display:inline-block;
@@ -317,7 +317,7 @@
       if (checkboxEl) checkboxEl.disabled = true;
       setMsg("", "");
 
-      // ✅ FIXED: use the correct variables + correct payload keys
+      // ✅ FIXED: correct param names + correct variables
       const { error } = await sb.rpc("admin_set_user_activation", {
         p_user_id: uid,
         p_is_activated: nextActive,
@@ -334,15 +334,9 @@
         return;
       }
 
-      // update local cache so the toggle doesn’t “flip back” on refresh
-      const i = cachedMembers.findIndex(m => String(m.user_id) === String(uid));
-      if (i >= 0) {
-        cachedMembers[i].is_activated = !!nextActive;
-        cachedMembers[i].activated_at = nextActive ? new Date().toISOString() : null;
-      }
-      applySearchAndFilter();
-
+      await loadMembers();
       if (checkboxEl) checkboxEl.disabled = false;
+
       setMsg("ok", `User ${uid} ${nextActive ? "activated" : "deactivated"}.`);
     }
 
