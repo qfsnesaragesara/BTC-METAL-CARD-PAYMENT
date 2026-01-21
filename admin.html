@@ -1,693 +1,728 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Admin Console — QFS</title>
-<meta name="robots" content="noindex, nofollow" />
-<link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" />
-
-<script src="./config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-  :root{
-    --bg:#020617;
-    --text:#e5e7eb;
-    --muted:#9ca3af;
-    --accent:#38bdf8;
-    --accent2:#a855f7;
-    --glass:rgba(15,23,42,0.88);
-    --border:rgba(148,163,184,0.45);
-    --shadow:rgba(2,6,23,0.9);
-    --radius:18px;
-    --maxw:1250px;
-    --good:#22c55e;
-    --bad:#f43f5e;
-    --warn:#fbbf24;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; min-height:100vh; padding:24px;
-    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    color:var(--text);
-    background:
-      radial-gradient(circle at top, rgba(56,189,248,0.30), transparent 55%),
-      radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
-      var(--bg);
-  }
-  .wrap{max-width:var(--maxw); margin:0 auto;}
-  .header{
-    display:flex; justify-content:space-between; align-items:center;
-    gap:14px; margin-bottom:16px;
-  }
-  .brand{display:flex; align-items:center; gap:12px;}
-  .logo{
-    width:54px; height:54px; border-radius:14px; object-fit:cover;
-    box-shadow: 0 14px 44px rgba(2,6,23,0.95), 0 0 0 1px rgba(148,163,184,0.35);
-  }
-  .brand h1{margin:0; font-size:18px; font-weight:900; letter-spacing:-0.02em;}
-  .brand .sub{font-size:12px; color:var(--muted); margin-top:2px;}
-  .actions{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;}
-  .pill{
-    padding:6px 10px; border-radius:999px;
-    border:1px solid rgba(148,163,184,0.30);
-    background:rgba(2,6,23,0.40);
-    font-size:11px; font-weight:900; letter-spacing:0.06em;
-    text-transform:uppercase;
-  }
-  .pill.good{border-color:rgba(34,197,94,0.35); color:#bbf7d0;}
-  .btn{
-    padding:8px 12px; border-radius:999px;
-    border:1px solid rgba(148,163,184,0.35);
-    background:rgba(255,255,255,0.06);
-    color:var(--text); font-weight:900; font-size:12px; cursor:pointer;
-  }
-  .btn.primary{background:linear-gradient(135deg, var(--accent), var(--accent2)); border:none;}
-  .btn:disabled{opacity:0.55; cursor:not-allowed;}
-  .banner{
-    margin:10px 0 16px;
-    padding:10px 12px;
-    border-radius:14px;
-    border:1px solid rgba(148,163,184,0.30);
-    background:rgba(2,6,23,0.45);
-    font-size:13px;
-    white-space:pre-wrap;
-  }
-  .banner.ok{border-color:rgba(34,197,94,0.35);}
-  .banner.err{border-color:rgba(244,63,94,0.35);}
-
-  .grid{display:grid; grid-template-columns: 1.1fr 0.9fr; gap:18px;}
-  @media (max-width:980px){ .grid{grid-template-columns:1fr;} }
-
-  .card{
-    background:linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.84));
-    border:1px solid var(--border);
-    border-radius:28px;
-    padding:18px;
-    box-shadow: 0 28px 110px var(--shadow);
-    backdrop-filter: blur(26px);
-    position:relative; overflow:hidden;
-  }
-  .card:before{
-    content:""; position:absolute; inset:-120px -120px auto auto;
-    width:320px; height:320px;
-    background: radial-gradient(circle at center, rgba(56,189,248,0.18), transparent 60%);
-    pointer-events:none;
-  }
-  .card h2{margin:0 0 6px; font-size:16px; font-weight:900;}
-  .subtle{color:var(--muted); font-size:12px;}
-  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-  .input, .select, .textarea{
-    width:100%;
-    padding:10px 12px;
-    border-radius:14px;
-    border:1px solid rgba(148,163,184,0.28);
-    background:rgba(2,6,23,0.35);
-    color:var(--text);
-    outline:none;
-  }
-  .textarea{min-height:80px; resize:vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-  .mini{width:auto; min-width:140px;}
-  table{width:100%; border-collapse:collapse; margin-top:10px; font-size:12px;}
-  th,td{padding:10px 8px; border-bottom:1px solid rgba(148,163,184,0.18); text-align:left; vertical-align:top;}
-  th{color:var(--muted); font-weight:700; text-transform:uppercase; font-size:11px;}
-  .tag{
-    display:inline-flex; align-items:center; justify-content:center;
-    padding:4px 8px; border-radius:999px;
-    border:1px solid rgba(148,163,184,0.25);
-    background:rgba(255,255,255,0.05);
-    font-weight:900; font-size:11px;
-  }
-  .tag.yes{border-color:rgba(34,197,94,0.35); color:#bbf7d0;}
-  .tag.no{border-color:rgba(244,63,94,0.35); color:#fecdd3;}
-  .switch{
-    display:flex; align-items:center; gap:10px;
-    padding:10px 12px; border-radius:14px;
-    border:1px solid rgba(148,163,184,0.28);
-    background:rgba(2,6,23,0.35);
-  }
-  .toggle{
-    width:44px; height:26px; border-radius:999px;
-    border:1px solid rgba(148,163,184,0.35);
-    background:rgba(255,255,255,0.08);
-    position:relative; cursor:pointer;
-    flex:0 0 auto;
-  }
-  .knob{
-    width:22px; height:22px; border-radius:50%;
-    background:#e5e7eb; position:absolute; top:1px; left:1px;
-    transition: transform 140ms ease;
-  }
-  .toggle.on{background:rgba(34,197,94,0.18); border-color:rgba(34,197,94,0.35);}
-  .toggle.on .knob{transform: translateX(18px);}
-  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Console</title>
+  <style>
+    :root{
+      --bg:#071524;
+      --panel:#0b2034;
+      --panel2:#0a1b2d;
+      --text:#e9f2ff;
+      --muted:#a7bdd8;
+      --accent:#7aa8ff;
+      --danger:#ff6b6b;
+      --ok:#40d39c;
+      --warn:#ffcc66;
+      --border:rgba(255,255,255,.10);
+      --shadow: 0 18px 70px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 600px at 30% 10%, rgba(122,168,255,.12), transparent 60%),
+                  radial-gradient(900px 500px at 90% 30%, rgba(64,211,156,.10), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    header{
+      padding:18px 22px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+    }
+    header .title{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    header h1{margin:0;font-size:18px;letter-spacing:.3px}
+    header .sub{color:var(--muted);font-size:12px}
+    header .right{
+      display:flex; gap:10px; align-items:center;
+    }
+    button{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:8px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      transition: transform .06s ease, background .12s ease;
+    }
+    button:hover{background: rgba(255,255,255,.09)}
+    button:active{transform: translateY(1px)}
+    button.primary{
+      border-color: rgba(122,168,255,.35);
+      background: rgba(122,168,255,.16);
+    }
+    button.danger{
+      border-color: rgba(255,107,107,.35);
+      background: rgba(255,107,107,.14);
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      font-size:12px;
+      color:var(--muted);
+    }
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--warn)}
+    .dot.ok{background:var(--ok)}
+    .dot.bad{background:var(--danger)}
+    .wrap{
+      padding:18px 18px 28px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .banner{
+      border:1px solid rgba(255,107,107,.35);
+      background: rgba(255,107,107,.10);
+      color:#ffd4d4;
+      padding:10px 12px;
+      border-radius: 12px;
+      margin-bottom:14px;
+      display:none;
+      white-space: pre-wrap;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap:14px;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:14px;
+      min-height: 120px;
+    }
+    .card h2{
+      margin:0 0 10px;
+      font-size:14px;
+      color:#d9e8ff;
+      letter-spacing:.2px;
+    }
+    .row{display:flex;gap:10px;align-items:center}
+    input, select, textarea{
+      width:100%;
+      padding:10px 12px;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      color:var(--text);
+      outline:none;
+    }
+    textarea{min-height:72px;resize:vertical}
+    .muted{color:var(--muted);font-size:12px}
+    .members{
+      margin-top:10px;
+      border-top:1px solid var(--border);
+      padding-top:10px;
+      max-height: 420px;
+      overflow:auto;
+    }
+    .member{
+      display:grid;
+      grid-template-columns: 1fr 1fr 110px;
+      gap:10px;
+      padding:10px;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255,255,255,.03);
+      margin-bottom:8px;
+      align-items:center;
+    }
+    .member .id{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:11px;color:var(--muted)}
+    .member .email{font-size:13px}
+    .member button{justify-self:end}
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin:10px 0 14px;
+    }
+    .box{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px 12px;
+      background: rgba(255,255,255,.03);
+    }
+    .box .label{color:var(--muted);font-size:12px;margin-bottom:6px}
+    .box .value{font-size:20px;font-weight:650}
+    .toggleRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
+    .switch{
+      position:relative; width:52px; height:28px;
+      background: rgba(255,255,255,.10);
+      border:1px solid var(--border);
+      border-radius:999px;
+      cursor:pointer;
+      flex: 0 0 auto;
+    }
+    .knob{
+      position:absolute; top:3px; left:3px;
+      width:22px; height:22px; border-radius:999px;
+      background: rgba(255,255,255,.85);
+      transition:left .14s ease;
+    }
+    .switch.on{background: rgba(64,211,156,.16); border-color: rgba(64,211,156,.30)}
+    .switch.on .knob{left:27px}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+      font-size:12px;
+    }
+    th, td{
+      border-bottom:1px solid var(--border);
+      padding:8px 6px;
+      text-align:left;
+      color:#d7e7ff;
+    }
+    th{color:var(--muted);font-weight:600}
+    .rightAlign{text-align:right}
+    .smallMono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace}
+    .footerNote{margin-top:10px;color:var(--muted);font-size:12px}
+  </style>
 </head>
-
 <body>
-<div class="wrap">
-
-  <header class="header">
-    <div class="brand">
-      <img class="logo" src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" alt="QFS" />
-      <div>
-        <h1>Admin Console</h1>
-        <div class="sub">Credit/Debit USD + BTC (sats) · View balances · View ledger</div>
-      </div>
+  <header>
+    <div class="title">
+      <h1>Admin Console</h1>
+      <div class="sub">Credit/Debit USD + BTC (sats) • View balances • View ledger • Toggle activation</div>
     </div>
-
-    <div class="actions">
-      <span id="loginPill" class="pill">Checking…</span>
-      <button id="refreshBtn" class="btn">Refresh</button>
-      <button id="logoutBtn" class="btn">Logout</button>
+    <div class="right">
+      <div class="pill" id="authPill"><span class="dot" id="authDot"></span><span id="authText">Checking session…</span></div>
+      <button id="refreshBtn">Refresh</button>
+      <button class="danger" id="logoutBtn">Logout</button>
     </div>
   </header>
 
-  <div id="banner" class="banner ok">Booting…</div>
+  <div class="wrap">
+    <div class="banner" id="banner"></div>
 
-  <section class="grid">
-
-    <!-- LEFT: MEMBERS -->
-    <div class="card">
-      <h2>Members</h2>
-      <div class="subtle">Search by email or user_id (UUID). Filter All / Activated / Pending.</div>
-
-      <div class="row" style="margin-top:10px;">
-        <input id="searchInput" class="input" placeholder="Search by email or user_id (UUID)…" />
-        <select id="filterSelect" class="select mini">
-          <option value="all">All</option>
-          <option value="activated">Activated only</option>
-          <option value="pending">Pending only</option>
-        </select>
-        <button id="loadMembersBtn" class="btn primary">Load</button>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>User ID</th>
-            <th>Email</th>
-            <th>Tier</th>
-            <th>Qty</th>
-            <th>Active</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="membersBody">
-          <tr><td colspan="6" style="color:var(--muted);">Loading…</td></tr>
-        </tbody>
-      </table>
-
-      <div class="row" style="justify-content:space-between; margin-top:10px;">
-        <div class="subtle" id="pageInfo">Page offset 0</div>
+    <div class="grid">
+      <!-- LEFT: Members -->
+      <div class="card">
+        <h2>Members</h2>
         <div class="row">
-          <button id="prevBtn" class="btn">Prev</button>
-          <button id="nextBtn" class="btn">Next</button>
+          <input id="searchInput" placeholder="Search by email or user_id (UUID)..." />
+          <select id="filterSelect" style="max-width:170px">
+            <option value="all">All</option>
+            <option value="active">Activated</option>
+            <option value="pending">Pending</option>
+          </select>
+          <button class="primary" id="loadMembersBtn" style="max-width:120px">Load</button>
         </div>
+
+        <div class="members" id="membersList"></div>
+
+        <div class="footerNote smallMono" id="adminSessionNote"></div>
       </div>
 
-      <div class="subtle" id="adminSessionLine" style="margin-top:10px;"></div>
+      <!-- RIGHT: Selected Member -->
+      <div class="card">
+        <h2>Selected Member</h2>
+        <input id="selectedUserId" placeholder="Pick a member on the left, or paste a UUID here…" />
+        <div class="row" style="margin-top:10px">
+          <button class="primary" id="loadSelectedBtn" style="max-width:120px">Load</button>
+          <button id="debugWhoBtn" style="max-width:160px">Who am I?</button>
+        </div>
+
+        <div class="kv">
+          <div class="box">
+            <div class="label">USD Balance</div>
+            <div class="value" id="usdBalance">$0.00</div>
+            <div class="muted">stored as cents</div>
+          </div>
+          <div class="box">
+            <div class="label">BTC Balance</div>
+            <div class="value" id="btcBalance">0 sats</div>
+            <div class="muted">stored as sats</div>
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="label">Activation</div>
+          <div class="toggleRow">
+            <div>
+              <div id="activationText" style="font-weight:650">—</div>
+              <div class="muted" id="activationSub">—</div>
+            </div>
+            <div class="switch" id="activationSwitch" role="switch" aria-checked="false">
+              <div class="knob"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <select id="currencySelect" style="max-width:120px">
+            <option value="USD">USD</option>
+            <option value="BTC">BTC</option>
+          </select>
+          <input id="amountInput" placeholder="Amount (USD in dollars, BTC in sats)" />
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <select id="entryTypeSelect" style="max-width:160px">
+            <option value="credit">Credit</option>
+            <option value="debit">Debit</option>
+          </select>
+          <input id="reasonInput" placeholder="Reason (e.g. welcome_credit, manual_adjust)" />
+        </div>
+
+        <textarea id="metadataInput" placeholder='Optional note/metadata (saved). Example:
+{"note":"manual top up"}' style="margin-top:10px"></textarea>
+
+        <div class="row" style="margin-top:10px; justify-content:flex-end">
+          <button class="primary" id="submitTxnBtn" style="max-width:160px">Submit</button>
+        </div>
+
+        <div class="row" style="margin-top:10px; justify-content:space-between; align-items:flex-end">
+          <div>
+            <div style="font-weight:650;margin-top:8px">Recent Ledger</div>
+            <div class="muted">Last 25 entries (selected member)</div>
+          </div>
+          <button id="refreshLedgerBtn" style="max-width:140px">Refresh</button>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Cur</th>
+              <th>Type</th>
+              <th class="rightAlign">Amount</th>
+              <th>Reason/Note</th>
+            </tr>
+          </thead>
+          <tbody id="ledgerBody">
+            <tr><td colspan="5" class="muted">No member selected.</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
 
-    <!-- RIGHT: SELECTED MEMBER -->
-    <div class="card">
-      <h2>Selected Member</h2>
-      <div class="subtle">Pick a member on the left, or paste a UUID below.</div>
+  <!-- Supabase JS (v2) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.90.1/dist/umd/supabase.js"></script>
 
-      <div class="row" style="margin-top:10px;">
-        <input id="selectedUserId" class="input mono" placeholder="Selected user_id (UUID)" />
-        <button id="loadSelectedBtn" class="btn primary">Load</button>
-      </div>
+  <script>
+    /******************************************************************
+     * CONFIG (REPLACE THESE)
+     ******************************************************************/
+    const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 
-      <div class="row" style="margin-top:12px;">
-        <div class="card" style="padding:12px; border-radius:18px; flex:1;">
-          <div class="subtle">USD Balance</div>
-          <div style="font-size:18px; font-weight:900;" id="usdBal">$0.00</div>
-          <div class="subtle">stored as cents</div>
-        </div>
-        <div class="card" style="padding:12px; border-radius:18px; flex:1;">
-          <div class="subtle">BTC Balance</div>
-          <div style="font-size:18px; font-weight:900;" id="btcBal">0 sats</div>
-          <div class="subtle">stored as sats</div>
-        </div>
-      </div>
-
-      <div class="switch" style="margin-top:12px;">
-        <div style="flex:1;">
-          <div style="font-weight:900;">Activation</div>
-          <div class="subtle" id="activationHelp">—</div>
-        </div>
-        <div id="activationToggle" class="toggle"><div class="knob"></div></div>
-        <span id="activationTag" class="tag no">PENDING</span>
-      </div>
-
-      <div class="row" style="margin-top:12px;">
-        <select id="currencySelect" class="select mini">
-          <option value="USD">USD</option>
-          <option value="BTC">BTC</option>
-        </select>
-        <input id="amountInput" class="input" placeholder="Amount (USD in dollars, BTC in sats)" />
-      </div>
-
-      <div class="row" style="margin-top:10px;">
-        <select id="typeSelect" class="select mini">
-          <option value="credit">Credit</option>
-          <option value="debit">Debit</option>
-        </select>
-        <input id="reasonInput" class="input" placeholder="Reason (e.g. welcome_credit, manual_adjust)" />
-      </div>
-
-      <div class="row" style="margin-top:10px;">
-        <textarea id="metaInput" class="textarea" placeholder='Optional note/metadata (saved). Example:
-{"note":"manual top up"}'></textarea>
-      </div>
-
-      <div class="row" style="justify-content:flex-end; margin-top:10px;">
-        <button id="submitBtn" class="btn primary">Submit</button>
-      </div>
-
-      <div class="subtle" style="margin-top:10px;">
-        USD is converted to cents automatically. BTC expects sats.
-      </div>
-
-      <div class="row" style="justify-content:space-between; margin-top:16px;">
-        <div>
-          <div style="font-weight:900;">Recent Ledger</div>
-          <div class="subtle">Last 25 entries (selected member)</div>
-        </div>
-        <button id="refreshLedgerBtn" class="btn">Refresh</button>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Cur</th>
-            <th>Type</th>
-            <th class="mono">Amount</th>
-            <th>Reason</th>
-          </tr>
-        </thead>
-        <tbody id="ledgerBody">
-          <tr><td colspan="5" style="color:var(--muted);">No member selected.</td></tr>
-        </tbody>
-      </table>
-
-    </div>
-
-  </section>
-</div>
-
-<script>
-(() => {
-  const CFG = window.__QFS_CONFIG || {};
-  const SUPABASE_URL = CFG.SUPABASE_URL || "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "";
-
-  const sb = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
-
-  const $ = (id) => document.getElementById(id);
-
-  const banner = $("banner");
-  function setBanner(text, ok=true){
-    banner.textContent = String(text || "");
-    banner.classList.toggle("ok", !!ok);
-    banner.classList.toggle("err", !ok);
-  }
-
-  const loginPill = $("loginPill");
-  const membersBody = $("membersBody");
-  const ledgerBody = $("ledgerBody");
-
-  let pageOffset = 0;
-  const pageLimit = 8;
-
-  let selected = {
-    user_id: null,
-    email: null,
-    tier: null,
-    qty: null,
-    is_active: null
-  };
-
-  function esc(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  function fmtUSDFromCents(cents){
-    const usd = Number(cents || 0) / 100;
-    return "$" + usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  function fmtAmount(cur, cents, sats){
-    const c = String(cur || "").toUpperCase();
-    if(c === "USD") return fmtUSDFromCents(cents);
-    if(c === "BTC") return (Number(sats||0)).toLocaleString() + " sats";
-    return "—";
-  }
-
-  function setActivationUI(isActive){
-    const toggle = $("activationToggle");
-    const tag = $("activationTag");
-    toggle.classList.toggle("on", !!isActive);
-    tag.classList.toggle("yes", !!isActive);
-    tag.classList.toggle("no", !isActive);
-    tag.textContent = isActive ? "ACTIVE" : "PENDING";
-    $("activationHelp").textContent = isActive ? "Member is activated." : "Member is pending (locked).";
-  }
-
-  async function checkSession(){
-    const { data, error } = await sb.auth.getSession();
-    if(error || !data?.session){
-      loginPill.textContent = "LOGGED OUT";
-      loginPill.className = "pill";
-      setBanner("Not logged in. Go to login.html", false);
-      return null;
-    }
-    loginPill.textContent = "LOGGED IN";
-    loginPill.className = "pill good";
-
-    const u = data.session.user;
-    $("adminSessionLine").textContent = `admin session: ${u?.email || "—"} · uid: ${u?.id || "—"}`;
-    return data.session;
-  }
-
-  async function requireAdminOrFail(){
-    const { data, error } = await sb.rpc("is_admin");
-    if(error){
-      setBanner("Admin check failed: " + error.message, false);
-      return false;
-    }
-    if(data !== true){
-      setBanner("Not allowed: your user is not in admin_users.", false);
-      return false;
-    }
-    return true;
-  }
-
-  async function loadMembers(){
-    if(!(await requireAdminOrFail())) return;
-
-    const p_search = ($("searchInput").value || "").trim() || null;
-    const p_filter = ($("filterSelect").value || "all").trim();
-    const p_limit = pageLimit;
-    const p_offset = pageOffset;
-
-    setBanner("Loading members…");
-    membersBody.innerHTML = `<tr><td colspan="6" style="color:var(--muted);">Loading…</td></tr>`;
-
-    const { data, error } = await sb.rpc("admin_list_members", { p_search, p_filter, p_limit, p_offset });
-    if(error){
-      setBanner("Error loading members: " + error.message, false);
-      membersBody.innerHTML = `<tr><td colspan="6" style="color:var(--muted);">Error loading members.</td></tr>`;
-      return;
-    }
-
-    const rows = data || [];
-    $("pageInfo").textContent = `Page offset ${pageOffset} · loaded ${rows.length}`;
-
-    if(rows.length === 0){
-      membersBody.innerHTML = `<tr><td colspan="6" style="color:var(--muted);">No members found.</td></tr>`;
-      setBanner("No members found.", true);
-      return;
-    }
-
-    membersBody.innerHTML = "";
-    rows.forEach(r => {
-      const active = !!r.is_active;
-      membersBody.insertAdjacentHTML("beforeend", `
-        <tr>
-          <td class="mono">${esc(r.user_id)}</td>
-          <td>${esc(r.email || "—")}</td>
-          <td>${esc(r.tier || "—")}</td>
-          <td>${esc(r.qty ?? "—")}</td>
-          <td>${active ? `<span class="tag yes">YES</span>` : `<span class="tag no">NO</span>`}</td>
-          <td><button class="btn" data-select="${esc(r.user_id)}">Select</button></td>
-        </tr>
-      `);
+    /******************************************************************
+     * CLIENT
+     ******************************************************************/
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
     });
 
-    setBanner("Members loaded ✅", true);
-  }
+    /******************************************************************
+     * UI HELPERS
+     ******************************************************************/
+    const $ = (id) => document.getElementById(id);
 
-  async function loadSelected(userId){
-    if(!userId) return;
-
-    selected.user_id = userId;
-
-    setBanner("Loading balances + activation + ledger…");
-    $("selectedUserId").value = userId;
-
-    // Load balances
-    const { data: bals, error: balErr } = await sb.rpc("admin_get_user_balances", { p_user_id: userId });
-    if(balErr){
-      setBanner("Balance error: " + balErr.message, false);
-      $("usdBal").textContent = "$0.00";
-      $("btcBal").textContent = "0 sats";
-      return;
+    function showBanner(msg) {
+      const b = $("banner");
+      b.textContent = msg;
+      b.style.display = msg ? "block" : "none";
     }
 
-    const usd = (bals || []).find(x => String(x.currency||"").toUpperCase() === "USD");
-    const btc = (bals || []).find(x => String(x.currency||"").toUpperCase() === "BTC");
-    $("usdBal").textContent = fmtUSDFromCents(usd?.balance_cents || 0);
-    $("btcBal").textContent = (Number(btc?.balance_sats || 0)).toLocaleString() + " sats";
-
-    // Also try to infer activation from members list row currently selected in UI
-    // (If you want exact truth, you can add an admin_get_user_profile RPC later; this is enough for now.)
-    // We'll keep the current toggle state unless user selects a row.
-    setBanner("Loaded balances ✅", true);
-
-    await loadLedger(userId);
-  }
-
-  async function loadLedger(userId){
-    ledgerBody.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Loading…</td></tr>`;
-
-    const { data, error } = await sb.rpc("admin_get_user_ledger", { p_user_id: userId, p_limit: 25 });
-    if(error){
-      setBanner("Ledger error: " + error.message, false);
-      ledgerBody.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">Ledger failed to load.</td></tr>`;
-      return;
+    function setAuthPill(ok, text) {
+      $("authText").textContent = text;
+      $("authDot").classList.remove("ok", "bad");
+      $("authDot").classList.add(ok ? "ok" : "bad");
+      $("authPill").style.borderColor = ok ? "rgba(64,211,156,.30)" : "rgba(255,107,107,.35)";
     }
 
-    const rows = data || [];
-    if(rows.length === 0){
-      ledgerBody.innerHTML = `<tr><td colspan="5" style="color:var(--muted);">No ledger entries.</td></tr>`;
-      setBanner("Ledger loaded (empty).", true);
-      return;
+    function fmtUsdFromCents(cents) {
+      const n = Number(cents || 0) / 100;
+      return n.toLocaleString(undefined, { style: "currency", currency: "USD" });
     }
 
-    ledgerBody.innerHTML = "";
-    rows.forEach(r => {
-      const dt = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
-      const cur = String(r.currency||"—").toUpperCase();
-      const type = String(r.entry_type||"—").toLowerCase();
-      const amt = fmtAmount(cur, r.amount_cents, r.amount_sats);
-
-      ledgerBody.insertAdjacentHTML("beforeend", `
-        <tr>
-          <td>${esc(dt)}</td>
-          <td>${esc(cur)}</td>
-          <td>${esc(type)}</td>
-          <td class="mono">${esc(amt)}</td>
-          <td>${esc(r.reason || "—")}</td>
-        </tr>
-      `);
-    });
-
-    setBanner("Ledger loaded ✅", true);
-  }
-
-  async function toggleActivation(){
-    if(!selected.user_id){
-      setBanner("Select a user first.", false);
-      return;
-    }
-    if(!(await requireAdminOrFail())) return;
-
-    const current = $("activationToggle").classList.contains("on");
-    const next = !current;
-
-    setBanner("Updating activation…");
-
-    const { error } = await sb.rpc("admin_set_user_activation", {
-      p_user_id: selected.user_id,
-      p_is_activated: next,
-      p_reason: "admin_toggle",
-      p_metadata: {}
-    });
-
-    if(error){
-      setBanner("Activation update failed: " + error.message, false);
-      return;
+    function fmtBtcSats(sats) {
+      return `${Number(sats || 0).toLocaleString()} sats`;
     }
 
-    setActivationUI(next);
-    setBanner("Activation updated ✅", true);
-  }
-
-  async function submitAdjustment(){
-    if(!selected.user_id){
-      setBanner("Select a user first.", false);
-      return;
+    function safeJsonParse(txt) {
+      try { return txt ? JSON.parse(txt) : {}; }
+      catch { return null; }
     }
-    if(!(await requireAdminOrFail())) return;
 
-    const currency = ($("currencySelect").value || "USD").toUpperCase();
-    const kind = ($("typeSelect").value || "credit").toLowerCase();
-    const reason = ($("reasonInput").value || "admin_adjust").trim() || "admin_adjust";
+    function setSwitch(isOn) {
+      const sw = $("activationSwitch");
+      sw.classList.toggle("on", !!isOn);
+      sw.setAttribute("aria-checked", !!isOn ? "true" : "false");
+    }
 
-    // Parse metadata JSON safely
-    let meta = {};
-    const rawMeta = ($("metaInput").value || "").trim();
-    if(rawMeta){
-      try{ meta = JSON.parse(rawMeta); } catch(e){
-        setBanner("Metadata must be valid JSON.", false);
+    /******************************************************************
+     * AUTH CHECK (THIS IS THE IMPORTANT PART)
+     ******************************************************************/
+    async function requireSessionAndAdmin() {
+      showBanner("");
+
+      // Make sure we have a session
+      let { data: s1, error: e1 } = await supabaseClient.auth.getSession();
+      if (e1) console.warn("getSession error:", e1);
+
+      // If session is missing, try refresh (common after long idle)
+      if (!s1?.session) {
+        const { data: s2 } = await supabaseClient.auth.refreshSession();
+        s1 = s2;
+      }
+
+      const session = s1?.session || null;
+      if (!session) {
+        setAuthPill(false, "Not logged in (no session)");
+        $("adminSessionNote").textContent = "No Supabase session found. Log in on the main site first, then reload this page.";
+        return { ok: false, session: null, isAdmin: false };
+      }
+
+      // Ask DB if this user is admin (RPC: is_admin)
+      const { data: isAdmin, error: isAdminErr } = await supabaseClient.rpc("is_admin", {});
+      if (isAdminErr) {
+        console.warn("is_admin rpc error:", isAdminErr);
+        setAuthPill(false, "Session OK • Admin check failed");
+        return { ok: false, session, isAdmin: false };
+      }
+
+      const uid = session.user?.id;
+      const email = session.user?.email;
+
+      $("adminSessionNote").textContent = `admin session: ${email || "(no email)"} • uid: ${uid || "(no uid)"}`;
+      setAuthPill(true, isAdmin ? `Logged in • Admin: YES` : `Logged in • Admin: NO`);
+
+      return { ok: !!isAdmin, session, isAdmin: !!isAdmin };
+    }
+
+    /******************************************************************
+     * MEMBERS
+     ******************************************************************/
+    async function loadMembers() {
+      const authState = await requireSessionAndAdmin();
+      if (!authState.session) return;
+      if (!authState.isAdmin) {
+        showBanner("You are logged in, but DB says you are NOT admin. (is_admin() returned false)");
         return;
       }
-    }
 
-    // Amount rules:
-    // - USD input is dollars in UI -> convert to cents (bigint)
-    // - BTC input is sats directly
-    const rawAmt = ($("amountInput").value || "").trim();
-    if(!rawAmt){
-      setBanner("Enter an amount.", false);
-      return;
-    }
+      const q = $("searchInput").value.trim();
+      const filter = $("filterSelect").value;
 
-    let amountBig = 0n;
-
-    if(currency === "USD"){
-      const dollars = Number(rawAmt);
-      if(!Number.isFinite(dollars)){
-        setBanner("USD amount must be a number.", false);
-        return;
-      }
-      const cents = Math.round(dollars * 100);
-      amountBig = BigInt(cents);
-    } else {
-      // BTC sats
-      const sats = Number(rawAmt);
-      if(!Number.isFinite(sats) || !Number.isInteger(sats)){
-        setBanner("BTC amount must be an integer number of sats.", false);
-        return;
-      }
-      amountBig = BigInt(sats);
-    }
-
-    setBanner("Submitting…");
-
-    if(kind === "credit"){
-      const { error } = await sb.rpc("admin_credit_user", {
-        p_user_id: selected.user_id,
-        p_currency: currency,
-        p_amount: amountBig.toString(),
-        p_reason: reason,
-        p_metadata: meta
+      // EXPECTED RPC: admin_list_members(search_text, filter_text, page_offset)
+      // If your signature differs, tell me and I’ll adjust in one shot.
+      const { data, error } = await supabaseClient.rpc("admin_list_members", {
+        p_search: q || null,
+        p_filter: filter || "all",
+        p_offset: 0
       });
-      if(error){
-        setBanner("Credit failed: " + error.message, false);
+
+      if (error) {
+        showBanner(`Load members failed:\n${error.message || JSON.stringify(error)}`);
         return;
       }
-    } else {
-      const { error } = await sb.rpc("admin_debit_user", {
-        p_user_id: selected.user_id,
-        p_currency: currency,
-        p_amount_units: amountBig.toString(),
-        p_reason: reason,
-        p_metadata: meta
-      });
-      if(error){
-        setBanner("Debit failed: " + error.message, false);
+
+      renderMembers(Array.isArray(data) ? data : []);
+    }
+
+    function renderMembers(rows) {
+      const wrap = $("membersList");
+      wrap.innerHTML = "";
+
+      if (!rows.length) {
+        wrap.innerHTML = `<div class="muted">No members found.</div>`;
         return;
+      }
+
+      for (const r of rows) {
+        const userId = r.user_id || r.id || r.uid; // defensive
+        const email = r.email || "(no email)";
+        const tier = r.tier || "";
+        const active = (r.is_active ?? r.active ?? false);
+
+        const el = document.createElement("div");
+        el.className = "member";
+        el.innerHTML = `
+          <div>
+            <div class="email">${email}</div>
+            <div class="id">${userId || ""}</div>
+          </div>
+          <div class="muted">${tier ? `Tier: ${tier}` : ""} ${typeof active === "boolean" ? `• Active: ${active ? "YES" : "NO"}` : ""}</div>
+          <button class="primary">Select</button>
+        `;
+        el.querySelector("button").onclick = () => {
+          $("selectedUserId").value = userId || "";
+          loadSelected();
+        };
+
+        wrap.appendChild(el);
       }
     }
 
-    setBanner("Saved ✅ Refreshing…", true);
-    await loadSelected(selected.user_id);
-  }
+    /******************************************************************
+     * SELECTED: BALANCES + LEDGER
+     ******************************************************************/
+    async function loadSelected() {
+      showBanner("");
 
-  // UI events
-  $("refreshBtn").addEventListener("click", async () => {
-    await loadMembers();
-    if(selected.user_id) await loadSelected(selected.user_id);
-  });
+      const authState = await requireSessionAndAdmin();
+      if (!authState.session) return;
+      if (!authState.isAdmin) {
+        showBanner("Not allowed: is_admin() returned false for your current session.");
+        return;
+      }
 
-  $("logoutBtn").addEventListener("click", async () => {
-    setBanner("Signing out…");
-    try{ await sb.auth.signOut(); } catch {}
-    window.location.replace("login.html");
-  });
+      const userId = $("selectedUserId").value.trim();
+      if (!userId) {
+        showBanner("Paste/select a user UUID first.");
+        return;
+      }
 
-  $("loadMembersBtn").addEventListener("click", async () => {
-    pageOffset = 0;
-    await loadMembers();
-  });
+      // BALANCES
+      const { data: balances, error: bErr } = await supabaseClient.rpc("admin_get_user_balances", { p_user_id: userId });
+      if (bErr) {
+        showBanner(`Balance load failed:\n${bErr.message || JSON.stringify(bErr)}`);
+        return;
+      }
 
-  $("prevBtn").addEventListener("click", async () => {
-    pageOffset = Math.max(0, pageOffset - pageLimit);
-    await loadMembers();
-  });
+      // Expect something like: { usd_balance_cents, btc_balance_sats, is_active }
+      const usdCents = balances?.usd_balance_cents ?? balances?.usd_balance ?? balances?.usd ?? 0;
+      const btcSats  = balances?.btc_balance_sats ?? balances?.btc_balance ?? balances?.btc ?? 0;
 
-  $("nextBtn").addEventListener("click", async () => {
-    pageOffset = pageOffset + pageLimit;
-    await loadMembers();
-  });
+      $("usdBalance").textContent = fmtUsdFromCents(usdCents);
+      $("btcBalance").textContent = fmtBtcSats(btcSats);
 
-  membersBody.addEventListener("click", async (e) => {
-    const btn = e.target.closest("button[data-select]");
-    if(!btn) return;
-    const uid = btn.getAttribute("data-select");
-    selected.user_id = uid;
+      // If balances returns activation, use it. Otherwise we show unknown until toggle succeeds.
+      const isActive = balances?.is_active;
+      if (typeof isActive === "boolean") {
+        setSwitch(isActive);
+        $("activationText").textContent = isActive ? "Activated" : "Pending / Disabled";
+        $("activationSub").textContent = isActive ? "Member is active." : "Member is pending (locked).";
+      } else {
+        $("activationText").textContent = "Activation status unknown";
+        $("activationSub").textContent = "Your balances RPC did not return is_active.";
+      }
 
-    // we don’t have is_active from a separate fetch; infer from row UI (best-effort)
-    const tr = btn.closest("tr");
-    const activeCell = tr?.children?.[4];
-    const isActive = !!activeCell?.querySelector(".tag.yes");
-    setActivationUI(isActive);
+      // LEDGER
+      await loadLedger();
+    }
 
-    // store email/tier/qty best-effort from row
-    selected.email = tr?.children?.[1]?.textContent?.trim() || null;
-    selected.tier = tr?.children?.[2]?.textContent?.trim() || null;
-    selected.qty = tr?.children?.[3]?.textContent?.trim() || null;
+    async function loadLedger() {
+      const userId = $("selectedUserId").value.trim();
+      if (!userId) return;
 
-    await loadSelected(uid);
-  });
+      const { data: ledger, error: lErr } = await supabaseClient.rpc("admin_get_user_ledger", { p_user_id: userId });
+      if (lErr) {
+        showBanner(`Ledger load failed:\n${lErr.message || JSON.stringify(lErr)}`);
+        $("ledgerBody").innerHTML = `<tr><td colspan="5" class="muted">Ledger failed to load.</td></tr>`;
+        return;
+      }
 
-  $("loadSelectedBtn").addEventListener("click", async () => {
-    const uid = ($("selectedUserId").value || "").trim();
-    if(!uid) return setBanner("Paste a user_id.", false);
-    setActivationUI(false);
-    await loadSelected(uid);
-  });
+      renderLedger(Array.isArray(ledger) ? ledger : []);
+    }
 
-  $("activationToggle").addEventListener("click", toggleActivation);
-  $("submitBtn").addEventListener("click", submitAdjustment);
-  $("refreshLedgerBtn").addEventListener("click", async () => {
-    if(!selected.user_id) return setBanner("Select a user first.", false);
-    await loadLedger(selected.user_id);
-  });
+    function renderLedger(rows) {
+      const body = $("ledgerBody");
+      body.innerHTML = "";
 
-  // Boot
-  (async () => {
-    setBanner("Checking session…");
-    const session = await checkSession();
-    if(!session) return;
+      if (!rows.length) {
+        body.innerHTML = `<tr><td colspan="5" class="muted">No ledger entries.</td></tr>`;
+        return;
+      }
 
-    const ok = await requireAdminOrFail();
-    if(!ok) return;
+      for (const r of rows) {
+        const created = r.created_at || r.time || r.created || "";
+        const cur = (r.currency || "").toUpperCase();
+        const type = r.entry_type || r.type || "";
+        const note = r.note || r.reason || "";
 
-    setBanner("Admin console ready.", true);
-    await loadMembers();
-  })();
-})();
-</script>
+        // Your table shows amount_cents bigint
+        let amountDisplay = "";
+        if (cur === "USD") amountDisplay = fmtUsdFromCents(r.amount_cents ?? r.amount ?? 0);
+        else if (cur === "BTC") amountDisplay = fmtBtcSats(r.amount_sats ?? r.amount ?? r.amount_cents ?? 0);
+        else amountDisplay = String(r.amount ?? r.amount_cents ?? "");
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="smallMono">${created}</td>
+          <td>${cur}</td>
+          <td>${type}</td>
+          <td class="rightAlign">${amountDisplay}</td>
+          <td>${note}</td>
+        `;
+        body.appendChild(tr);
+      }
+    }
+
+    /******************************************************************
+     * CREDIT / DEBIT
+     ******************************************************************/
+    async function submitTxn() {
+      showBanner("");
+
+      const authState = await requireSessionAndAdmin();
+      if (!authState.session) return;
+      if (!authState.isAdmin) {
+        showBanner("Not allowed: is_admin() returned false for your current session.");
+        return;
+      }
+
+      const userId = $("selectedUserId").value.trim();
+      if (!userId) return showBanner("Select a member first.");
+
+      const currency = $("currencySelect").value;
+      const entryType = $("entryTypeSelect").value; // credit/debit
+      const reason = $("reasonInput").value.trim() || "manual_adjust";
+
+      const amountRaw = $("amountInput").value.trim();
+      if (!amountRaw) return showBanner("Enter an amount.");
+
+      let metadata = safeJsonParse($("metadataInput").value.trim());
+      if (metadata === null) return showBanner("Metadata must be valid JSON.");
+
+      // Convert amount to what your RPC expects:
+      // - USD -> cents
+      // - BTC -> sats (assumed already sats)
+      let amountBigint = 0;
+      if (currency === "USD") {
+        const dollars = Number(amountRaw);
+        if (!Number.isFinite(dollars)) return showBanner("USD amount must be a number (e.g. 550).");
+        amountBigint = Math.round(dollars * 100);
+      } else {
+        const sats = Number(amountRaw);
+        if (!Number.isFinite(sats)) return showBanner("BTC amount must be a number (sats).");
+        amountBigint = Math.round(sats);
+      }
+
+      // If you want debit, pass negative (common pattern) OR let RPC handle entry_type.
+      // Your existing admin_credit_user takes p_amount bigint and likely expects positive.
+      // So we call admin_credit_user for credit and admin_debit_user for debit if you have it.
+      if (entryType === "debit") {
+        // If you have admin_debit_user, use it. Otherwise, call admin_credit_user with negative.
+        const { data, error } = await supabaseClient.rpc("admin_credit_user", {
+          p_user_id: userId,
+          p_currency: currency,
+          p_amount: -Math.abs(amountBigint),
+          p_reason: reason,
+          p_metadata: metadata || {}
+        });
+        if (error) return showBanner(`Debit failed:\n${error.message || JSON.stringify(error)}`);
+      } else {
+        const { data, error } = await supabaseClient.rpc("admin_credit_user", {
+          p_user_id: userId,
+          p_currency: currency,
+          p_amount: Math.abs(amountBigint),
+          p_reason: reason,
+          p_metadata: metadata || {}
+        });
+        if (error) return showBanner(`Credit failed:\n${error.message || JSON.stringify(error)}`);
+      }
+
+      await loadSelected();
+    }
+
+    /******************************************************************
+     * ACTIVATION TOGGLE
+     ******************************************************************/
+    async function toggleActivation() {
+      showBanner("");
+
+      const authState = await requireSessionAndAdmin();
+      if (!authState.session) return;
+      if (!authState.isAdmin) {
+        showBanner("Not allowed: is_admin() returned false for your current session.");
+        return;
+      }
+
+      const userId = $("selectedUserId").value.trim();
+      if (!userId) return showBanner("Select a member first.");
+
+      const isOn = $("activationSwitch").classList.contains("on");
+      const newVal = !isOn;
+
+      // This matches the signature you showed:
+      // admin_set_user_activation(p_is_activated boolean, p_metadata jsonb, p_reason text, p_user_id uuid)
+      const { data, error } = await supabaseClient.rpc("admin_set_user_activation", {
+        p_is_activated: newVal,
+        p_metadata: {},
+        p_reason: "admin toggle",
+        p_user_id: userId
+      });
+
+      if (error) {
+        // Roll back UI
+        setSwitch(isOn);
+        showBanner(`Activation update failed:\n${error.message || JSON.stringify(error)}`);
+        return;
+      }
+
+      setSwitch(newVal);
+      $("activationText").textContent = newVal ? "Activated" : "Pending / Disabled";
+      $("activationSub").textContent = newVal ? "Member is active." : "Member is pending (locked).";
+
+      // refresh balances/ledger after activation
+      await loadSelected();
+    }
+
+    /******************************************************************
+     * DEBUG: WHO AM I (optional)
+     ******************************************************************/
+    async function whoAmI() {
+      showBanner("");
+      const { data, error } = await supabaseClient.rpc("debug_whoami", {});
+      if (error) return showBanner(`debug_whoami failed:\n${error.message || JSON.stringify(error)}`);
+      showBanner(`debug_whoami:\n${JSON.stringify(data, null, 2)}`);
+    }
+
+    /******************************************************************
+     * LOGOUT
+     ******************************************************************/
+    async function logout() {
+      await supabaseClient.auth.signOut();
+      location.reload();
+    }
+
+    /******************************************************************
+     * WIRE UP
+     ******************************************************************/
+    $("loadMembersBtn").onclick = loadMembers;
+    $("loadSelectedBtn").onclick = loadSelected;
+    $("refreshLedgerBtn").onclick = loadLedger;
+    $("submitTxnBtn").onclick = submitTxn;
+    $("activationSwitch").onclick = toggleActivation;
+    $("logoutBtn").onclick = logout;
+    $("refreshBtn").onclick = async () => {
+      showBanner("");
+      await requireSessionAndAdmin();
+      await loadMembers();
+      const uid = $("selectedUserId").value.trim();
+      if (uid) await loadSelected();
+    };
+    $("debugWhoBtn").onclick = whoAmI;
+
+    // Initial load
+    (async function init(){
+      const authState = await requireSessionAndAdmin();
+      if (authState.session && authState.isAdmin) {
+        await loadMembers();
+      }
+    })();
+  </script>
 </body>
 </html>
