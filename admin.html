@@ -65,6 +65,10 @@
       border-color: rgba(255,107,107,.35);
       background: rgba(255,107,107,.14);
     }
+    button[disabled]{
+      opacity:.55;
+      cursor:not-allowed;
+    }
     .pill{
       display:inline-flex; align-items:center; gap:8px;
       padding:6px 10px;
@@ -121,6 +125,10 @@
       color:var(--text);
       outline:none;
     }
+    input[disabled], select[disabled], textarea[disabled]{
+      opacity:.6;
+      cursor:not-allowed;
+    }
     textarea{min-height:72px;resize:vertical}
     .muted{color:var(--muted);font-size:12px}
     .members{
@@ -175,6 +183,10 @@
     }
     .switch.on{background: rgba(64,211,156,.16); border-color: rgba(64,211,156,.30)}
     .switch.on .knob{left:27px}
+    .switch[aria-disabled="true"]{
+      opacity:.6;
+      cursor:not-allowed;
+    }
     table{
       width:100%;
       border-collapse:collapse;
@@ -193,6 +205,7 @@
     .footerNote{margin-top:10px;color:var(--muted);font-size:12px}
   </style>
 </head>
+
 <body>
   <header>
     <div class="title">
@@ -209,7 +222,7 @@
   <div class="wrap">
     <div class="banner" id="banner"></div>
 
-    <div class="grid">
+    <div class="grid" id="adminGrid">
       <!-- LEFT: Members -->
       <div class="card">
         <h2>Members</h2>
@@ -317,10 +330,20 @@
 
   <script>
     /******************************************************************
-     * CONFIG (REPLACE THESE)
+     * HARD GATE:
+     * - Keep page hidden until admin is verified.
+     * - If no session -> redirect to admin-confirm.html (your login page).
+     * - If session but not admin -> lock UI and show 403 banner.
+     ******************************************************************/
+    document.documentElement.style.visibility = "hidden";
+
+    /******************************************************************
+     * CONFIG
      ******************************************************************/
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
+    const LOGIN_PAGE = "/admin-confirm.html";
 
     /******************************************************************
      * CLIENT
@@ -329,7 +352,7 @@
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true
+        detectSessionInUrl: false
       }
     });
 
@@ -371,34 +394,95 @@
       sw.setAttribute("aria-checked", !!isOn ? "true" : "false");
     }
 
+    function setSwitchDisabled(disabled) {
+      const sw = $("activationSwitch");
+      sw.setAttribute("aria-disabled", disabled ? "true" : "false");
+      if (disabled) {
+        sw.classList.remove("on");
+        sw.setAttribute("aria-checked", "false");
+      }
+    }
+
+    function lockAdminUI() {
+      // disable buttons / inputs so nothing can be used
+      const idsToDisable = [
+        "refreshBtn",
+        "loadMembersBtn",
+        "loadSelectedBtn",
+        "debugWhoBtn",
+        "refreshLedgerBtn",
+        "submitTxnBtn",
+        "searchInput",
+        "filterSelect",
+        "selectedUserId",
+        "currencySelect",
+        "amountInput",
+        "entryTypeSelect",
+        "reasonInput",
+        "metadataInput"
+      ];
+      for (const id of idsToDisable) {
+        const el = $(id);
+        if (!el) continue;
+        if (el.tagName === "INPUT" || el.tagName === "SELECT" || el.tagName === "TEXTAREA" || el.tagName === "BUTTON") {
+          el.disabled = true;
+        }
+      }
+
+      // prevent activation toggle
+      setSwitchDisabled(true);
+
+      // keep header visible (layout), but hide grid content to reduce exposure
+      const grid = $("adminGrid");
+      if (grid) grid.style.display = "none";
+    }
+
+    function redirectToLogin() {
+      const next = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
+      window.location.href = `${LOGIN_PAGE}?next=${next}`;
+    }
+
     /******************************************************************
-     * AUTH CHECK (THIS IS THE IMPORTANT PART)
+     * AUTH CHECK (IMPORTANT PART)
      ******************************************************************/
-    async function requireSessionAndAdmin() {
+    async function requireSessionAndAdmin({ redirectIfNoSession = true } = {}) {
       showBanner("");
 
-      // Make sure we have a session
+      // Session
       let { data: s1, error: e1 } = await supabaseClient.auth.getSession();
       if (e1) console.warn("getSession error:", e1);
 
-      // If session is missing, try refresh (common after long idle)
+      // If session missing, try refresh once
       if (!s1?.session) {
-        const { data: s2 } = await supabaseClient.auth.refreshSession();
-        s1 = s2;
+        try {
+          const { data: s2 } = await supabaseClient.auth.refreshSession();
+          s1 = s2;
+        } catch (e) {
+          // ignore
+        }
       }
 
       const session = s1?.session || null;
       if (!session) {
-        setAuthPill(false, "Not logged in (no session)");
-        $("adminSessionNote").textContent = "No Supabase session found. Log in on the main site first, then reload this page.";
+        setAuthPill(false, "Not logged in");
+        $("adminSessionNote").textContent = "No Supabase session found.";
+        if (redirectIfNoSession) {
+          redirectToLogin();
+        } else {
+          document.documentElement.style.visibility = "visible";
+        }
         return { ok: false, session: null, isAdmin: false };
       }
 
-      // Ask DB if this user is admin (RPC: is_admin)
+      // Admin check via DB (RPC)
       const { data: isAdmin, error: isAdminErr } = await supabaseClient.rpc("is_admin", {});
       if (isAdminErr) {
         console.warn("is_admin rpc error:", isAdminErr);
         setAuthPill(false, "Session OK • Admin check failed");
+        $("adminSessionNote").textContent = "Session exists, but admin verification failed.";
+        showBanner(`Admin check failed:\n${isAdminErr.message || JSON.stringify(isAdminErr)}`);
+        lockAdminUI();
+        document.documentElement.style.visibility = "visible";
         return { ok: false, session, isAdmin: false };
       }
 
@@ -406,27 +490,33 @@
       const email = session.user?.email;
 
       $("adminSessionNote").textContent = `admin session: ${email || "(no email)"} • uid: ${uid || "(no uid)"}`;
-      setAuthPill(true, isAdmin ? `Logged in • Admin: YES` : `Logged in • Admin: NO`);
 
-      return { ok: !!isAdmin, session, isAdmin: !!isAdmin };
+      if (isAdmin === true) {
+        setAuthPill(true, "Logged in • Admin: YES");
+        // show page only after success
+        document.documentElement.style.visibility = "visible";
+        return { ok: true, session, isAdmin: true };
+      }
+
+      // Not admin: lock and show 403
+      setAuthPill(false, "Logged in • Admin: NO");
+      showBanner("403 — Admin access only.\nYou are logged in, but your user is not in admin_users (is_admin() returned false).");
+      lockAdminUI();
+      document.documentElement.style.visibility = "visible";
+      return { ok: false, session, isAdmin: false };
     }
 
     /******************************************************************
      * MEMBERS
      ******************************************************************/
     async function loadMembers() {
-      const authState = await requireSessionAndAdmin();
+      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
       if (!authState.session) return;
-      if (!authState.isAdmin) {
-        showBanner("You are logged in, but DB says you are NOT admin. (is_admin() returned false)");
-        return;
-      }
+      if (!authState.isAdmin) return;
 
       const q = $("searchInput").value.trim();
       const filter = $("filterSelect").value;
 
-      // EXPECTED RPC: admin_list_members(search_text, filter_text, page_offset)
-      // If your signature differs, tell me and I’ll adjust in one shot.
       const { data, error } = await supabaseClient.rpc("admin_list_members", {
         p_search: q || null,
         p_filter: filter || "all",
@@ -451,7 +541,7 @@
       }
 
       for (const r of rows) {
-        const userId = r.user_id || r.id || r.uid; // defensive
+        const userId = r.user_id || r.id || r.uid;
         const email = r.email || "(no email)";
         const tier = r.tier || "";
         const active = (r.is_active ?? r.active ?? false);
@@ -481,12 +571,9 @@
     async function loadSelected() {
       showBanner("");
 
-      const authState = await requireSessionAndAdmin();
+      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
       if (!authState.session) return;
-      if (!authState.isAdmin) {
-        showBanner("Not allowed: is_admin() returned false for your current session.");
-        return;
-      }
+      if (!authState.isAdmin) return;
 
       const userId = $("selectedUserId").value.trim();
       if (!userId) {
@@ -494,23 +581,21 @@
         return;
       }
 
-      // BALANCES
       const { data: balances, error: bErr } = await supabaseClient.rpc("admin_get_user_balances", { p_user_id: userId });
       if (bErr) {
         showBanner(`Balance load failed:\n${bErr.message || JSON.stringify(bErr)}`);
         return;
       }
 
-      // Expect something like: { usd_balance_cents, btc_balance_sats, is_active }
       const usdCents = balances?.usd_balance_cents ?? balances?.usd_balance ?? balances?.usd ?? 0;
       const btcSats  = balances?.btc_balance_sats ?? balances?.btc_balance ?? balances?.btc ?? 0;
 
       $("usdBalance").textContent = fmtUsdFromCents(usdCents);
       $("btcBalance").textContent = fmtBtcSats(btcSats);
 
-      // If balances returns activation, use it. Otherwise we show unknown until toggle succeeds.
       const isActive = balances?.is_active;
       if (typeof isActive === "boolean") {
+        setSwitchDisabled(false);
         setSwitch(isActive);
         $("activationText").textContent = isActive ? "Activated" : "Pending / Disabled";
         $("activationSub").textContent = isActive ? "Member is active." : "Member is pending (locked).";
@@ -519,13 +604,16 @@
         $("activationSub").textContent = "Your balances RPC did not return is_active.";
       }
 
-      // LEDGER
       await loadLedger();
     }
 
     async function loadLedger() {
       const userId = $("selectedUserId").value.trim();
       if (!userId) return;
+
+      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
+      if (!authState.session) return;
+      if (!authState.isAdmin) return;
 
       const { data: ledger, error: lErr } = await supabaseClient.rpc("admin_get_user_ledger", { p_user_id: userId });
       if (lErr) {
@@ -552,7 +640,6 @@
         const type = r.entry_type || r.type || "";
         const note = r.note || r.reason || "";
 
-        // Your table shows amount_cents bigint
         let amountDisplay = "";
         if (cur === "USD") amountDisplay = fmtUsdFromCents(r.amount_cents ?? r.amount ?? 0);
         else if (cur === "BTC") amountDisplay = fmtBtcSats(r.amount_sats ?? r.amount ?? r.amount_cents ?? 0);
@@ -576,12 +663,9 @@
     async function submitTxn() {
       showBanner("");
 
-      const authState = await requireSessionAndAdmin();
+      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
       if (!authState.session) return;
-      if (!authState.isAdmin) {
-        showBanner("Not allowed: is_admin() returned false for your current session.");
-        return;
-      }
+      if (!authState.isAdmin) return;
 
       const userId = $("selectedUserId").value.trim();
       if (!userId) return showBanner("Select a member first.");
@@ -596,9 +680,6 @@
       let metadata = safeJsonParse($("metadataInput").value.trim());
       if (metadata === null) return showBanner("Metadata must be valid JSON.");
 
-      // Convert amount to what your RPC expects:
-      // - USD -> cents
-      // - BTC -> sats (assumed already sats)
       let amountBigint = 0;
       if (currency === "USD") {
         const dollars = Number(amountRaw);
@@ -610,24 +691,43 @@
         amountBigint = Math.round(sats);
       }
 
-      // If you want debit, pass negative (common pattern) OR let RPC handle entry_type.
-      // Your existing admin_credit_user takes p_amount bigint and likely expects positive.
-      // So we call admin_credit_user for credit and admin_debit_user for debit if you have it.
+      const amt = Math.abs(amountBigint);
+
       if (entryType === "debit") {
-        // If you have admin_debit_user, use it. Otherwise, call admin_credit_user with negative.
-        const { data, error } = await supabaseClient.rpc("admin_credit_user", {
-          p_user_id: userId,
-          p_currency: currency,
-          p_amount: -Math.abs(amountBigint),
-          p_reason: reason,
-          p_metadata: metadata || {}
-        });
-        if (error) return showBanner(`Debit failed:\n${error.message || JSON.stringify(error)}`);
+        // Prefer admin_debit_user if it exists (you have it in DB list)
+        let didDebit = false;
+
+        {
+          const { error } = await supabaseClient.rpc("admin_debit_user", {
+            p_user_id: userId,
+            p_currency: currency,
+            p_amount: amt,
+            p_reason: reason,
+            p_metadata: metadata || {}
+          });
+
+          if (!error) {
+            didDebit = true;
+          } else {
+            // Fallback: negative amount through credit_user (your old behavior)
+            const { error: e2 } = await supabaseClient.rpc("admin_credit_user", {
+              p_user_id: userId,
+              p_currency: currency,
+              p_amount: -amt,
+              p_reason: reason,
+              p_metadata: metadata || {}
+            });
+            if (e2) return showBanner(`Debit failed:\n${e2.message || JSON.stringify(e2)}`);
+            didDebit = true;
+          }
+        }
+
+        if (!didDebit) return showBanner("Debit failed (unknown).");
       } else {
-        const { data, error } = await supabaseClient.rpc("admin_credit_user", {
+        const { error } = await supabaseClient.rpc("admin_credit_user", {
           p_user_id: userId,
           p_currency: currency,
-          p_amount: Math.abs(amountBigint),
+          p_amount: amt,
           p_reason: reason,
           p_metadata: metadata || {}
         });
@@ -643,22 +743,20 @@
     async function toggleActivation() {
       showBanner("");
 
-      const authState = await requireSessionAndAdmin();
+      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
       if (!authState.session) return;
-      if (!authState.isAdmin) {
-        showBanner("Not allowed: is_admin() returned false for your current session.");
-        return;
-      }
+      if (!authState.isAdmin) return;
 
       const userId = $("selectedUserId").value.trim();
       if (!userId) return showBanner("Select a member first.");
 
+      const isDisabled = $("activationSwitch").getAttribute("aria-disabled") === "true";
+      if (isDisabled) return;
+
       const isOn = $("activationSwitch").classList.contains("on");
       const newVal = !isOn;
 
-      // This matches the signature you showed:
-      // admin_set_user_activation(p_is_activated boolean, p_metadata jsonb, p_reason text, p_user_id uuid)
-      const { data, error } = await supabaseClient.rpc("admin_set_user_activation", {
+      const { error } = await supabaseClient.rpc("admin_set_user_activation", {
         p_is_activated: newVal,
         p_metadata: {},
         p_reason: "admin toggle",
@@ -666,7 +764,6 @@
       });
 
       if (error) {
-        // Roll back UI
         setSwitch(isOn);
         showBanner(`Activation update failed:\n${error.message || JSON.stringify(error)}`);
         return;
@@ -676,7 +773,6 @@
       $("activationText").textContent = newVal ? "Activated" : "Pending / Disabled";
       $("activationSub").textContent = newVal ? "Member is active." : "Member is pending (locked).";
 
-      // refresh balances/ledger after activation
       await loadSelected();
     }
 
@@ -685,6 +781,10 @@
      ******************************************************************/
     async function whoAmI() {
       showBanner("");
+      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
+      if (!authState.session) return;
+      if (!authState.isAdmin) return;
+
       const { data, error } = await supabaseClient.rpc("debug_whoami", {});
       if (error) return showBanner(`debug_whoami failed:\n${error.message || JSON.stringify(error)}`);
       showBanner(`debug_whoami:\n${JSON.stringify(data, null, 2)}`);
@@ -694,8 +794,12 @@
      * LOGOUT
      ******************************************************************/
     async function logout() {
-      await supabaseClient.auth.signOut();
-      location.reload();
+      try {
+        await supabaseClient.auth.signOut();
+      } catch (e) {
+        // ignore
+      }
+      redirectToLogin();
     }
 
     /******************************************************************
@@ -707,23 +811,29 @@
     $("submitTxnBtn").onclick = submitTxn;
     $("activationSwitch").onclick = toggleActivation;
     $("logoutBtn").onclick = logout;
+
     $("refreshBtn").onclick = async () => {
       showBanner("");
-      await requireSessionAndAdmin();
+      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
+      if (!authState.session || !authState.isAdmin) return;
       await loadMembers();
       const uid = $("selectedUserId").value.trim();
       if (uid) await loadSelected();
     };
+
     $("debugWhoBtn").onclick = whoAmI;
 
-    // Initial load
+    // Initial load (hard gate)
     (async function init(){
-      const authState = await requireSessionAndAdmin();
+      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
       if (authState.session && authState.isAdmin) {
+        // Only show grid for verified admin
+        const grid = $("adminGrid");
+        if (grid) grid.style.display = "grid";
+        setSwitchDisabled(false);
         await loadMembers();
       }
     })();
   </script>
 </body>
 </html>
-
