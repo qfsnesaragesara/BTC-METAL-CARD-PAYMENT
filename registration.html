@@ -66,7 +66,7 @@
         </div>
       </div>
 
-      <!-- DOB / PHONE / GENDER -->
+      <!-- DOB / PHONE / GENDER (kept) -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="font-semibold">Date of Birth</label>
@@ -88,16 +88,10 @@
         </div>
       </div>
 
-      <!-- EMAIL + OPTIONAL -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="font-semibold">Email Address</label>
-          <input id="regEmail" type="email" name="email" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-        <div>
-          <label class="font-semibold">A Number (Optional)</label>
-          <input type="text" name="a_number" class="w-full mt-1 p-3 border rounded-lg">
-        </div>
+      <!-- EMAIL (A Number removed) -->
+      <div>
+        <label class="font-semibold">Email Address</label>
+        <input id="regEmail" type="email" name="email" required class="w-full mt-1 p-3 border rounded-lg">
       </div>
 
       <!-- PASSWORD -->
@@ -114,7 +108,7 @@
         </div>
       </div>
 
-      <!-- REGISTERING FOR -->
+      <!-- REGISTERING FOR (USA hides Gold) -->
       <div>
         <label class="font-semibold">What are you registering for?</label>
         <select id="regFor" name="registering_for" required class="w-full mt-1 p-3 border rounded-lg">
@@ -136,7 +130,6 @@
           </option>
         </select>
 
-        <!-- optional note -->
         <p id="goldHiddenNote" class="text-xs text-slate-500 mt-2 hidden">
           Gold Card is not available for United States users.
         </p>
@@ -152,35 +145,9 @@
         </select>
       </div>
 
-      <!-- BIRTH DETAILS -->
-      <h3 class="text-lg font-bold mt-4">Birth Information</h3>
+      <!-- ✅ Birth Information section removed entirely -->
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="font-semibold">Place of Birth</label>
-          <input type="text" name="place_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-        <div>
-          <label class="font-semibold">City of Birth</label>
-          <input type="text" name="city_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-        <div>
-          <label class="font-semibold">State/Province of Birth</label>
-          <input type="text" name="state_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
-        </div>
-      </div>
-
-      <div>
-        <label class="font-semibold">Country of Birth</label>
-        <input type="text" name="country_of_birth" required class="w-full mt-1 p-3 border rounded-lg">
-      </div>
-
-      <div>
-        <label class="font-semibold">Country of Citizenship</label>
-        <input type="text" name="citizenship_country" required class="w-full mt-1 p-3 border rounded-lg">
-      </div>
-
-      <!-- ADDRESS -->
+      <!-- ADDRESS (kept) -->
       <h3 class="text-lg font-bold mt-4">Physical Address</h3>
 
       <div>
@@ -208,17 +175,12 @@
         </div>
       </div>
 
-      <!-- ✅ add id so JS can read what they type -->
       <div>
         <label class="font-semibold">Country</label>
         <input id="countryEl" type="text" name="country" required class="w-full mt-1 p-3 border rounded-lg">
       </div>
 
-      <!-- FAMILY -->
-      <div>
-        <label class="font-semibold">Number of Family Members (Spouse or Children under 21)</label>
-        <input type="number" name="family_members" min="0" required class="w-full mt-1 p-3 border rounded-lg">
-      </div>
+      <!-- ✅ Number of Family Members removed -->
 
       <div id="regMsg" class="text-sm text-center hidden"></div>
 
@@ -248,7 +210,6 @@
   const middleNameEl = document.getElementById("middleName");
   const lastNameEl = document.getElementById("lastName");
 
-  // ✅ NEW: Country + gold option refs
   const countryEl = document.getElementById("countryEl");
   const goldOption = document.getElementById("goldOption");
   const goldHiddenNote = document.getElementById("goldHiddenNote");
@@ -259,11 +220,9 @@
     msg.classList.remove("hidden");
   }
 
-  // ✅ detect USA even if they type variations
   function isUnitedStates(v){
     const s = String(v || "").trim().toLowerCase().replace(/\./g, "");
     if(!s) return false;
-
     const cleaned = s.replace(/\s+/g, " ");
     return (
       cleaned === "united states" ||
@@ -279,10 +238,8 @@
 
   function setGoldVisibility(){
     if(!goldOption) return;
-
     const usa = isUnitedStates(countryEl?.value);
 
-    // If USA: hide gold option and reset selection if it was selected.
     goldOption.hidden = usa;
     goldOption.disabled = usa;
 
@@ -290,18 +247,15 @@
       goldHiddenNote.classList.toggle("hidden", !usa);
     }
 
-    // If they already picked gold then typed USA -> force them off gold
     if(usa && regFor && regFor.value === goldOption.value){
       regFor.value = "";
     }
   }
 
-  // run on load + when they type/paste
   if(countryEl){
     countryEl.addEventListener("input", setGoldVisibility);
     countryEl.addEventListener("change", setGoldVisibility);
   }
-  // run once on boot
   setGoldVisibility();
 
   function inferTierFromRegisteringFor(registeringForText) {
@@ -333,7 +287,7 @@
     if (busy) return;
     busy = true;
 
-    // ✅ final guard: if USA, block gold even if someone tries to hack the DOM
+    // final guard
     setGoldVisibility();
     if (isUnitedStates(countryEl?.value) && (regFor.value || "").toLowerCase().includes("gold")) {
       btn.disabled = false;
