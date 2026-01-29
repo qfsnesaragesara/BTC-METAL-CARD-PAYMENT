@@ -65,10 +65,6 @@
       border-color: rgba(255,107,107,.35);
       background: rgba(255,107,107,.14);
     }
-    button[disabled]{
-      opacity:.55;
-      cursor:not-allowed;
-    }
     .pill{
       display:inline-flex; align-items:center; gap:8px;
       padding:6px 10px;
@@ -125,10 +121,6 @@
       color:var(--text);
       outline:none;
     }
-    input[disabled], select[disabled], textarea[disabled]{
-      opacity:.6;
-      cursor:not-allowed;
-    }
     textarea{min-height:72px;resize:vertical}
     .muted{color:var(--muted);font-size:12px}
     .members{
@@ -183,10 +175,6 @@
     }
     .switch.on{background: rgba(64,211,156,.16); border-color: rgba(64,211,156,.30)}
     .switch.on .knob{left:27px}
-    .switch[aria-disabled="true"]{
-      opacity:.6;
-      cursor:not-allowed;
-    }
     table{
       width:100%;
       border-collapse:collapse;
@@ -205,7 +193,6 @@
     .footerNote{margin-top:10px;color:var(--muted);font-size:12px}
   </style>
 </head>
-
 <body>
   <header>
     <div class="title">
@@ -222,7 +209,7 @@
   <div class="wrap">
     <div class="banner" id="banner"></div>
 
-    <div class="grid" id="adminGrid">
+    <div class="grid">
       <!-- LEFT: Members -->
       <div class="card">
         <h2>Members</h2>
@@ -330,20 +317,15 @@
 
   <script>
     /******************************************************************
-     * HARD GATE:
-     * - Keep page hidden until admin is verified.
-     * - If no session -> redirect to admin-confirm.html (your login page).
-     * - If session but not admin -> lock UI and show 403 banner.
-     ******************************************************************/
-    document.documentElement.style.visibility = "hidden";
-
-    /******************************************************************
      * CONFIG
      ******************************************************************/
     const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-    const LOGIN_PAGE = "/admin-confirm.html";
+    // ✅ ONLY ME (frontend allowlist)
+    const ADMIN_EMAIL_ALLOWLIST = new Set([
+      "support@qfsnesaragesara.org"
+    ]);
 
     /******************************************************************
      * CLIENT
@@ -352,7 +334,7 @@
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: false
+        detectSessionInUrl: true
       }
     });
 
@@ -394,123 +376,81 @@
       sw.setAttribute("aria-checked", !!isOn ? "true" : "false");
     }
 
-    function setSwitchDisabled(disabled) {
-      const sw = $("activationSwitch");
-      sw.setAttribute("aria-disabled", disabled ? "true" : "false");
-      if (disabled) {
-        sw.classList.remove("on");
-        sw.setAttribute("aria-checked", "false");
-      }
-    }
-
-    function lockAdminUI() {
-      // disable buttons / inputs so nothing can be used
-      const idsToDisable = [
-        "refreshBtn",
-        "loadMembersBtn",
-        "loadSelectedBtn",
-        "debugWhoBtn",
-        "refreshLedgerBtn",
-        "submitTxnBtn",
-        "searchInput",
-        "filterSelect",
-        "selectedUserId",
-        "currencySelect",
-        "amountInput",
-        "entryTypeSelect",
-        "reasonInput",
-        "metadataInput"
-      ];
-      for (const id of idsToDisable) {
-        const el = $(id);
-        if (!el) continue;
-        if (el.tagName === "INPUT" || el.tagName === "SELECT" || el.tagName === "TEXTAREA" || el.tagName === "BUTTON") {
-          el.disabled = true;
-        }
-      }
-
-      // prevent activation toggle
-      setSwitchDisabled(true);
-
-      // keep header visible (layout), but hide grid content to reduce exposure
-      const grid = $("adminGrid");
-      if (grid) grid.style.display = "none";
-    }
-
-    function redirectToLogin() {
-      const next = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
-      window.location.href = `${LOGIN_PAGE}?next=${next}`;
+    function normalizeEmail(e) {
+      return String(e || "").trim().toLowerCase();
     }
 
     /******************************************************************
-     * AUTH CHECK (IMPORTANT PART)
+     * AUTH CHECK (IMPORTANT)
      ******************************************************************/
-    async function requireSessionAndAdmin({ redirectIfNoSession = true } = {}) {
+    async function requireSessionAndAdmin() {
       showBanner("");
 
-      // Session
+      // Make sure we have a session
       let { data: s1, error: e1 } = await supabaseClient.auth.getSession();
       if (e1) console.warn("getSession error:", e1);
 
-      // If session missing, try refresh once
+      // If session is missing, try refresh (common after long idle)
       if (!s1?.session) {
-        try {
-          const { data: s2 } = await supabaseClient.auth.refreshSession();
-          s1 = s2;
-        } catch (e) {
-          // ignore
-        }
+        const { data: s2, error: e2 } = await supabaseClient.auth.refreshSession();
+        if (e2) console.warn("refreshSession error:", e2);
+        s1 = s2 || s1;
       }
 
       const session = s1?.session || null;
       if (!session) {
-        setAuthPill(false, "Not logged in");
-        $("adminSessionNote").textContent = "No Supabase session found.";
-        if (redirectIfNoSession) {
-          redirectToLogin();
-        } else {
-          document.documentElement.style.visibility = "visible";
-        }
+        setAuthPill(false, "Not logged in (no session)");
+        $("adminSessionNote").textContent =
+          "No Supabase session found. Please log in via admin-confirm.html first, then reload this page.";
         return { ok: false, session: null, isAdmin: false };
       }
 
-      // Admin check via DB (RPC)
+      const uid = session.user?.id;
+      const email = normalizeEmail(session.user?.email);
+
+      $("adminSessionNote").textContent = `admin session: ${email || "(no email)"} • uid: ${uid || "(no uid)"}`;
+
+      // ✅ FRONTEND allowlist (Only me)
+      if (!ADMIN_EMAIL_ALLOWLIST.has(email)) {
+        setAuthPill(false, "Logged in • Blocked (not allowlisted)");
+        showBanner(
+          "Not authorized: This admin page is locked to a single allowlisted email.\n\n" +
+          `Signed in as: ${email || "(no email)"}`
+        );
+        return { ok: false, session, isAdmin: false };
+      }
+
+      // ✅ DB-side admin check (defense in depth)
       const { data: isAdmin, error: isAdminErr } = await supabaseClient.rpc("is_admin", {});
       if (isAdminErr) {
         console.warn("is_admin rpc error:", isAdminErr);
         setAuthPill(false, "Session OK • Admin check failed");
-        $("adminSessionNote").textContent = "Session exists, but admin verification failed.";
-        showBanner(`Admin check failed:\n${isAdminErr.message || JSON.stringify(isAdminErr)}`);
-        lockAdminUI();
-        document.documentElement.style.visibility = "visible";
+        showBanner(
+          "Signed in with allowlisted email, but DB admin check failed.\n\n" +
+          "This usually means your admin_users (or admin logic) does not include this account.\n" +
+          "Fix: add support@qfsnesaragesara.org as admin in the database, then refresh.\n\n" +
+          `RPC error: ${isAdminErr.message || JSON.stringify(isAdminErr)}`
+        );
         return { ok: false, session, isAdmin: false };
       }
 
-      const uid = session.user?.id;
-      const email = session.user?.email;
+      setAuthPill(true, isAdmin ? "Logged in • Admin: YES" : "Logged in • Admin: NO");
 
-      $("adminSessionNote").textContent = `admin session: ${email || "(no email)"} • uid: ${uid || "(no uid)"}`;
-
-      if (isAdmin === true) {
-        setAuthPill(true, "Logged in • Admin: YES");
-        // show page only after success
-        document.documentElement.style.visibility = "visible";
-        return { ok: true, session, isAdmin: true };
+      if (!isAdmin) {
+        showBanner(
+          "Not authorized: DB says you are NOT admin (is_admin() returned false).\n\n" +
+          "Fix: add your user to admin_users (or update is_admin() logic), then refresh."
+        );
       }
 
-      // Not admin: lock and show 403
-      setAuthPill(false, "Logged in • Admin: NO");
-      showBanner("403 — Admin access only.\nYou are logged in, but your user is not in admin_users (is_admin() returned false).");
-      lockAdminUI();
-      document.documentElement.style.visibility = "visible";
-      return { ok: false, session, isAdmin: false };
+      return { ok: !!isAdmin, session, isAdmin: !!isAdmin };
     }
 
     /******************************************************************
      * MEMBERS
      ******************************************************************/
     async function loadMembers() {
-      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
+      const authState = await requireSessionAndAdmin();
       if (!authState.session) return;
       if (!authState.isAdmin) return;
 
@@ -571,7 +511,7 @@
     async function loadSelected() {
       showBanner("");
 
-      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
+      const authState = await requireSessionAndAdmin();
       if (!authState.session) return;
       if (!authState.isAdmin) return;
 
@@ -595,7 +535,6 @@
 
       const isActive = balances?.is_active;
       if (typeof isActive === "boolean") {
-        setSwitchDisabled(false);
         setSwitch(isActive);
         $("activationText").textContent = isActive ? "Activated" : "Pending / Disabled";
         $("activationSub").textContent = isActive ? "Member is active." : "Member is pending (locked).";
@@ -610,10 +549,6 @@
     async function loadLedger() {
       const userId = $("selectedUserId").value.trim();
       if (!userId) return;
-
-      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
-      if (!authState.session) return;
-      if (!authState.isAdmin) return;
 
       const { data: ledger, error: lErr } = await supabaseClient.rpc("admin_get_user_ledger", { p_user_id: userId });
       if (lErr) {
@@ -663,7 +598,7 @@
     async function submitTxn() {
       showBanner("");
 
-      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
+      const authState = await requireSessionAndAdmin();
       if (!authState.session) return;
       if (!authState.isAdmin) return;
 
@@ -671,7 +606,7 @@
       if (!userId) return showBanner("Select a member first.");
 
       const currency = $("currencySelect").value;
-      const entryType = $("entryTypeSelect").value; // credit/debit
+      const entryType = $("entryTypeSelect").value;
       const reason = $("reasonInput").value.trim() || "manual_adjust";
 
       const amountRaw = $("amountInput").value.trim();
@@ -691,43 +626,20 @@
         amountBigint = Math.round(sats);
       }
 
-      const amt = Math.abs(amountBigint);
-
       if (entryType === "debit") {
-        // Prefer admin_debit_user if it exists (you have it in DB list)
-        let didDebit = false;
-
-        {
-          const { error } = await supabaseClient.rpc("admin_debit_user", {
-            p_user_id: userId,
-            p_currency: currency,
-            p_amount: amt,
-            p_reason: reason,
-            p_metadata: metadata || {}
-          });
-
-          if (!error) {
-            didDebit = true;
-          } else {
-            // Fallback: negative amount through credit_user (your old behavior)
-            const { error: e2 } = await supabaseClient.rpc("admin_credit_user", {
-              p_user_id: userId,
-              p_currency: currency,
-              p_amount: -amt,
-              p_reason: reason,
-              p_metadata: metadata || {}
-            });
-            if (e2) return showBanner(`Debit failed:\n${e2.message || JSON.stringify(e2)}`);
-            didDebit = true;
-          }
-        }
-
-        if (!didDebit) return showBanner("Debit failed (unknown).");
+        const { error } = await supabaseClient.rpc("admin_credit_user", {
+          p_user_id: userId,
+          p_currency: currency,
+          p_amount: -Math.abs(amountBigint),
+          p_reason: reason,
+          p_metadata: metadata || {}
+        });
+        if (error) return showBanner(`Debit failed:\n${error.message || JSON.stringify(error)}`);
       } else {
         const { error } = await supabaseClient.rpc("admin_credit_user", {
           p_user_id: userId,
           p_currency: currency,
-          p_amount: amt,
+          p_amount: Math.abs(amountBigint),
           p_reason: reason,
           p_metadata: metadata || {}
         });
@@ -743,15 +655,12 @@
     async function toggleActivation() {
       showBanner("");
 
-      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
+      const authState = await requireSessionAndAdmin();
       if (!authState.session) return;
       if (!authState.isAdmin) return;
 
       const userId = $("selectedUserId").value.trim();
       if (!userId) return showBanner("Select a member first.");
-
-      const isDisabled = $("activationSwitch").getAttribute("aria-disabled") === "true";
-      if (isDisabled) return;
 
       const isOn = $("activationSwitch").classList.contains("on");
       const newVal = !isOn;
@@ -777,14 +686,10 @@
     }
 
     /******************************************************************
-     * DEBUG: WHO AM I (optional)
+     * DEBUG: WHO AM I
      ******************************************************************/
     async function whoAmI() {
       showBanner("");
-      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
-      if (!authState.session) return;
-      if (!authState.isAdmin) return;
-
       const { data, error } = await supabaseClient.rpc("debug_whoami", {});
       if (error) return showBanner(`debug_whoami failed:\n${error.message || JSON.stringify(error)}`);
       showBanner(`debug_whoami:\n${JSON.stringify(data, null, 2)}`);
@@ -794,12 +699,8 @@
      * LOGOUT
      ******************************************************************/
     async function logout() {
-      try {
-        await supabaseClient.auth.signOut();
-      } catch (e) {
-        // ignore
-      }
-      redirectToLogin();
+      await supabaseClient.auth.signOut();
+      location.reload();
     }
 
     /******************************************************************
@@ -811,26 +712,19 @@
     $("submitTxnBtn").onclick = submitTxn;
     $("activationSwitch").onclick = toggleActivation;
     $("logoutBtn").onclick = logout;
-
     $("refreshBtn").onclick = async () => {
       showBanner("");
-      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
-      if (!authState.session || !authState.isAdmin) return;
+      await requireSessionAndAdmin();
       await loadMembers();
       const uid = $("selectedUserId").value.trim();
       if (uid) await loadSelected();
     };
-
     $("debugWhoBtn").onclick = whoAmI;
 
-    // Initial load (hard gate)
+    // Initial load
     (async function init(){
-      const authState = await requireSessionAndAdmin({ redirectIfNoSession: true });
+      const authState = await requireSessionAndAdmin();
       if (authState.session && authState.isAdmin) {
-        // Only show grid for verified admin
-        const grid = $("adminGrid");
-        if (grid) grid.style.display = "grid";
-        setSwitchDisabled(false);
         await loadMembers();
       }
     })();
