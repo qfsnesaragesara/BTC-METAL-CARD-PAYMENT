@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site Maintenance — QFS NESARA GESARA</title>
+  <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: radial-gradient(circle at top, rgba(56,189,248,0.3), transparent 55%),
+                  radial-gradient(circle at bottom, rgba(147,51,234,0.32), transparent 60%),
+                  #020617;
+      min-height: 100vh;
+    }
+    .gear {
+      animation: spin 4s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center p-4">
+  <div class="max-w-2xl w-full bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-12 text-center">
+    
+    <!-- Logo -->
+    <div class="mb-8">
+      <img src="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true" 
+           alt="QFS Logo" 
+           class="w-24 h-24 mx-auto rounded-2xl border-4 border-blue-500/20"
+           onerror="this.src='https://via.placeholder.com/96x96?text=QFS'">
+    </div>
+
+    <!-- Maintenance Icon -->
+    <div class="inline-block p-6 bg-blue-50 rounded-full mb-6">
+      <svg class="w-20 h-20 text-blue-600 gear" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    </div>
+
+    <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+      We'll Be Back Soon!
+    </h1>
+    
+    <div class="inline-block bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+      🚧 Scheduled Maintenance
+    </div>
+    
+    <p class="text-xl text-gray-700 mb-4">
+      Our website is currently undergoing scheduled maintenance to serve you better.
+    </p>
+    
+    <p class="text-gray-500 mb-8">
+      Estimated completion: <span class="font-semibold text-blue-600">2-3 hours</span>
+    </p>
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-gray-200 rounded-full h-3 mb-8 overflow-hidden">
+      <div class="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full" style="width: 45%"></div>
+    </div>
+
+    <!-- What's happening -->
+    <div class="bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
+      <h3 class="font-semibold text-gray-800 mb-3">🔧 What's being updated?</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+          QFS Portal enhancements
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+          Security upgrades
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+          Card ordering system
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+          Performance optimization
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-100">
+      <p class="text-gray-700 mb-2">📧 For urgent inquiries:</p>
+      <a href="mailto:support@qfsnesaragesara.org" class="text-blue-600 font-semibold hover:underline">
+        support@qfsnesaragesara.org
+      </a>
+    </div>
+
+    <!-- Refresh button -->
+    <button onclick="location.reload()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700 transition">
+      Check Status ↻
+    </button>
+
+    <p class="text-xs text-gray-400 mt-6">
+      This page auto-refreshes every 60 seconds<br>
+      <span id="countdown" class="font-mono text-blue-500">60</span>s
+    </p>
+  </div>
+
+  <script>
+    // Auto-refresh countdown
+    let seconds = 60;
+    setInterval(() => {
+      seconds--;
+      document.getElementById('countdown').textContent = seconds;
+      if (seconds <= 0) location.reload();
+    }, 1000);
+  </script>
+</body>
+</html>
