@@ -40,10 +40,58 @@
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   setDbg("supabase ready ✅ " + stamp());
 
-  function decidePortal(user){
+  // ===== UPDATED REDIRECT LOGIC (added) =====
+  async function decidePortal(user){
+    if (!user) return "portal.html";
+    
+    // First try to get profile from profiles table
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('registering_for, selected_tier')
+        .eq('email', user.email)
+        .maybeSingle();
+      
+      if (profile) {
+        const registeringFor = profile.registering_for;
+        const selectedTier = profile.selected_tier;
+        
+        // QFS Account users
+        if (registeringFor === 'QFS Account') {
+          return "qfs-holding-dashboard.html";
+        }
+        
+        // Gold Card users
+        if (registeringFor === 'Trump Gold Card Program' || selectedTier === 'gold') {
+          return "portal-gold.html";
+        }
+        
+        // Silver and Black users - store tier for portal.html
+        if (registeringFor.includes('Silver') || registeringFor.includes('Black') || 
+            selectedTier === 'silver' || selectedTier === 'black') {
+          try {
+            localStorage.setItem("user_tier", selectedTier || 
+              (registeringFor.includes('Black') ? 'black' : 'silver'));
+          } catch {}
+          return "portal.html";
+        }
+        
+        // MedBeds - no portal yet
+        if (registeringFor.includes('MedBeds')) {
+          showMsg("MedBeds portal coming soon. Check your email for updates.", "ok");
+          setTimeout(() => { window.location.href = "index.html"; }, 3000);
+          return null;
+        }
+      }
+    } catch (error) {
+      console.error("Profile lookup error:", error);
+    }
+    
+    // Fallback to user_metadata (original logic)
     const v = String(user?.user_metadata?.registering_for || "").toLowerCase();
     if (v.includes("trump gold card program")) return "portal-gold.html";
-    // silver + black + everything else
+    
+    // Default
     return "portal.html";
   }
 
@@ -58,12 +106,14 @@
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return showMsg("Login failed: " + error.message, "error");
 
-      // Fetch user metadata for routing
+      // Fetch user for routing
       const { data: u } = await supabase.auth.getUser();
-      const next = decidePortal(u?.user);
-
-      showMsg("Login successful ✅ Redirecting…", "ok");
-      setTimeout(()=>location.href = next, 600);
+      const next = await decidePortal(u?.user);
+      
+      if (next) {
+        showMsg("Login successful ✅ Redirecting…", "ok");
+        setTimeout(() => location.href = next, 600);
+      }
     } finally {
       setBusy(false);
     }
