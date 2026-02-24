@@ -1,24 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>
-  // MAINTENANCE MODE CHECK
-  (function() {
-    // Check if maintenance.flag exists
-    fetch('/maintenance.flag?' + Date.now()) // Add timestamp to bypass cache
-      .then(response => {
-        if (response.ok) {
-          // maintenance.flag exists - redirect to maintenance page
-          if (!window.location.pathname.includes('maintenance.html')) {
-            window.location.href = '/maintenance.html';
-          }
-        }
-      })
-      .catch(() => {
-        // Flag doesn't exist - site is live
-        console.log('Site is live');
-      });
-  })();
-</script>
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -639,6 +620,29 @@ checkIfQFSUser();
 
 </script>
 
+<!-- MAINTENANCE MODE CHECK (moved to bottom) -->
+<script>
+  (function() {
+    // Don't run on maintenance page
+    if (window.location.pathname.includes('maintenance.html')) {
+      return;
+    }
+    
+    // Check if maintenance.flag exists - but don't let it break the page
+    fetch('/maintenance.flag?' + Date.now())
+      .then(response => {
+        if (response.ok) {
+          if (!window.location.pathname.includes('maintenance.html')) {
+            window.location.href = '/maintenance.html';
+          }
+        }
+      })
+      .catch(() => {
+        // Silently fail - don't interrupt the page
+        console.log('Site is live');
+      });
+  })();
+</script>
+
 </body>
 </html>
-
