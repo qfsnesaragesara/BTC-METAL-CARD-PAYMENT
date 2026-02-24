@@ -5,6 +5,7 @@
 <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
 <title>Success | QFS Portal</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
     :root {
@@ -191,26 +192,61 @@
     <p>Your registration has been submitted successfully.</p>
 
     <p style="margin-top:14px;">
-        <strong>Next Step</strong>
+        <strong id="nextStepTitle">Next Step</strong>
     </p>
-    <p>
+    <p id="nextStepMessage">
         Please check your email inbox for confirmation and next-step instructions.
         If you don’t see it, check Spam/Promotions.
     </p>
 
-    <a href="login.html" class="btn">Go to Login</a>
+    <a href="#" id="primaryBtn" class="btn">Continue to Your Account</a>
     <a href="index.html" class="btn secondary">Return to Homepage</a>
 </div>
 
 <script>
+const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function handleSuccessRedirect() {
+    // Get registration type from localStorage
+    const registeringFor = localStorage.getItem('qfs_registering_for');
+    const primaryBtn = document.getElementById('primaryBtn');
+    const nextStepTitle = document.getElementById('nextStepTitle');
+    const nextStepMessage = document.getElementById('nextStepMessage');
+
+    if (registeringFor === 'QFS Account') {
+        // QFS users go to holding page
+        primaryBtn.href = 'qfs-holding-dashboard.html';
+        nextStepTitle.innerHTML = 'QFS Account Activation Required';
+        nextStepMessage.innerHTML = 'Your QFS account has been created. You need to order a card to activate your account.';
+    } else {
+        // Other users go to login
+        primaryBtn.href = 'login.html';
+        nextStepTitle.innerHTML = 'Next Step';
+        nextStepMessage.innerHTML = 'Please check your email for confirmation. Then log in to access your account.';
+    }
+}
+
+// Hide loader and set redirect
 setTimeout(() => {
     const loader = document.getElementById("loader");
     loader.style.opacity = "0";
     setTimeout(() => loader.style.display = "none", 600);
 }, 1800);
 
+// Handle the redirect based on registration type
+handleSuccessRedirect();
+
+// Auto-redirect after 20 seconds (to login or QFS holding)
 setTimeout(() => {
-    window.location.href = "index.html";
+    const registeringFor = localStorage.getItem('qfs_registering_for');
+    if (registeringFor === 'QFS Account') {
+        window.location.href = "qfs-holding-dashboard.html";
+    } else {
+        window.location.href = "login.html";
+    }
 }, 20000);
 </script>
 
