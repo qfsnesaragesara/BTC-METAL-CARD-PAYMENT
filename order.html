@@ -6,6 +6,8 @@
 <title>Order Metal Card — QFS</title>
 <link rel="icon" type="image/png" href="https://github.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/blob/main/photo%201.jpg?raw=true">
 
+<!-- Add Supabase library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 :root {
@@ -187,6 +189,10 @@ select {
   font-weight:650;
   cursor:pointer;
 }
+.pay-btn:disabled {
+  opacity:0.5;
+  cursor:not-allowed;
+}
 </style>
 </head>
 
@@ -209,7 +215,7 @@ select {
       </div>
     </div>
 
-    <!-- 🔥 NEW MESSAGE BELOW CARDS -->
+    <!-- 🔥 MESSAGE BELOW CARDS -->
     <div id="centerMessage" class="center-message">Select a card to begin</div>
 
     <div class="title"></div>
@@ -242,8 +248,13 @@ select {
 
 
 <script>
-/* === SAME PRICING / PERKS / BTC LOGIC AS BEFORE === */
+/* === SUPABASE INITIALIZATION === */
+const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* === PRICING CONFIGURATION === */
 const BASE_PRICES={black:575850,silver:3229};
 const INCREASED_PRICES={black:775650,silver:5899};
 const GOLD_PROCESSING_FEE=15000;
@@ -286,6 +297,72 @@ const CARD_PERKS={
   ]
 };
 
+/* === QFS ACCOUNT DETECTION === */
+let isQFSUser = false;
+let qfsAccountData = null;
+
+async function checkIfQFSUser() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('registering_for')
+        .eq('id', user.id)
+        .single();
+      
+      isQFSUser = profile?.registering_for === 'QFS Account';
+      
+      if (isQFSUser) {
+        const { data: qfs } = await supabase
+          .from('qfs_accounts')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        qfsAccountData = qfs;
+        addQFSBanner();
+      }
+    }
+  } catch (error) {
+    console.log('Not logged in or not QFS user');
+  }
+}
+
+function addQFSBanner() {
+  const visualDiv = document.querySelector('.visual');
+  const banner = document.createElement('div');
+  banner.id = 'qfsBanner';
+  banner.style.cssText = `
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid #38bdf8;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    text-align: center;
+  `;
+  
+  banner.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+      <span style="font-size: 24px;">🔷</span>
+      <div>
+        <strong style="color: #38bdf8; font-size: 18px;">QFS Account Activation Required</strong>
+        <p style="color: #e2e8f0; margin: 4px 0 0 0; font-size: 14px;">
+          Your QFS account is pending activation. Order any card below to activate your account.
+        </p>
+        <p style="color: #fbbf24; margin: 8px 0 0 0; font-size: 13px;">
+          Status: ${qfsAccountData?.account_status || 'pending_activation'} 
+          ${qfsAccountData?.card_ordered ? '| Card Ordered: Yes' : ''}
+        </p>
+      </div>
+    </div>
+  `;
+  
+  visualDiv.insertBefore(banner, visualDiv.firstChild);
+}
+
+/* === MAIN VARIABLES === */
 let selectedCard=null;
 let currentBtcPrice=null;
 
@@ -302,31 +379,28 @@ const countdownEl=document.querySelector(".countdown");
 const btcPriceLine=document.getElementById("btcPriceLine");
 const payNowBtn=document.getElementById("payNow");
 
-/* HIDE DETAILS INITIALLY */
+/* Hide details initially */
 orderPanel.style.display="none";
 cardPerksEl.style.display="none";
 titleEl.style.display="none";
 descEl.style.display="none";
 
-/* ✅ FIX #1: update totals when quantity changes (this is what was missing) */
+/* Quantity change handler */
 qtyEl.addEventListener("change", updateTotals);
 
-/* BTC Price */
+/* BTC Price fetch */
 async function fetchBtcPrice(){
 try{
   const r=await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
   const j=await r.json();
   currentBtcPrice=j.bitcoin.usd;
   btcPriceLine.innerText="BTC Price: $"+currentBtcPrice.toLocaleString();
-
-  /* ✅ FIX #2: if a card is already selected, refresh totals once BTC price loads */
   if(selectedCard) updateTotals();
-
 }catch{}
 }
 fetchBtcPrice();
 
-/* Countdown */
+/* Countdown timer */
 const END_KEY="timer_v5";
 function getEnd(){
   const s=localStorage.getItem(END_KEY);
@@ -354,7 +428,7 @@ function runCountdown(){
 }
 setInterval(runCountdown,1000);
 
-/* Quantity Logic */
+/* Quantity options */
 function setQuantity(c){
   qtyEl.innerHTML="";
   if(c==="silver"){
@@ -366,7 +440,7 @@ function setQuantity(c){
   }
 }
 
-/* Price update */
+/* Update price totals */
 function updateTotals(){
   let usd=(selectedCard==="gold")
     ? GOLD_PROCESSING_FEE
@@ -376,14 +450,77 @@ function updateTotals(){
   totalBTCEle.innerText=currentBtcPrice?(usd/currentBtcPrice).toFixed(8)+" BTC":"0 BTC";
 }
 
-/* Update perks */
+/* Update perks display */
 function updatePerks(){
   cardPerksEl.innerHTML="<strong>Perks:</strong><ul>"+
     CARD_PERKS[selectedCard].map(p=>`<li>${p}</li>`).join("")+
     "</ul>";
 }
 
-payNowBtn.addEventListener("click", () => {
+/* Card click handler */
+cardViews.forEach(view=>{
+const img=view.querySelector(".card-img");
+const type=view.dataset.type;
+
+view.addEventListener("click",()=>{
+
+  centerMessage.classList.add("fade-out");
+
+  document.querySelectorAll(".card-img").forEach(x=>x.classList.remove("selected"));
+  img.classList.add("selected");
+
+  selectedCard=type;
+
+  titleEl.style.display="block";
+  descEl.style.display="block";
+  orderPanel.style.display="block";
+  cardPerksEl.style.display="block";
+
+  titleEl.innerHTML=CARD_TITLES[type];
+  descEl.innerHTML=CARD_DESCS[type];
+
+  setQuantity(type);
+  updateTotals();
+  updatePerks();
+
+  cardPerksEl.classList.remove("show");
+  setTimeout(()=>cardPerksEl.classList.add("show"),10);
+
+  /* Show QFS activation message if user is QFS */
+  if (isQFSUser) {
+    let qfsMsg = document.getElementById('qfsActivationMsg');
+    if (!qfsMsg) {
+      qfsMsg = document.createElement('div');
+      qfsMsg.id = 'qfsActivationMsg';
+      qfsMsg.style.cssText = `
+        margin-top: 20px;
+        padding: 16px;
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid #38bdf8;
+        border-radius: 12px;
+        text-align: center;
+      `;
+      document.querySelector('.visual').appendChild(qfsMsg);
+    }
+    
+    qfsMsg.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 28px;">✅</span>
+        <div style="text-align: left;">
+          <strong style="color: #38bdf8;">QFS Account Activation</strong>
+          <p style="color: #e2e8f0; margin: 4px 0 0 0; font-size: 14px;">
+            Great choice! Ordering this ${type} card will activate your QFS account.
+            Once your card is delivered, you'll get full access to your QFS portal.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+});
+});
+
+/* Pay Now button handler */
+payNowBtn.addEventListener("click", async () => {
 
   if (!selectedCard) {
     alert("Please select a card first.");
@@ -401,52 +538,58 @@ payNowBtn.addEventListener("click", () => {
     ? (usd / currentBtcPrice).toFixed(8)
     : "0.00000000";
 
-  const params = new URLSearchParams({
-    type: selectedCard,
-    qty: Number(qtyEl.value),
-    usd,
-    btc: btcValue,
-    addr: WALLET_ADDR
-  });
+  /* Handle QFS users differently */
+  if (isQFSUser) {
+    try {
+      payNowBtn.textContent = "Processing QFS Activation...";
+      payNowBtn.disabled = true;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        alert("Please log in first");
+        window.location.href = "/login.html";
+        return;
+      }
+      
+      const { error } = await supabase.rpc('qfs_order_card', {
+        p_user_id: user.id,
+        p_card_type: selectedCard
+      });
+      
+      if (error) throw error;
+      
+      localStorage.setItem('qfs_last_order', JSON.stringify({
+        card: selectedCard,
+        date: new Date().toISOString(),
+        amount: usd
+      }));
+      
+      alert(`✅ QFS Activation Order Placed!\n\nYour ${selectedCard} card has been ordered. Your QFS account will be activated upon card delivery.`);
+      window.location.href = "/portal/qfs-holding.html?order=success";
+      
+    } catch (error) {
+      console.error('QFS order failed:', error);
+      alert("Order failed: " + error.message);
+      payNowBtn.textContent = "Pay Now";
+      payNowBtn.disabled = false;
+    }
+  } else {
+    /* Regular user - original flow */
+    const params = new URLSearchParams({
+      type: selectedCard,
+      qty: Number(qtyEl.value),
+      usd,
+      btc: btcValue,
+      addr: WALLET_ADDR
+    });
 
-  // 🔥 THIS IS THE REDIRECT YOU WERE MISSING 🔥
-  window.location.href = "wallet.html?" + params.toString();
+    window.location.href = "wallet.html?" + params.toString();
+  }
 });
 
-
-/* Card click */
-cardViews.forEach(view=>{
-const img=view.querySelector(".card-img");
-const type=view.dataset.type;
-
-view.addEventListener("click",()=>{
-
-  /* Fade message */
-  centerMessage.classList.add("fade-out");
-
-  document.querySelectorAll(".card-img").forEach(x=>x.classList.remove("selected"));
-  img.classList.add("selected");
-
-  selectedCard=type;
-
-  /* Reveal UI parts */
-  titleEl.style.display="block";
-  descEl.style.display="block";
-  orderPanel.style.display="block";
-  cardPerksEl.style.display="block";
-
-  titleEl.innerHTML=CARD_TITLES[type];
-  descEl.innerHTML=CARD_DESCS[type];
-
-  setQuantity(type);
-  updateTotals();
-  updatePerks();
-
-  /* animate perks */
-  cardPerksEl.classList.remove("show");
-  setTimeout(()=>cardPerksEl.classList.add("show"),10);
-});
-});
+/* Initialize QFS check on page load */
+checkIfQFSUser();
 
 </script>
 
