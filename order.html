@@ -204,17 +204,6 @@ select {
   cursor:not-allowed;
 }
 
-.fee-badge {
-  display:inline-block;
-  background: var(--qfs);
-  color: white;
-  font-size: 11px;
-  font-weight: bold;
-  padding: 2px 8px;
-  border-radius: 999px;
-  margin-left: 8px;
-}
-
 /* QFS Badge on card */
 .qfs-badge-overlay {
   position: absolute;
@@ -229,6 +218,16 @@ select {
   z-index: 2;
   border: 1px solid white;
 }
+
+/* QFS Banner */
+.qfs-banner {
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid #8b5cf6;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
 </style>
 </head>
 
@@ -238,9 +237,9 @@ select {
   <div class="visual">
 
     <div class="card-row">
-      <!-- QFS Card with Real Image -->
+      <!-- QFS Card with GitHub Image -->
       <div class="card-view qfs-card" data-type="qfs" style="position:relative;">
-        <img class="card-img" src="photo_2026-02-24_04-57-07.jpg" 
+        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/QFS-Card.jpg" 
              alt="QFS Card"
              onerror="this.src='https://via.placeholder.com/185x120/8b5cf6/ffffff?text=QFS+CARD'">
         <div class="qfs-badge-overlay">$500 FEE</div>
@@ -398,14 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const visualDiv = document.querySelector('.visual');
     const banner = document.createElement('div');
     banner.id = 'qfsBanner';
-    banner.style.cssText = `
-      background: rgba(139, 92, 246, 0.15);
-      border: 1px solid #8b5cf6;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
-      text-align: center;
-    `;
+    banner.className = 'qfs-banner';
     
     banner.innerHTML = `
       <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
