@@ -265,56 +265,72 @@
       if(loginBtn) loginBtn.textContent = on ? (label || "Working...") : "Login";
     }
 
-    function normTier(v){
-      const s = String(v || "").trim().toLowerCase();
-      return (s === "gold" || s === "silver" || s === "black") ? s : "";
-    }
-    function routeByTier(tier){
-      return normTier(tier) === "gold" ? "portal-gold.html" : "portal.html";
-    }
-
-    async function routeAfterLoginByDbEmail(){
+    // ===== NEW REDIRECT LOGIC USING PROFILES TABLE =====
+    async function routeAfterLogin() {
       setDbg("getUser…");
-      const { data: u, error: uErr } = await sb.auth.getUser();
-      if(uErr || !u?.user){
+      const { data: { user }, error: uErr } = await sb.auth.getUser();
+      
+      if (uErr || !user) {
         setDbg("no user -> stay");
         return;
       }
 
-      const email = (u.user.email || "").trim().toLowerCase();
-      if(!email){
-        setDbg("no email -> stay");
-        return;
-      }
-
+      const email = (user.email || "").trim().toLowerCase();
       localStorage.setItem("qfsEmail", email);
       localStorage.setItem("memberEmail", email);
 
-      setDbg("fetch portal_users by email…");
+      setDbg("fetch profile by email…");
 
-      const { data: pu, error: pErr } = await sb
-        .from("portal_users")
-        .select("email, tier, selected_tier")
+      // Get user profile from profiles table
+      const { data: profile, error: pErr } = await sb
+        .from("profiles")
+        .select("registering_for, account_status")
         .eq("email", email)
         .maybeSingle();
 
-      if(pErr){
-        setDbg("portal_users blocked");
-        show("Profile lookup blocked. Add a SELECT policy on portal_users for logged-in users.", "error");
+      if (pErr) {
+        console.error("Profile lookup error:", pErr);
+        setDbg("profile lookup error");
+        show("Profile lookup failed. Please contact support.", "error");
         return;
       }
 
-      if(!pu){
+      // If no profile found, send to registration
+      if (!profile) {
         setDbg("no profile -> registration");
         window.location.href = "registration.html";
         return;
       }
 
-      const effectiveTier = normTier(pu.tier) || normTier(pu.selected_tier) || "silver";
-      const dest = routeByTier(effectiveTier);
+      const registeringFor = profile.registering_for;
+      setDbg("registering_for: " + registeringFor);
 
-      setDbg("route -> " + dest);
-      window.location.href = dest;
+      // ===== REDIRECT BASED ON REGISTRATION TYPE =====
+      switch(registeringFor) {
+        case 'QFS Account':
+          window.location.href = "qfs-holding-dashboard.html";
+          break;
+          
+        case 'Trump Gold Card Program':
+          window.location.href = "portal-gold.html"; // Your existing gold page
+          break;
+          
+        case 'Physical Bitcoin Metal Card (Silver $25,000)':
+          window.location.href = "portal-silver.html"; // Your existing silver page
+          break;
+          
+        case 'Physical Bitcoin Metal Card (Black 25,000 BTC)':
+          window.location.href = "portal-black.html"; // Your existing black page
+          break;
+          
+        case 'MedBeds Application Fees $2000 - $5000':
+          window.location.href = "portal-medbeds.html"; // Your existing medbeds page
+          break;
+          
+        default:
+          // Fallback to generic portal
+          window.location.href = "portal.html";
+      }
     }
 
     async function doLogin(){
@@ -340,8 +356,8 @@
 
       setLoading(false);
       show("Login successful. Redirecting…", "ok");
-      setDbg("login ok -> route by DB");
-      await routeAfterLoginByDbEmail();
+      setDbg("login ok -> route by profile");
+      await routeAfterLogin();
     }
 
     async function doForgot(){
@@ -400,8 +416,7 @@
       });
     }
 
-    // ✅ IMPORTANT: STOP auto-route loop after logout
-    // If user is sent here with ?logged_out=1 or ?force=1, do NOT auto-redirect.
+    // Check if auto-route should be skipped
     function shouldAutoRoute(){
       const p = new URLSearchParams(window.location.search);
       return !(p.get("logged_out") === "1" || p.get("force") === "1");
@@ -436,7 +451,7 @@
         const { data } = await sb.auth.getSession();
         if(data?.session){
           setDbg("session exists -> auto-route");
-          await routeAfterLoginByDbEmail();
+          await routeAfterLogin();
         }
       } catch {
         // ignore
