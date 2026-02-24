@@ -14,6 +14,24 @@
                   #020617;
       min-height: 100vh;
     }
+    .fee-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .fee-paid {
+      background: #10b98120;
+      color: #10b981;
+      border: 1px solid #10b98140;
+    }
+    .fee-pending {
+      background: #f59e0b20;
+      color: #f59e0b;
+      border: 1px solid #f59e0b40;
+    }
   </style>
 </head>
 <body class="flex items-center justify-center p-4">
@@ -42,11 +60,11 @@
       <div class="space-y-3">
         <div class="flex items-start gap-3">
           <div class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">1</div>
-          <p class="text-gray-700">Order your Quantum Metal Card (Silver/Black)</p>
+          <p class="text-gray-700">Order your Quantum Metal Card (Silver/Black) <span class="text-amber-600 font-semibold">($500 activation fee)</span></p>
         </div>
         <div class="flex items-start gap-3">
           <div class="flex-shrink-0 w-6 h-6 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center text-sm font-bold">2</div>
-          <p class="text-gray-500">Complete payment processing</p>
+          <p class="text-gray-500">Complete payment processing (includes $500 fee)</p>
         </div>
         <div class="flex items-start gap-3">
           <div class="flex-shrink-0 w-6 h-6 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center text-sm font-bold">3</div>
@@ -148,7 +166,10 @@
             statusCard.className = 'bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6';
             statusTitle.innerHTML = '📦 Card Ordered';
             statusTitle.className = 'text-lg font-semibold text-blue-800 mb-2';
-            statusMessage.innerHTML = `Your ${qfsAccount.card_type} card has been ordered. Current status: ${qfsAccount.card_status}`;
+            
+            // Show fee status in message
+            const feeStatus = qfsAccount.fee_paid ? '✅ Fee paid' : '⏳ Fee pending';
+            statusMessage.innerHTML = `Your ${qfsAccount.card_type} card has been ordered. Current status: ${qfsAccount.card_status}. ${feeStatus}`;
             statusMessage.className = 'text-blue-700';
             headerSubtitle.innerHTML = 'Processing Order';
             nextStepsSection.style.display = 'none';
@@ -162,17 +183,20 @@
             statusCard.className = 'bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6';
             statusTitle.innerHTML = '⏳ Account Not Yet Active';
             statusTitle.className = 'text-lg font-semibold text-yellow-800 mb-2';
-            statusMessage.innerHTML = 'Your QFS Account registration is complete, but activation requires ordering your card first.';
+            statusMessage.innerHTML = 'Your QFS Account registration is complete, but activation requires ordering your card first. A one-time $500 activation fee applies.';
             statusMessage.className = 'text-yellow-700';
             headerSubtitle.innerHTML = 'Pending Activation';
             nextStepsSection.style.display = 'block';
-            actionButton.textContent = 'Order Your Quantum Card Now';
+            actionButton.textContent = 'Order Your Quantum Card Now ($500 fee)';
             actionButton.onclick = () => {
               window.location.href = '/order-card.html?type=qfs';
             };
           }
 
-          // Update account info details
+          // Format fee amount (stored in cents)
+          const activationFee = qfsAccount.activation_fee ? `$${(qfsAccount.activation_fee / 100).toFixed(2)}` : '$500.00';
+          
+          // Update account info details with fee status
           document.getElementById('accountInfo').innerHTML = `
             <h3 class="font-semibold mb-3">Your QFS Account Details:</h3>
             <div class="bg-gray-50 p-4 rounded-lg space-y-2">
@@ -182,6 +206,27 @@
                   ${qfsAccount.account_status.replace(/_/g, ' ')}
                 </span>
               </p>
+              
+              <!-- Activation Fee Status -->
+              <p><span class="text-gray-600">Activation Fee:</span> 
+                <span class="font-medium">
+                  ${activationFee}
+                  ${qfsAccount.fee_paid ? 
+                    '<span class="fee-badge fee-paid">✓ Paid</span>' : 
+                    '<span class="fee-badge fee-pending">⏳ Pending</span>'}
+                </span>
+              </p>
+              ${qfsAccount.fee_paid_date ? `
+                <p><span class="text-gray-600">Fee Paid Date:</span> 
+                  <span class="font-medium">${new Date(qfsAccount.fee_paid_date).toLocaleDateString()}</span>
+                </p>
+              ` : ''}
+              ${qfsAccount.payment_method ? `
+                <p><span class="text-gray-600">Payment Method:</span> 
+                  <span class="font-medium">${qfsAccount.payment_method}</span>
+                </p>
+              ` : ''}
+              
               <p><span class="text-gray-600">Card Ordered:</span> 
                 <span class="font-medium">${qfsAccount.card_ordered ? 'Yes' : 'No'}</span>
               </p>
@@ -224,7 +269,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('order') === 'success') {
       setTimeout(() => {
-        alert('✅ Your card has been ordered successfully! Your QFS account will activate upon delivery.');
+        alert('✅ Your card has been ordered successfully! Your $500 activation fee has been processed. Your QFS account will activate upon card delivery.');
       }, 500);
     }
 
