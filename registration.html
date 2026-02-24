@@ -1,24 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>
-  // MAINTENANCE MODE CHECK
-  (function() {
-    // Check if maintenance.flag exists
-    fetch('/maintenance.flag?' + Date.now()) // Add timestamp to bypass cache
-      .then(response => {
-        if (response.ok) {
-          // maintenance.flag exists - redirect to maintenance page
-          if (!window.location.pathname.includes('maintenance.html')) {
-            window.location.href = '/maintenance.html';
-          }
-        }
-      })
-      .catch(() => {
-        // Flag doesn't exist - site is live
-        console.log('Site is live');
-      });
-  })();
-</script>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -89,15 +70,15 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="font-semibold">Date of Birth</label>
-          <input id="dob" type="date" name="dob" required class="w-full mt-1 p-3 border rounded-lg">
+          <input type="date" name="dob" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
         <div>
           <label class="font-semibold">Phone Number</label>
-          <input id="phone" type="tel" name="phone" required class="w-full mt-1 p-3 border rounded-lg">
+          <input type="tel" name="phone" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
         <div>
           <label class="font-semibold">Gender</label>
-          <select id="gender" name="gender" required class="w-full mt-1 p-3 border rounded-lg">
+          <select name="gender" required class="w-full mt-1 p-3 border rounded-lg">
             <option value="">Select…</option>
             <option>Male</option>
             <option>Female</option>
@@ -132,11 +113,27 @@
         <label class="font-semibold">What are you registering for?</label>
         <select id="regFor" name="registering_for" required class="w-full mt-1 p-3 border rounded-lg">
           <option value="">Select one…</option>
-          <option value="QFS Account">QFS Account</option>
-          <option id="goldOption" value="Trump Gold Card Program">Trump Gold Card Program ( Unlock life in America )</option>
-          <option value="Physical Bitcoin Metal Card (Silver $25,000)">Physical Bitcoin Metal Card Silver ( Preloaded with $25,000 worth of Bitcoin)</option>
-          <option value="Physical Bitcoin Metal Card (Black 25,000 BTC)">Physical Bitcoin Metal Card Black ( Preloaded with 25,000 Bitcoin )</option>
-          <option value="MedBeds Application Fees $2000 - $5000">MedBeds Aplication Fees Applicable</option>
+
+          <!-- ✅ NEW OPTION (ADDED ONLY) -->
+          <option value="QFS Account">
+            QFS Account
+          </option>
+
+          <option id="goldOption" value="Trump Gold Card Program">
+            Trump Gold Card Program ( Unlock life in America )
+          </option>
+
+          <option value="Physical Bitcoin Metal Card (Silver $25,000)">
+            Physical Bitcoin Metal Card Silver ( Preloaded with $25,000 worth of Bitcoin)
+          </option>
+
+          <option value="Physical Bitcoin Metal Card (Black 25,000 BTC)">
+            Physical Bitcoin Metal Card Black ( Preloaded with 25,000 Bitcoin )
+          </option>
+
+          <option value="MedBeds Application Fees $2000 - $5000">
+            MedBeds Aplication Fees Applicable
+          </option>
         </select>
 
         <p id="goldHiddenNote" class="text-xs text-slate-500 mt-2 hidden">
@@ -147,7 +144,7 @@
       <!-- PAYMENT OPTION -->
       <div>
         <label class="font-semibold">Payment Option</label>
-        <select id="paymentOption" name="payment_option" required class="w-full mt-1 p-3 border rounded-lg">
+        <select name="payment_option" required class="w-full mt-1 p-3 border rounded-lg">
           <option value="">Select payment option…</option>
           <option>Full Payment</option>
           <option>Bridge Payment</option>
@@ -159,26 +156,26 @@
 
       <div>
         <label class="font-semibold">Street Address</label>
-        <input id="streetAddress" type="text" name="street_address" required class="w-full mt-1 p-3 border rounded-lg">
+        <input type="text" name="street_address" required class="w-full mt-1 p-3 border rounded-lg">
       </div>
 
       <div>
         <label class="font-semibold">Apartment / Suite</label>
-        <input id="apartment" type="text" name="apartment" class="w-full mt-1 p-3 border rounded-lg">
+        <input type="text" name="apartment" class="w-full mt-1 p-3 border rounded-lg">
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="font-semibold">City</label>
-          <input id="city" type="text" name="city" required class="w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="city" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
         <div>
           <label class="font-semibold">State / Province</label>
-          <input id="state" type="text" name="state" required class="w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="state" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
         <div>
           <label class="font-semibold">ZIP / Postal Code</label>
-          <input id="zip" type="text" name="zip" required class="w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="zip" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
       </div>
 
@@ -201,7 +198,7 @@
   const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
 
   const form = document.getElementById("regForm");
   const emailEl = document.getElementById("regEmail");
@@ -211,21 +208,11 @@
   const msg = document.getElementById("regMsg");
   const btn = document.getElementById("regSubmit");
 
-  // Get all form fields for metadata
   const firstNameEl = document.getElementById("firstName");
   const middleNameEl = document.getElementById("middleName");
   const lastNameEl = document.getElementById("lastName");
-  const dobEl = document.getElementById("dob");
-  const phoneEl = document.getElementById("phone");
-  const genderEl = document.getElementById("gender");
-  const paymentOptionEl = document.getElementById("paymentOption");
-  const streetAddressEl = document.getElementById("streetAddress");
-  const apartmentEl = document.getElementById("apartment");
-  const cityEl = document.getElementById("city");
-  const stateEl = document.getElementById("state");
-  const zipEl = document.getElementById("zip");
+
   const countryEl = document.getElementById("countryEl");
-  
   const goldOption = document.getElementById("goldOption");
   const goldHiddenNote = document.getElementById("goldHiddenNote");
 
@@ -275,7 +262,10 @@
 
   function inferTierFromRegisteringFor(registeringForText) {
     const v = (registeringForText || "").toLowerCase();
+
+    // ✅ ADDED ONLY
     if (v === "qfs account") return "activation_pending";
+
     if (v.includes("gold")) return "gold";
     if (v.includes("black")) return "black";
     if (v.includes("silver")) return "silver";
@@ -286,7 +276,13 @@
     const action = form.getAttribute("action");
     const method = (form.getAttribute("method") || "POST").toUpperCase();
     const fd = new FormData(form);
-    const res = await fetch(action, { method, body: fd, headers: { "Accept": "text/html" } });
+
+    const res = await fetch(action, {
+      method,
+      body: fd,
+      headers: { "Accept": "text/html" }
+    });
+
     if (!res.ok) throw new Error("Form submit failed (" + res.status + ")");
   }
 
@@ -309,21 +305,10 @@
     const pwB = (p2.value || "").trim();
     const registering_for = (regFor.value || "").trim();
 
-    // Get all form values for metadata
     const first = String(firstNameEl?.value || "").trim();
     const middle = String(middleNameEl?.value || "").trim();
     const last = String(lastNameEl?.value || "").trim();
     const full_name = [first, middle, last].filter(Boolean).join(" ").trim();
-    const dob = dobEl?.value || "";
-    const phone = phoneEl?.value || "";
-    const gender = genderEl?.value || "";
-    const payment_option = paymentOptionEl?.value || "";
-    const street_address = streetAddressEl?.value || "";
-    const apartment = apartmentEl?.value || "";
-    const city = cityEl?.value || "";
-    const state = stateEl?.value || "";
-    const zip = zipEl?.value || "";
-    const country = countryEl?.value || "";
 
     if (pwA.length < 8) {
       busy = false;
@@ -355,25 +340,15 @@
         data: {
           registering_for,
           selected_tier,
-          // Fix: Use pending_activation instead of inactive
+
+          // ✅ ADDED ONLY
           activation_required: selectedTier === "activation_pending",
-          account_status: selectedTier === "activation_pending" ? "pending_activation" : "active",
-          // Personal info
-          first_name: first,
-          middle_name: middle,
-          last_name: last,
-          full_name: full_name,
-          date_of_birth: dob,
-          phone: phone,
-          gender: gender,
-          payment_option: payment_option,
-          // Address fields
-          street_address: street_address,
-          apartment: apartment,
-          city: city,
-          state: state,
-          zip: zip,
-          country: country
+          account_status: selectedTier === "activation_pending" ? "inactive" : "active",
+
+          first_name: first || null,
+          middle_name: middle || null,
+          last_name: last || null,
+          full_name: full_name || null
         },
         emailRedirectTo: "https://qfsnesaragesara.org/login.html"
       }
@@ -394,7 +369,7 @@
       show("Account created ✅ (Email submission failed, but login is created.)", true);
     }
 
-    window.location.href = "success-registration.html";
+    window.location.href = "https://qfsnesaragesara.org/success-registration.html";
   });
 })();
 </script>
