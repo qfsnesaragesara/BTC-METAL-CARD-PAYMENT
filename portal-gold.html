@@ -1,5 +1,24 @@
 <!doctype html>
 <html lang="en">
+<script>
+  // MAINTENANCE MODE CHECK
+  (function() {
+    // Check if maintenance.flag exists
+    fetch('/maintenance.flag?' + Date.now()) // Add timestamp to bypass cache
+      .then(response => {
+        if (response.ok) {
+          // maintenance.flag exists - redirect to maintenance page
+          if (!window.location.pathname.includes('maintenance.html')) {
+            window.location.href = '/maintenance.html';
+          }
+        }
+      })
+      .catch(() => {
+        // Flag doesn't exist - site is live
+        console.log('Site is live');
+      });
+  })();
+</script>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
