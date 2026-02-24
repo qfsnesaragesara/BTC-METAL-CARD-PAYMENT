@@ -268,13 +268,23 @@
 <script>
   const CFG = window.__QFS_CONFIG || {};
   const SUPABASE_URL = CFG.SUPABASE_URL || "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "PASTE_ANON_KEY_HERE_IF_NO_CONFIG_JS";
+  const SUPABASE_ANON_KEY = CFG.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
   const $ = (id) => document.getElementById(id);
   const toast = $("toast");
   const say = (t) => { if(toast) toast.textContent = String(t || ""); };
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ===== CHECK LOCALSTORAGE FOR TIER =====
+  let userTier = 'silver'; // default
+  try {
+    const storedTier = localStorage.getItem('user_tier');
+    if (storedTier === 'black' || storedTier === 'silver') {
+      userTier = storedTier;
+      console.log('Using tier from localStorage:', userTier);
+    }
+  } catch {}
 
   function normTier(v){
     const s = String(v || "").trim().toLowerCase();
@@ -385,14 +395,16 @@
     return data.session;
   }
 
+  // ===== UPDATED: Get profile from profiles table =====
   async function getDbProfileByEmail(email){
     return await sb
-      .from("portal_users")
-      .select("id, email, tier, selected_tier, qty, is_active")
+      .from("profiles")
+      .select("id, email, first_name, last_name, registering_for, selected_tier, account_status")
       .eq("email", email)
       .maybeSingle();
   }
 
+  // ===== UPDATED: Get accounts from portal_accounts (same as before) =====
   async function getAccountsByUserId(userId){
     return await sb
       .from("portal_accounts")
@@ -492,8 +504,6 @@
     }
 
     // 2) Pull ledger entries for those accounts
-    // IMPORTANT: We query by account_id (NOT portal_ledger.user_id).
-    // We also try a fallback select if your column names differ.
     let rows = null;
     let lastErr = null;
 
@@ -580,16 +590,22 @@
     const now = new Date();
     $("lastChecked").textContent = "Last checked: " + now.toLocaleString();
 
-    const tier = (profile?.tier || profile?.selected_tier || "").toUpperCase();
-    let qty = Number(profile?.qty || 0) || 0;
-
+    // Use tier from profile or fallback to localStorage
+    let tier = (profile?.selected_tier || "").toUpperCase();
+    if (!tier && userTier) {
+      tier = userTier.toUpperCase();
+    }
+    
+    // Default quantity
+    let qty = 1;
+    if (tier === "SILVER") qty = 1;
     if (tier === "BLACK") qty = 1;
-    if (!Number.isFinite(qty) || qty < 1) qty = 1;
 
     $("tierCell").textContent = tier || "—";
     $("qtyCell").textContent = String(qty);
 
-    const isActive = profile?.is_active === true;
+    // Check account status (active vs pending)
+    const isActive = profile?.account_status === 'active';
     $("statusCell").textContent = isActive ? "Active" : "Pending";
     setBadge(isActive);
 
@@ -632,8 +648,6 @@
 
       const { data: profile } = await getDbProfileByEmail(email);
       if(profile){
-        const t2 = normTier(profile.tier) || normTier(profile.selected_tier);
-        if(t2 === "gold") return window.location.replace("portal-gold.html");
         await refreshUI(profile, userId);
         await loadRecentTransactionsByUserId(userId);
       }
@@ -680,7 +694,7 @@
       const { data: profile, error } = await getDbProfileByEmail(email);
 
       if(error){
-        say("Profile SELECT blocked (RLS). portal_users read policy must allow this email.");
+        say("Profile SELECT blocked (RLS). profiles read policy must allow this email.");
         lockActions();
         return;
       }
@@ -690,7 +704,8 @@
         return window.location.replace("registration.html");
       }
 
-      const effectiveTier = normTier(profile.tier) || normTier(profile.selected_tier);
+      // Check if this is a gold user (shouldn't happen, but just in case)
+      const effectiveTier = normTier(profile.selected_tier) || userTier;
       if(effectiveTier === "gold"){
         say("Gold detected → redirect portal-gold.html");
         return window.location.replace("portal-gold.html");
@@ -703,8 +718,6 @@
       setInterval(async () => {
         const { data: p2 } = await getDbProfileByEmail(email);
         if(p2){
-          const t2 = normTier(p2.tier) || normTier(p2.selected_tier);
-          if(t2 === "gold") return window.location.replace("portal-gold.html");
           await refreshUI(p2, userId);
           await loadRecentTransactionsByUserId(userId);
         }
@@ -718,4 +731,3 @@
 
 </body>
 </html>
-
