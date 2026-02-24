@@ -265,7 +265,7 @@
       if(loginBtn) loginBtn.textContent = on ? (label || "Working...") : "Login";
     }
 
-    // ===== NEW REDIRECT LOGIC USING PROFILES TABLE =====
+    // ===== REDIRECT LOGIC BASED ON YOUR ACTUAL FILE STRUCTURE =====
     async function routeAfterLogin() {
       setDbg("getUser…");
       const { data: { user }, error: uErr } = await sb.auth.getUser();
@@ -284,7 +284,7 @@
       // Get user profile from profiles table
       const { data: profile, error: pErr } = await sb
         .from("profiles")
-        .select("registering_for, account_status")
+        .select("registering_for, selected_tier")
         .eq("email", email)
         .maybeSingle();
 
@@ -303,34 +303,49 @@
       }
 
       const registeringFor = profile.registering_for;
+      const selectedTier = profile.selected_tier;
+      
       setDbg("registering_for: " + registeringFor);
+      setDbg("selected_tier: " + selectedTier);
 
-      // ===== REDIRECT BASED ON REGISTRATION TYPE =====
-      switch(registeringFor) {
-        case 'QFS Account':
-          window.location.href = "qfs-holding-dashboard.html";
-          break;
-          
-        case 'Trump Gold Card Program':
-          window.location.href = "portal-gold.html"; // Your existing gold page
-          break;
-          
-        case 'Physical Bitcoin Metal Card (Silver $25,000)':
-          window.location.href = "portal-silver.html"; // Your existing silver page
-          break;
-          
-        case 'Physical Bitcoin Metal Card (Black 25,000 BTC)':
-          window.location.href = "portal-black.html"; // Your existing black page
-          break;
-          
-        case 'MedBeds Application Fees $2000 - $5000':
-          window.location.href = "portal-medbeds.html"; // Your existing medbeds page
-          break;
-          
-        default:
-          // Fallback to generic portal
-          window.location.href = "portal.html";
+      // ===== REDIRECT BASED ON YOUR ACTUAL FILE STRUCTURE =====
+      
+      // QFS Account users go to holding page
+      if (registeringFor === 'QFS Account') {
+        window.location.href = "qfs-holding-dashboard.html";
+        return;
       }
+      
+      // Gold Card users go to portal-gold.html
+      if (registeringFor === 'Trump Gold Card Program' || selectedTier === 'gold') {
+        window.location.href = "portal-gold.html";
+        return;
+      }
+      
+      // Silver and Black users both go to portal.html (which handles different UI)
+      if (registeringFor.includes('Silver') || registeringFor.includes('Black') || 
+          selectedTier === 'silver' || selectedTier === 'black') {
+        // Store the tier in localStorage so portal.html knows which UI to show
+        try {
+          localStorage.setItem("user_tier", selectedTier || 
+            (registeringFor.includes('Black') ? 'black' : 'silver'));
+        } catch {}
+        
+        window.location.href = "portal.html";
+        return;
+      }
+      
+      // MedBeds - no portal yet, send to generic page or home
+      if (registeringFor.includes('MedBeds')) {
+        show("MedBeds portal coming soon. Check your email for updates.", "ok");
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 3000);
+        return;
+      }
+
+      // Fallback
+      window.location.href = "portal.html";
     }
 
     async function doLogin(){
