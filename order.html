@@ -639,21 +639,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }); // End of DOMContentLoaded
 </script>
 
-<!-- MAINTENANCE MODE CHECK -->
-<script>
-  (function() {
-    if (window.location.pathname.includes('maintenance.html')) {
-      return;
-    }
-    fetch('/maintenance.flag?' + Date.now())
-      .then(response => {
-        if (response.ok && !window.location.pathname.includes('maintenance.html')) {
-          window.location.href = '/maintenance.html';
-        }
-      })
-      .catch(() => {});
-  })();
-</script>
 
 </body>
 </html>
+
