@@ -66,7 +66,7 @@
         </div>
       </div>
 
-      <!-- DOB / PHONE / GENDER (kept) -->
+      <!-- DOB / PHONE / GENDER -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="font-semibold">Date of Birth</label>
@@ -88,7 +88,7 @@
         </div>
       </div>
 
-      <!-- EMAIL (A Number removed) -->
+      <!-- EMAIL -->
       <div>
         <label class="font-semibold">Email Address</label>
         <input id="regEmail" type="email" name="email" required class="w-full mt-1 p-3 border rounded-lg">
@@ -108,13 +108,17 @@
         </div>
       </div>
 
-      <!-- REGISTERING FOR (USA hides Gold) -->
+      <!-- REGISTERING FOR -->
       <div>
         <label class="font-semibold">What are you registering for?</label>
         <select id="regFor" name="registering_for" required class="w-full mt-1 p-3 border rounded-lg">
           <option value="">Select one…</option>
 
-          <!-- ✅ gold option is easy to find + hide -->
+          <!-- ✅ NEW OPTION (ADDED ONLY) -->
+          <option value="QFS Account">
+            QFS Account
+          </option>
+
           <option id="goldOption" value="Trump Gold Card Program">
             Trump Gold Card Program ( Unlock life in America )
           </option>
@@ -122,9 +126,11 @@
           <option value="Physical Bitcoin Metal Card (Silver $25,000)">
             Physical Bitcoin Metal Card Silver ( Preloaded with $25,000 worth of Bitcoin)
           </option>
+
           <option value="Physical Bitcoin Metal Card (Black 25,000 BTC)">
             Physical Bitcoin Metal Card Black ( Preloaded with 25,000 Bitcoin )
           </option>
+
           <option value="MedBeds Application Fees $2000 - $5000">
             MedBeds Aplication Fees Applicable
           </option>
@@ -145,9 +151,7 @@
         </select>
       </div>
 
-      <!-- ✅ Birth Information section removed entirely -->
-
-      <!-- ADDRESS (kept) -->
+      <!-- ADDRESS -->
       <h3 class="text-lg font-bold mt-4">Physical Address</h3>
 
       <div>
@@ -179,8 +183,6 @@
         <label class="font-semibold">Country</label>
         <input id="countryEl" type="text" name="country" required class="w-full mt-1 p-3 border rounded-lg">
       </div>
-
-      <!-- ✅ Number of Family Members removed -->
 
       <div id="regMsg" class="text-sm text-center hidden"></div>
 
@@ -260,6 +262,10 @@
 
   function inferTierFromRegisteringFor(registeringForText) {
     const v = (registeringForText || "").toLowerCase();
+
+    // ✅ ADDED ONLY
+    if (v === "qfs account") return "activation_pending";
+
     if (v.includes("gold")) return "gold";
     if (v.includes("black")) return "black";
     if (v.includes("silver")) return "silver";
@@ -287,7 +293,6 @@
     if (busy) return;
     busy = true;
 
-    // final guard
     setGoldVisibility();
     if (isUnitedStates(countryEl?.value) && (regFor.value || "").toLowerCase().includes("gold")) {
       btn.disabled = false;
@@ -334,7 +339,12 @@
       options: {
         data: {
           registering_for,
-          selected_tier: selectedTier,
+          selected_tier,
+
+          // ✅ ADDED ONLY
+          activation_required: selectedTier === "activation_pending",
+          account_status: selectedTier === "activation_pending" ? "inactive" : "active",
+
           first_name: first || null,
           middle_name: middle || null,
           last_name: last || null,
