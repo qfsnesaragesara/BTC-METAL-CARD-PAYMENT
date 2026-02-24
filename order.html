@@ -215,7 +215,7 @@ select {
       </div>
     </div>
 
-    <!-- 🔥 MESSAGE BELOW CARDS -->
+    <!-- MESSAGE BELOW CARDS -->
     <div id="centerMessage" class="center-message">Select a card to begin</div>
 
     <div class="title"></div>
@@ -246,401 +246,412 @@ select {
   </div>
 </div>
 
-
 <script>
-/* === SUPABASE INITIALIZATION === */
-const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+  
+  /* === SUPABASE INITIALIZATION === */
+  const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* === PRICING CONFIGURATION === */
-const BASE_PRICES={black:575850,silver:3229};
-const INCREASED_PRICES={black:775650,silver:5899};
-const GOLD_PROCESSING_FEE=15000;
-const GOLD_REQUIRED_FORM="https://www.uscis.gov/i-140g";
-const WALLET_ADDR="bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8";
-const QFS_ACTIVATION_FEE = 500; // $500 USD
+  /* === PRICING CONFIGURATION === */
+  const BASE_PRICES = { black: 575850, silver: 3229 };
+  const INCREASED_PRICES = { black: 775650, silver: 5899 };
+  const GOLD_PROCESSING_FEE = 15000;
+  const GOLD_REQUIRED_FORM = "https://www.uscis.gov/i-140g";
+  const WALLET_ADDR = "bc1qqla2r8dmmvefq9svus0kv098nnvudsehpzmut8";
+  const QFS_ACTIVATION_FEE = 500;
 
-const CARD_TITLES={
-  black:"Trump Black Card — 25,000 Bitcoin",
-  gold:"Trump Gold Card — Unlock life in America",
-  silver:"Trump Silver Card — $25,000 worth of bitcoin"
-};
+  const CARD_TITLES = {
+    black: "Trump Black Card — 25,000 Bitcoin",
+    gold: "Trump Gold Card — Unlock life in America",
+    silver: "Trump Silver Card — $25,000 worth of bitcoin"
+  };
 
-const CARD_DESCS={
-  black:"High-weight elite matte finish with premium chain security.",
-  gold:`For a $15,000 DHS processing fee and, after background approval, a contribution of $1 million, receive U.S. residency in record time with the Trump Gold Card.<br> Upon completion and receipt of payment, individuals will need to complete the Department of Homeland Security I-140G to commence vetting. The form is available here.<br><br>
-        <a href="${GOLD_REQUIRED_FORM}" target="_blank" style="color:#38bdf8;">View Form</a>`,
-  silver:"Premium stainless-steel card with essential blockchain benefits."
-};
+  const CARD_DESCS = {
+    black: "High-weight elite matte finish with premium chain security.",
+    gold: `For a $15,000 DHS processing fee and, after background approval, a contribution of $1 million, receive U.S. residency in record time with the Trump Gold Card.<br> Upon completion and receipt of payment, individuals will need to complete the Department of Homeland Security I-140G to commence vetting. The form is available here.<br><br>
+          <a href="${GOLD_REQUIRED_FORM}" target="_blank" style="color:#38bdf8;">View Form</a>`,
+    silver: "Premium stainless-steel card with essential blockchain benefits."
+  };
 
-const CARD_PERKS={
-  black:[
-    "Black matte + gold elite finish",
-    "Very heavy collectible-grade metal construction",
-    "QR, NFC & embedded cold-storage level security",
-    "Rare, numbered series with custom engraving options",
-    "Includes 25k Bitcoin allocation benefit",
-    "VIP access: NFT drops, private events, exclusive airdrops"
-  ],
-  gold:[
-    "24K gold-plated alloy",
-    "Quantum engraving",
-    "Priority membership",
-    "As appropriately determined by the U.S. Department of Homeland Security and subject to availability, a successful applicant receives lawful permanent resident status as an EB-1 or EB-2 visa holder.",
-  ],
-  silver:[
-    "Stainless steel build",
-    "Printed QR for direct wallet address access",
-    "Includes $25,000 in Bitcoin equivalent value",
-    "Minimal elite design"
-  ]
-};
+  const CARD_PERKS = {
+    black: [
+      "Black matte + gold elite finish",
+      "Very heavy collectible-grade metal construction",
+      "QR, NFC & embedded cold-storage level security",
+      "Rare, numbered series with custom engraving options",
+      "Includes 25k Bitcoin allocation benefit",
+      "VIP access: NFT drops, private events, exclusive airdrops"
+    ],
+    gold: [
+      "24K gold-plated alloy",
+      "Quantum engraving",
+      "Priority membership",
+      "As appropriately determined by the U.S. Department of Homeland Security and subject to availability, a successful applicant receives lawful permanent resident status as an EB-1 or EB-2 visa holder.",
+    ],
+    silver: [
+      "Stainless steel build",
+      "Printed QR for direct wallet address access",
+      "Includes $25,000 in Bitcoin equivalent value",
+      "Minimal elite design"
+    ]
+  };
 
-/* === QFS ACCOUNT DETECTION === */
-let isQFSUser = false;
-let qfsAccountData = null;
+  /* === QFS ACCOUNT DETECTION === */
+  let isQFSUser = false;
+  let qfsAccountData = null;
 
-async function checkIfQFSUser() {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('registering_for')
-        .eq('id', user.id)
-        .single();
+  async function checkIfQFSUser() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
       
-      isQFSUser = profile?.registering_for === 'QFS Account';
-      
-      if (isQFSUser) {
-        const { data: qfs } = await supabase
-          .from('qfs_accounts')
-          .select('*')
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('registering_for')
           .eq('id', user.id)
           .single();
         
-        qfsAccountData = qfs;
-        addQFSBanner();
+        isQFSUser = profile?.registering_for === 'QFS Account';
+        
+        if (isQFSUser) {
+          const { data: qfs } = await supabase
+            .from('qfs_accounts')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          
+          qfsAccountData = qfs;
+          addQFSBanner();
+        }
       }
+    } catch (error) {
+      console.log('Not logged in or not QFS user');
     }
-  } catch (error) {
-    console.log('Not logged in or not QFS user');
   }
-}
 
-function addQFSBanner() {
-  const visualDiv = document.querySelector('.visual');
-  const banner = document.createElement('div');
-  banner.id = 'qfsBanner';
-  banner.style.cssText = `
-    background: rgba(56, 189, 248, 0.15);
-    border: 1px solid #38bdf8;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 20px;
-    text-align: center;
-  `;
-  
-  banner.innerHTML = `
-    <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
-      <span style="font-size: 24px;">🔷</span>
-      <div>
-        <strong style="color: #38bdf8; font-size: 18px;">QFS Account Activation Required</strong>
-        <p style="color: #e2e8f0; margin: 4px 0 0 0; font-size: 14px;">
-          Your QFS account is pending activation. Order any card below to activate your account.
-        </p>
-        <p style="color: #fbbf24; margin: 8px 0 0 0; font-size: 13px;">
-          Status: ${qfsAccountData?.account_status || 'pending_activation'} 
-          ${qfsAccountData?.card_ordered ? '| Card Ordered: Yes' : ''}
-        </p>
-      </div>
-    </div>
-  `;
-  
-  visualDiv.insertBefore(banner, visualDiv.firstChild);
-}
-
-/* === MAIN VARIABLES === */
-let selectedCard=null;
-let currentBtcPrice=null;
-
-const centerMessage=document.getElementById("centerMessage");
-const cardViews=document.querySelectorAll(".card-view");
-const orderPanel=document.querySelector(".panel");
-const cardPerksEl=document.getElementById("cardPerks");
-const titleEl=document.querySelector(".title");
-const descEl=document.querySelector(".desc");
-const qtyEl=document.getElementById("quantity");
-const totalUSDEl=document.getElementById("totalUSD");
-const totalBTCEle=document.getElementById("totalBTC");
-const countdownEl=document.querySelector(".countdown");
-const btcPriceLine=document.getElementById("btcPriceLine");
-const payNowBtn=document.getElementById("payNow");
-
-/* Hide details initially */
-orderPanel.style.display="none";
-cardPerksEl.style.display="none";
-titleEl.style.display="none";
-descEl.style.display="none";
-
-/* Quantity change handler */
-qtyEl.addEventListener("change", updateTotals);
-
-/* BTC Price fetch */
-async function fetchBtcPrice(){
-try{
-  const r=await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
-  const j=await r.json();
-  currentBtcPrice=j.bitcoin.usd;
-  btcPriceLine.innerText="BTC Price: $"+currentBtcPrice.toLocaleString();
-  if(selectedCard) updateTotals();
-}catch{}
-}
-fetchBtcPrice();
-
-/* Countdown timer */
-const END_KEY="timer_v5";
-function getEnd(){
-  const s=localStorage.getItem(END_KEY);
-  if(s) return Number(s);
-  const t=Date.now()+48*3600*1000;
-  localStorage.setItem(END_KEY,t);
-  return t;
-}
-let endTs=getEnd();
-
-function runCountdown(){
-  if(selectedCard==="gold"){
-    countdownEl.style.display="none";
-    return;
-  }
-  const d=endTs-Date.now();
-  if(d<=0){
-    document.getElementById("countdown").innerText="Expired";
-    return;
-  }
-  const h=Math.floor(d/3600000),
-        m=Math.floor((d%3600000)/60000),
-        s=Math.floor((d%60000)/1000);
-  document.getElementById("countdown").innerText=`${h}h ${m}m ${s}s`;
-}
-setInterval(runCountdown,1000);
-
-/* Quantity options */
-function setQuantity(c){
-  qtyEl.innerHTML="";
-  if(c==="silver"){
-    for(let i=1;i<=50;i++) qtyEl.innerHTML+=`<option>${i}</option>`;
-    qtyEl.disabled=false;
-  } else {
-    qtyEl.innerHTML="<option>1</option>";
-    qtyEl.disabled=true;
-  }
-}
-
-/* Update price totals */
-function updateTotals(){
-  let usd=(selectedCard==="gold")
-    ? GOLD_PROCESSING_FEE
-    : (Date.now()>=endTs?INCREASED_PRICES:BASE_PRICES)[selectedCard]*Number(qtyEl.value);
-
-  totalUSDEl.innerText="$"+usd.toLocaleString();
-  totalBTCEle.innerText=currentBtcPrice?(usd/currentBtcPrice).toFixed(8)+" BTC":"0 BTC";
-}
-
-/* Update perks display */
-function updatePerks(){
-  cardPerksEl.innerHTML="<strong>Perks:</strong><ul>"+
-    CARD_PERKS[selectedCard].map(p=>`<li>${p}</li>`).join("")+
-    "</ul>";
-}
-
-/* Card click handler */
-cardViews.forEach(view=>{
-const img=view.querySelector(".card-img");
-const type=view.dataset.type;
-
-view.addEventListener("click",()=>{
-
-  centerMessage.classList.add("fade-out");
-
-  document.querySelectorAll(".card-img").forEach(x=>x.classList.remove("selected"));
-  img.classList.add("selected");
-
-  selectedCard=type;
-
-  titleEl.style.display="block";
-  descEl.style.display="block";
-  orderPanel.style.display="block";
-  cardPerksEl.style.display="block";
-
-  titleEl.innerHTML=CARD_TITLES[type];
-  descEl.innerHTML=CARD_DESCS[type];
-
-  setQuantity(type);
-  updateTotals();
-  updatePerks();
-
-  cardPerksEl.classList.remove("show");
-  setTimeout(()=>cardPerksEl.classList.add("show"),10);
-
-  /* Show QFS activation message with $500 fee */
-  if (isQFSUser) {
-    let qfsMsg = document.getElementById('qfsActivationMsg');
-    if (!qfsMsg) {
-      qfsMsg = document.createElement('div');
-      qfsMsg.id = 'qfsActivationMsg';
-      qfsMsg.style.cssText = `
-        margin-top: 20px;
-        padding: 16px;
-        background: rgba(56, 189, 248, 0.1);
-        border: 1px solid #38bdf8;
-        border-radius: 12px;
-        text-align: center;
-      `;
-      document.querySelector('.visual').appendChild(qfsMsg);
-    }
+  function addQFSBanner() {
+    const visualDiv = document.querySelector('.visual');
+    const banner = document.createElement('div');
+    banner.id = 'qfsBanner';
+    banner.style.cssText = `
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid #38bdf8;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      text-align: center;
+    `;
     
-    qfsMsg.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-        <span style="font-size: 28px;">✅</span>
-        <div style="text-align: left;">
-          <strong style="color: #38bdf8;">QFS Account Activation</strong>
+    banner.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+        <span style="font-size: 24px;">🔷</span>
+        <div>
+          <strong style="color: #38bdf8; font-size: 18px;">QFS Account Activation Required</strong>
           <p style="color: #e2e8f0; margin: 4px 0 0 0; font-size: 14px;">
-            Great choice! Ordering this ${type} card will activate your QFS account.
+            Your QFS account is pending activation. Order any card below to activate your account.
+          </p>
+          <p style="color: #fbbf24; margin: 8px 0 0 0; font-size: 13px;">
+            Status: ${qfsAccountData?.account_status || 'pending_activation'} 
+            ${qfsAccountData?.card_ordered ? '| Card Ordered: Yes' : ''}
           </p>
         </div>
       </div>
-      <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px;">
-        <p style="color: #fbbf24; font-size: 24px; font-weight: bold; margin: 0;">$${QFS_ACTIVATION_FEE}</p>
-        <p style="color: #9ca3af; font-size: 12px; margin: 4px 0 0 0;">One-time QFS account activation fee</p>
-      </div>
     `;
-  }
-});
-});
-
-/* Pay Now button handler */
-payNowBtn.addEventListener("click", async () => {
-
-  if (!selectedCard) {
-    alert("Please select a card first.");
-    return;
+    
+    visualDiv.insertBefore(banner, visualDiv.firstChild);
   }
 
-  let cardPrice =
-    selectedCard === "gold"
-      ? GOLD_PROCESSING_FEE
-      : (Date.now() >= endTs
-          ? INCREASED_PRICES
-          : BASE_PRICES)[selectedCard] * Number(qtyEl.value);
+  /* === MAIN VARIABLES === */
+  let selectedCard = null;
+  let currentBtcPrice = null;
 
-  let btcValue = currentBtcPrice
-    ? (cardPrice / currentBtcPrice).toFixed(8)
-    : "0.00000000";
+  const centerMessage = document.getElementById("centerMessage");
+  const cardViews = document.querySelectorAll(".card-view");
+  const orderPanel = document.querySelector(".panel");
+  const cardPerksEl = document.getElementById("cardPerks");
+  const titleEl = document.querySelector(".title");
+  const descEl = document.querySelector(".desc");
+  const qtyEl = document.getElementById("quantity");
+  const totalUSDEl = document.getElementById("totalUSD");
+  const totalBTCEle = document.getElementById("totalBTC");
+  const countdownEl = document.querySelector(".countdown");
+  const btcPriceLine = document.getElementById("btcPriceLine");
+  const payNowBtn = document.getElementById("payNow");
 
-  /* Handle QFS users differently */
-  if (isQFSUser) {
+  /* Quantity change handler */
+  qtyEl.addEventListener("change", updateTotals);
+
+  /* BTC Price fetch */
+  async function fetchBtcPrice() {
     try {
-      payNowBtn.textContent = "Processing QFS Activation...";
-      payNowBtn.disabled = true;
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        alert("Please log in first");
-        window.location.href = "/login.html";
-        return;
+      const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+      const j = await r.json();
+      currentBtcPrice = j.bitcoin.usd;
+      btcPriceLine.innerText = "BTC Price: $" + currentBtcPrice.toLocaleString();
+      if (selectedCard) updateTotals();
+    } catch {}
+  }
+  fetchBtcPrice();
+
+  /* Countdown timer */
+  const END_KEY = "timer_v5";
+  function getEnd() {
+    const s = localStorage.getItem(END_KEY);
+    if (s) return Number(s);
+    const t = Date.now() + 48 * 3600 * 1000;
+    localStorage.setItem(END_KEY, t);
+    return t;
+  }
+  let endTs = getEnd();
+
+  function runCountdown() {
+    if (selectedCard === "gold") {
+      countdownEl.style.display = "none";
+      return;
+    }
+    const d = endTs - Date.now();
+    if (d <= 0) {
+      document.getElementById("countdown").innerText = "Expired";
+      return;
+    }
+    const h = Math.floor(d / 3600000),
+          m = Math.floor((d % 3600000) / 60000),
+          s = Math.floor((d % 60000) / 1000);
+    document.getElementById("countdown").innerText = `${h}h ${m}m ${s}s`;
+  }
+  setInterval(runCountdown, 1000);
+
+  /* Quantity options */
+  function setQuantity(c) {
+    qtyEl.innerHTML = "";
+    if (c === "silver") {
+      for (let i = 1; i <= 50; i++) {
+        let option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        qtyEl.appendChild(option);
       }
+      qtyEl.disabled = false;
+    } else {
+      let option = document.createElement('option');
+      option.value = 1;
+      option.textContent = 1;
+      qtyEl.appendChild(option);
+      qtyEl.disabled = true;
+    }
+  }
+
+  /* Update price totals */
+  function updateTotals() {
+    if (!selectedCard) return;
+    
+    let usd = (selectedCard === "gold")
+      ? GOLD_PROCESSING_FEE
+      : (Date.now() >= endTs ? INCREASED_PRICES : BASE_PRICES)[selectedCard] * Number(qtyEl.value);
+
+    totalUSDEl.innerText = "$" + usd.toLocaleString();
+    totalBTCEle.innerText = currentBtcPrice ? (usd / currentBtcPrice).toFixed(8) + " BTC" : "0 BTC";
+  }
+
+  /* Update perks display */
+  function updatePerks() {
+    if (!selectedCard) return;
+    cardPerksEl.innerHTML = "<strong>Perks:</strong><ul>" +
+      CARD_PERKS[selectedCard].map(p => `<li>${p}</li>`).join("") +
+      "</ul>";
+  }
+
+  /* Card click handler */
+  cardViews.forEach(view => {
+    const img = view.querySelector(".card-img");
+    const type = view.dataset.type;
+
+    view.addEventListener("click", function(e) {
+      e.preventDefault();
       
-      // Calculate total with $500 fee
-      const totalUSD = cardPrice + QFS_ACTIVATION_FEE;
-      const totalBTC = currentBtcPrice ? (totalUSD / currentBtcPrice).toFixed(8) : "0.00000000";
+      // Remove selected class from all cards
+      document.querySelectorAll(".card-img").forEach(x => x.classList.remove("selected"));
       
-      // Show fee breakdown
-      const confirmMsg = `QFS Account Activation:\n\n` +
-        `Card Price: $${cardPrice.toLocaleString()}\n` +
-        `Activation Fee: $${QFS_ACTIVATION_FEE}\n` +
-        `Total: $${totalUSD.toLocaleString()} (${totalBTC} BTC)\n\n` +
-        `Proceed to payment?`;
+      // Add selected class to clicked card
+      img.classList.add("selected");
+
+      // Fade out center message
+      centerMessage.classList.add("fade-out");
+
+      // Set selected card
+      selectedCard = type;
+
+      // Show all panels
+      titleEl.style.display = "block";
+      descEl.style.display = "block";
+      orderPanel.style.display = "block";
+      cardPerksEl.style.display = "block";
+
+      // Update content
+      titleEl.innerHTML = CARD_TITLES[type];
+      descEl.innerHTML = CARD_DESCS[type];
+
+      // Update quantity options
+      setQuantity(type);
+      
+      // Update prices and perks
+      updateTotals();
+      updatePerks();
+
+      // Show perks with animation
+      cardPerksEl.classList.remove("show");
+      setTimeout(() => cardPerksEl.classList.add("show"), 10);
+
+      // Show QFS activation message with $500 fee
+      if (isQFSUser) {
+        let qfsMsg = document.getElementById('qfsActivationMsg');
+        if (!qfsMsg) {
+          qfsMsg = document.createElement('div');
+          qfsMsg.id = 'qfsActivationMsg';
+          qfsMsg.style.cssText = `
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid #38bdf8;
+            border-radius: 12px;
+            text-align: center;
+          `;
+          document.querySelector('.visual').appendChild(qfsMsg);
+        }
         
-      if (!confirm(confirmMsg)) {
+        qfsMsg.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <span style="font-size: 28px;">✅</span>
+            <div style="text-align: left;">
+              <strong style="color: #38bdf8;">QFS Account Activation</strong>
+              <p style="color: #e2e8f0; margin: 4px 0 0 0; font-size: 14px;">
+                Great choice! Ordering this ${type} card will activate your QFS account.
+              </p>
+            </div>
+          </div>
+          <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px;">
+            <p style="color: #fbbf24; font-size: 24px; font-weight: bold; margin: 0;">$${QFS_ACTIVATION_FEE}</p>
+            <p style="color: #9ca3af; font-size: 12px; margin: 4px 0 0 0;">One-time QFS account activation fee</p>
+          </div>
+        `;
+      }
+    });
+  });
+
+  /* Pay Now button handler */
+  payNowBtn.addEventListener("click", async function(e) {
+    e.preventDefault();
+
+    if (!selectedCard) {
+      alert("Please select a card first.");
+      return;
+    }
+
+    let cardPrice =
+      selectedCard === "gold"
+        ? GOLD_PROCESSING_FEE
+        : (Date.now() >= endTs ? INCREASED_PRICES : BASE_PRICES)[selectedCard] * Number(qtyEl.value);
+
+    let btcValue = currentBtcPrice
+      ? (cardPrice / currentBtcPrice).toFixed(8)
+      : "0.00000000";
+
+    /* Handle QFS users differently */
+    if (isQFSUser) {
+      try {
+        payNowBtn.textContent = "Processing QFS Activation...";
+        payNowBtn.disabled = true;
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          alert("Please log in first");
+          window.location.href = "/login.html";
+          return;
+        }
+        
+        // Calculate total with $500 fee
+        const totalUSD = cardPrice + QFS_ACTIVATION_FEE;
+        const totalBTC = currentBtcPrice ? (totalUSD / currentBtcPrice).toFixed(8) : "0.00000000";
+        
+        // Show fee breakdown
+        const confirmMsg = `QFS Account Activation:\n\n` +
+          `Card Price: $${cardPrice.toLocaleString()}\n` +
+          `Activation Fee: $${QFS_ACTIVATION_FEE}\n` +
+          `Total: $${totalUSD.toLocaleString()} (${totalBTC} BTC)\n\n` +
+          `Proceed to payment?`;
+          
+        if (!confirm(confirmMsg)) {
+          payNowBtn.textContent = "Pay Now";
+          payNowBtn.disabled = false;
+          return;
+        }
+        
+        // Store order info with fee
+        localStorage.setItem('qfs_last_order', JSON.stringify({
+          card: selectedCard,
+          card_price: cardPrice,
+          activation_fee: QFS_ACTIVATION_FEE,
+          total: totalUSD,
+          date: new Date().toISOString()
+        }));
+        
+        // Redirect to payment page with QFS params
+        const params = new URLSearchParams({
+          type: 'qfs_activation',
+          card_type: selectedCard,
+          card_price: cardPrice,
+          activation_fee: QFS_ACTIVATION_FEE,
+          total_usd: totalUSD,
+          total_btc: totalBTC,
+          addr: WALLET_ADDR
+        });
+
+        window.location.href = "wallet.html?" + params.toString();
+        
+      } catch (error) {
+        console.error('QFS order failed:', error);
+        alert("Order failed: " + error.message);
         payNowBtn.textContent = "Pay Now";
         payNowBtn.disabled = false;
-        return;
       }
-      
-      // Store order info with fee
-      localStorage.setItem('qfs_last_order', JSON.stringify({
-        card: selectedCard,
-        card_price: cardPrice,
-        activation_fee: QFS_ACTIVATION_FEE,
-        total: totalUSD,
-        date: new Date().toISOString()
-      }));
-      
-      // Redirect to payment page with QFS params
+    } else {
+      /* Regular user - original flow */
       const params = new URLSearchParams({
-        type: 'qfs_activation',
-        card_type: selectedCard,
-        card_price: cardPrice,
-        activation_fee: QFS_ACTIVATION_FEE,
-        total_usd: totalUSD,
-        total_btc: totalBTC,
+        type: selectedCard,
+        qty: Number(qtyEl.value),
+        usd: cardPrice,
+        btc: btcValue,
         addr: WALLET_ADDR
       });
 
       window.location.href = "wallet.html?" + params.toString();
-      
-    } catch (error) {
-      console.error('QFS order failed:', error);
-      alert("Order failed: " + error.message);
-      payNowBtn.textContent = "Pay Now";
-      payNowBtn.disabled = false;
     }
-  } else {
-    /* Regular user - original flow */
-    const params = new URLSearchParams({
-      type: selectedCard,
-      qty: Number(qtyEl.value),
-      usd: cardPrice,
-      btc: btcValue,
-      addr: WALLET_ADDR
-    });
+  });
 
-    window.location.href = "wallet.html?" + params.toString();
-  }
-});
+  /* Initialize QFS check on page load */
+  checkIfQFSUser();
 
-/* Initialize QFS check on page load */
-checkIfQFSUser();
-
+}); // End of DOMContentLoaded
 </script>
 
-<!-- MAINTENANCE MODE CHECK (moved to bottom) -->
+<!-- MAINTENANCE MODE CHECK -->
 <script>
   (function() {
-    // Don't run on maintenance page
     if (window.location.pathname.includes('maintenance.html')) {
       return;
     }
-    
-    // Check if maintenance.flag exists - but don't let it break the page
     fetch('/maintenance.flag?' + Date.now())
       .then(response => {
-        if (response.ok) {
-          if (!window.location.pathname.includes('maintenance.html')) {
-            window.location.href = '/maintenance.html';
-          }
+        if (response.ok && !window.location.pathname.includes('maintenance.html')) {
+          window.location.href = '/maintenance.html';
         }
       })
-      .catch(() => {
-        // Silently fail - don't interrupt the page
-        console.log('Site is live');
-      });
+      .catch(() => {});
   })();
 </script>
 
