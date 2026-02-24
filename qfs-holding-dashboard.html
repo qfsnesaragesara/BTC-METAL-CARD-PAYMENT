@@ -1,0 +1,122 @@
+<!-- qfs-holding-dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QFS Account - Pending Activation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50">
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+      
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <div class="inline-block p-4 bg-blue-100 rounded-full mb-4">
+          <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-900">QFS Account</h1>
+        <p class="text-gray-600 mt-2">Pending Activation</p>
+      </div>
+
+      <!-- Status Card -->
+      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+        <h2 class="text-lg font-semibold text-yellow-800 mb-2">⏳ Account Not Yet Active</h2>
+        <p class="text-yellow-700">
+          Your QFS Account registration is complete, but activation requires ordering your card first.
+        </p>
+      </div>
+
+      <!-- Next Steps -->
+      <div class="mb-8">
+        <h3 class="font-semibold text-gray-900 mb-4">Next Steps to Activate:</h3>
+        <div class="space-y-3">
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">1</div>
+            <p class="text-gray-700">Order your Quantum Metal Card (Silver/Black)</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 w-6 h-6 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center text-sm font-bold">2</div>
+            <p class="text-gray-500">Complete payment processing</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 w-6 h-6 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center text-sm font-bold">3</div>
+            <p class="text-gray-500">Receive and activate your card</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 w-6 h-6 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center text-sm font-bold">4</div>
+            <p class="text-gray-500">Full QFS portal access granted</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Card Button -->
+      <button id="orderCardBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-700 transition mb-4">
+        Order Your Quantum Card Now
+      </button>
+
+      <!-- Account Info -->
+      <div id="accountInfo" class="border-t pt-6">
+        <!-- Will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://qagktukzxtwbjrdgiben.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk'
+    );
+
+    async function loadQFSAccount() {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      // Get QFS account details
+      const { data: qfsAccount } = await supabase
+        .from('qfs_accounts')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (qfsAccount) {
+        document.getElementById('accountInfo').innerHTML = `
+          <h3 class="font-semibold mb-3">Your QFS Account Details:</h3>
+          <div class="bg-gray-50 p-4 rounded-lg space-y-2">
+            <p><span class="text-gray-600">Status:</span> 
+              <span class="font-medium ${qfsAccount.account_status === 'active' ? 'text-green-600' : 'text-yellow-600'}">
+                ${qfsAccount.account_status}
+              </span>
+            </p>
+            <p><span class="text-gray-600">Card Ordered:</span> 
+              <span class="font-medium">${qfsAccount.card_ordered ? 'Yes' : 'No'}</span>
+            </p>
+            ${qfsAccount.card_order_date ? `
+              <p><span class="text-gray-600">Order Date:</span> 
+                <span class="font-medium">${new Date(qfsAccount.card_order_date).toLocaleDateString()}</span>
+              </p>
+            ` : ''}
+            <p><span class="text-gray-600">Registered:</span> 
+              <span class="font-medium">${new Date(qfsAccount.created_at).toLocaleDateString()}</span>
+            </p>
+          </div>
+        `;
+      }
+
+      // Handle order card button
+      document.getElementById('orderCardBtn').onclick = () => {
+        window.location.href = '/order-card.html?type=qfs';
+      };
+    }
+
+    loadQFSAccount();
+  </script>
+</body>
+</html>
