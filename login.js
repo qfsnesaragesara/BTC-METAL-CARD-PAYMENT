@@ -1,6 +1,18 @@
 (() => {
-  const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+  // Check if config is loaded
+  if (!window.__QFS_CONFIG) {
+    console.error("Config not loaded! Make sure config.js is loaded first.");
+    const msgEl = document.getElementById("msg");
+    if (msgEl) {
+      msgEl.className = "msg show error";
+      msgEl.textContent = "Configuration error. Please refresh.";
+    }
+    return;
+  }
+
+  // Use config values
+  const SUPABASE_URL = window.__QFS_CONFIG.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = window.__QFS_CONFIG.SUPABASE_ANON_KEY;
 
   const dbg = document.getElementById("dbg");
   const msgEl = document.getElementById("msg");
@@ -36,11 +48,11 @@
     return;
   }
 
-  // ✅ ONE Supabase client
+  // ✅ ONE Supabase client from config
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   setDbg("supabase ready ✅ " + stamp());
 
-  // ===== UPDATED REDIRECT LOGIC (added) =====
+  // ===== REDIRECT LOGIC =====
   async function decidePortal(user){
     if (!user) return "portal.html";
     
@@ -67,17 +79,17 @@
         }
         
         // Silver and Black users - store tier for portal.html
-        if (registeringFor.includes('Silver') || registeringFor.includes('Black') || 
+        if (registeringFor?.includes('Silver') || registeringFor?.includes('Black') || 
             selectedTier === 'silver' || selectedTier === 'black') {
           try {
             localStorage.setItem("user_tier", selectedTier || 
-              (registeringFor.includes('Black') ? 'black' : 'silver'));
+              (registeringFor?.includes('Black') ? 'black' : 'silver'));
           } catch {}
           return "portal.html";
         }
         
         // MedBeds - no portal yet
-        if (registeringFor.includes('MedBeds')) {
+        if (registeringFor?.includes('MedBeds')) {
           showMsg("MedBeds portal coming soon. Check your email for updates.", "ok");
           setTimeout(() => { window.location.href = "index.html"; }, 3000);
           return null;
@@ -87,9 +99,11 @@
       console.error("Profile lookup error:", error);
     }
     
-    // Fallback to user_metadata (original logic)
-    const v = String(user?.user_metadata?.registering_for || "").toLowerCase();
+    // Fallback to user_metadata
+    const metadata = user?.user_metadata || {};
+    const v = String(metadata.registering_for || "").toLowerCase();
     if (v.includes("trump gold card program")) return "portal-gold.html";
+    if (v.includes("qfs account")) return "qfs-holding-dashboard.html";
     
     // Default
     return "portal.html";
@@ -114,6 +128,9 @@
         showMsg("Login successful ✅ Redirecting…", "ok");
         setTimeout(() => location.href = next, 600);
       }
+    } catch (err) {
+      showMsg("An unexpected error occurred.", "error");
+      console.error("Login error:", err);
     } finally {
       setBusy(false);
     }
@@ -143,12 +160,15 @@
 
       if (error) return showMsg("Signup failed: " + error.message, "error");
       showMsg("Account created ✅ Check your email to confirm.", "ok");
+    } catch (err) {
+      showMsg("An unexpected error occurred.", "error");
+      console.error("Signup error:", err);
     } finally {
       setBusy(false);
     }
   }
 
-  // ✅ ONE reset trigger (guarded)
+  // Reset password
   let forgotBusy = false;
   async function doForgot(){
     if (forgotBusy) return;
@@ -161,10 +181,13 @@
     showMsg("Sending reset email…");
     try{
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: "https://qfsnesaragesara.org/reset.html"
+        redirectTo: "https://qfsnesaragesara.org/reset-password.html"
       });
       if (error) return showMsg("Reset failed: " + error.message, "error");
       showMsg("Password reset email sent ✅ Check inbox/spam.", "ok");
+    } catch (err) {
+      showMsg("An unexpected error occurred.", "error");
+      console.error("Reset error:", err);
     } finally {
       setBusy(false);
       setTimeout(()=>{ forgotBusy = false; }, 1500);
@@ -185,6 +208,9 @@
       });
       if (error) return showMsg("Resend failed: " + error.message, "error");
       showMsg("Verification email resent ✅ Check inbox/spam.", "ok");
+    } catch (err) {
+      showMsg("An unexpected error occurred.", "error");
+      console.error("Resend error:", err);
     } finally {
       setBusy(false);
     }
