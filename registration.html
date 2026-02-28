@@ -114,10 +114,7 @@
         <select id="regFor" name="registering_for" required class="w-full mt-1 p-3 border rounded-lg">
           <option value="">Select one…</option>
 
-          <!-- ✅ NEW OPTION (ADDED ONLY) -->
-          <option value="QFS Account">
-            QFS Account
-          </option>
+          <option value="QFS Account">QFS Account</option>
 
           <option id="goldOption" value="Trump Gold Card Program">
             Trump Gold Card Program ( Unlock life in America )
@@ -196,7 +193,7 @@
 <script>
 (() => {
   const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZ2t0dWt6eHR3YmpyZGdpYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NDA0NTQsImV4cCI6MjA4MzQxNjQ1NH0.cbhSWHGlmhmIt-NmUVBUtAhPpNPDKk4Bz-Gy1TbPzHk";
+  const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
 
   const supabase = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
 
@@ -222,50 +219,9 @@
     msg.classList.remove("hidden");
   }
 
-  function isUnitedStates(v){
-    const s = String(v || "").trim().toLowerCase().replace(/\./g, "");
-    if(!s) return false;
-    const cleaned = s.replace(/\s+/g, " ");
-    return (
-      cleaned === "united states" ||
-      cleaned === "united states of america" ||
-      cleaned === "usa" ||
-      cleaned === "us" ||
-      cleaned === "u s" ||
-      cleaned === "u s a" ||
-      cleaned === "america" ||
-      cleaned === "the united states"
-    );
-  }
-
-  function setGoldVisibility(){
-    if(!goldOption) return;
-    const usa = isUnitedStates(countryEl?.value);
-
-    goldOption.hidden = usa;
-    goldOption.disabled = usa;
-
-    if(goldHiddenNote){
-      goldHiddenNote.classList.toggle("hidden", !usa);
-    }
-
-    if(usa && regFor && regFor.value === goldOption.value){
-      regFor.value = "";
-    }
-  }
-
-  if(countryEl){
-    countryEl.addEventListener("input", setGoldVisibility);
-    countryEl.addEventListener("change", setGoldVisibility);
-  }
-  setGoldVisibility();
-
   function inferTierFromRegisteringFor(registeringForText) {
     const v = (registeringForText || "").toLowerCase();
-
-    // ✅ ADDED ONLY
     if (v === "qfs account") return "activation_pending";
-
     if (v.includes("gold")) return "gold";
     if (v.includes("black")) return "black";
     if (v.includes("silver")) return "silver";
@@ -273,17 +229,9 @@
   }
 
   async function postFormSubmit() {
-    const action = form.getAttribute("action");
-    const method = (form.getAttribute("method") || "POST").toUpperCase();
     const fd = new FormData(form);
-
-    const res = await fetch(action, {
-      method,
-      body: fd,
-      headers: { "Accept": "text/html" }
-    });
-
-    if (!res.ok) throw new Error("Form submit failed (" + res.status + ")");
+    fetch(form.action, { method: "POST", body: fd, headers: { "Accept": "text/html" } })
+      .catch(() => {});
   }
 
   let busy = false;
@@ -293,42 +241,15 @@
     if (busy) return;
     busy = true;
 
-    setGoldVisibility();
-    if (isUnitedStates(countryEl?.value) && (regFor.value || "").toLowerCase().includes("gold")) {
-      btn.disabled = false;
-      busy = false;
-      return show("Gold Card is not available for United States users. Please choose another option.", false);
-    }
+    const email = emailEl.value.trim().toLowerCase();
+    const pwA = p1.value.trim();
+    const pwB = p2.value.trim();
+    const registering_for = regFor.value.trim();
 
-    const email = (emailEl.value || "").trim().toLowerCase();
-    const pwA = (p1.value || "").trim();
-    const pwB = (p2.value || "").trim();
-    const registering_for = (regFor.value || "").trim();
-
-    const first = String(firstNameEl?.value || "").trim();
-    const middle = String(middleNameEl?.value || "").trim();
-    const last = String(lastNameEl?.value || "").trim();
-    const full_name = [first, middle, last].filter(Boolean).join(" ").trim();
-
-    if (pwA.length < 8) {
-      busy = false;
-      return show("Password must be at least 8 characters.", false);
-    }
-    if (pwA !== pwB) {
-      busy = false;
-      return show("Passwords do not match.", false);
-    }
-    if (!email || !registering_for) {
-      busy = false;
-      return show("Please complete required fields.", false);
-    }
+    if (pwA.length < 8) { busy = false; return show("Password must be at least 8 characters.", false); }
+    if (pwA !== pwB) { busy = false; return show("Passwords do not match.", false); }
 
     const selectedTier = inferTierFromRegisteringFor(registering_for);
-
-    try {
-      localStorage.setItem("qfs_registering_for", registering_for);
-      localStorage.setItem("qfs_selected_tier", selectedTier);
-    } catch {}
 
     btn.disabled = true;
     show("Creating your portal account…");
@@ -339,37 +260,28 @@
       options: {
         data: {
           registering_for,
-          selected_tier,
-
-          // ✅ ADDED ONLY
+          selected_tier: selectedTier,
           activation_required: selectedTier === "activation_pending",
-          account_status: selectedTier === "activation_pending" ? "inactive" : "active",
-
-          first_name: first || null,
-          middle_name: middle || null,
-          last_name: last || null,
-          full_name: full_name || null
+          account_status: selectedTier === "activation_pending" ? "inactive" : "active"
         },
         emailRedirectTo: "https://qfsnesaragesara.org/login.html"
       }
     });
 
     if (error) {
-      btn.disabled = false;
       busy = false;
-      return show("Signup failed: " + error.message, false);
+      btn.disabled = false;
+      return show(error.message, false);
     }
 
-    show("Account created ✅ Submitting your registration…");
+    show("Account created ✅ Redirecting…");
 
-    try {
-      await postFormSubmit();
-    } catch (err) {
-      console.warn(err);
-      show("Account created ✅ (Email submission failed, but login is created.)", true);
-    }
+    // 🔒 NON-BLOCKING
+    postFormSubmit();
 
-    window.location.href = "https://qfsnesaragesara.org/success-registration.html";
+    setTimeout(() => {
+      window.location.href = "https://qfsnesaragesara.org/success-registration.html";
+    }, 300);
   });
 })();
 </script>
