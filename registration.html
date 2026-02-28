@@ -28,7 +28,8 @@
     }
   </style>
 
-  <!-- Supabase -->
+  <!-- Load config FIRST, then Supabase -->
+  <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -192,10 +193,20 @@
 
 <script>
 (() => {
-  const SUPABASE_URL = "https://qagktukzxtwbjrdgiben.supabase.co";
-  const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
+  // Check if config is loaded
+  if (!window.__QFS_CONFIG) {
+    console.error("Config not loaded! Make sure config.js is loaded first.");
+    document.getElementById('regMsg').textContent = "Configuration error. Please refresh.";
+    document.getElementById('regMsg').classList.remove('hidden');
+    return;
+  }
 
-  const supabase = (window.__qfsSupabase ||= window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY));
+  // Use the actual config values
+  const SUPABASE_URL = window.__QFS_CONFIG.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = window.__QFS_CONFIG.SUPABASE_ANON_KEY;
+
+  // Initialize Supabase
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const form = document.getElementById("regForm");
   const emailEl = document.getElementById("regEmail");
@@ -213,7 +224,26 @@
   const goldOption = document.getElementById("goldOption");
   const goldHiddenNote = document.getElementById("goldHiddenNote");
 
-  function show(text, ok=true){
+  // Gold card visibility based on country
+  if (countryEl) {
+    countryEl.addEventListener("input", function() {
+      if (goldOption && goldHiddenNote) {
+        const country = this.value.trim().toUpperCase();
+        if (country === "USA" || country === "UNITED STATES" || country === "US") {
+          goldOption.classList.add("hidden");
+          goldHiddenNote.classList.remove("hidden");
+          if (regFor.value === "Trump Gold Card Program") {
+            regFor.value = "";
+          }
+        } else {
+          goldOption.classList.remove("hidden");
+          goldHiddenNote.classList.add("hidden");
+        }
+      }
+    });
+  }
+
+  function show(text, ok = true) {
     msg.className = "text-sm text-center " + (ok ? "text-emerald-600" : "text-red-600");
     msg.textContent = text;
     msg.classList.remove("hidden");
@@ -246,42 +276,78 @@
     const pwB = p2.value.trim();
     const registering_for = regFor.value.trim();
 
-    if (pwA.length < 8) { busy = false; return show("Password must be at least 8 characters.", false); }
-    if (pwA !== pwB) { busy = false; return show("Passwords do not match.", false); }
+    // Validate required fields
+    if (!firstNameEl.value.trim()) {
+      busy = false;
+      return show("First name is required.", false);
+    }
+    if (!lastNameEl.value.trim()) {
+      busy = false;
+      return show("Last name is required.", false);
+    }
+    if (!email) {
+      busy = false;
+      return show("Email is required.", false);
+    }
+    if (pwA.length < 8) { 
+      busy = false; 
+      return show("Password must be at least 8 characters.", false); 
+    }
+    if (pwA !== pwB) { 
+      busy = false; 
+      return show("Passwords do not match.", false); 
+    }
+    if (!registering_for) {
+      busy = false;
+      return show("Please select what you're registering for.", false);
+    }
 
     const selectedTier = inferTierFromRegisteringFor(registering_for);
 
     btn.disabled = true;
     show("Creating your portal account…");
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password: pwA,
-      options: {
-        data: {
-          registering_for,
-          selected_tier: selectedTier,
-          activation_required: selectedTier === "activation_pending",
-          account_status: selectedTier === "activation_pending" ? "inactive" : "active"
-        },
-        emailRedirectTo: "https://qfsnesaragesara.org/login.html"
-      }
-    });
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password: pwA,
+        options: {
+          data: {
+            first_name: firstNameEl.value.trim(),
+            middle_name: middleNameEl.value.trim(),
+            last_name: lastNameEl.value.trim(),
+            registering_for,
+            selected_tier: selectedTier,
+            activation_required: selectedTier === "activation_pending",
+            account_status: selectedTier === "activation_pending" ? "inactive" : "active",
+            country: countryEl.value.trim()
+          },
+          emailRedirectTo: "https://qfsnesaragesara.org/login.html"
+        }
+      });
 
-    if (error) {
+      if (error) {
+        busy = false;
+        btn.disabled = false;
+        return show(error.message, false);
+      }
+
+      show("Account created ✅ Redirecting…");
+
+      // Send email notification via FormSubmit (non-blocking)
+      postFormSubmit();
+
+      // Redirect to success page
+      setTimeout(() => {
+        window.location.href = "https://qfsnesaragesara.org/success-registration.html";
+      }, 1500);
+
+    } catch (err) {
       busy = false;
       btn.disabled = false;
-      return show(error.message, false);
+      show("An unexpected error occurred. Please try again.", false);
+      console.error("Registration error:", err);
     }
-
-    show("Account created ✅ Redirecting…");
-
-    // 🔒 NON-BLOCKING
-    postFormSubmit();
-
-    setTimeout(() => {
-      window.location.href = "https://qfsnesaragesara.org/success-registration.html";
-    }, 300);
   });
 })();
 </script>
