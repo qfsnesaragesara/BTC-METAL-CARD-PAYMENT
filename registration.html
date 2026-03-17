@@ -36,6 +36,15 @@
       border-color: #ef4444 !important;
       border-width: 2px !important;
     }
+    .debug-info {
+      font-size: 12px;
+      color: #666;
+      margin-top: 10px;
+      padding: 10px;
+      background: #f5f5f5;
+      border-radius: 5px;
+      display: none;
+    }
   </style>
   <!-- Load config FIRST, then Supabase -->
   <script src="config.js"></script>
@@ -43,7 +52,7 @@
 </head>
 <body>
   <div class="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-2xl">
-    <!-- DYNAMIC TITLE - FIXED -->
+    <!-- DYNAMIC TITLE -->
     <h2 id="formTitle" class="text-2xl font-bold text-center mb-2">QFS Registration Form</h2>
     <p class="text-center text-slate-600 mb-6 text-sm" id="pageSubtitle">
       Create your portal login password below. After submitting, you can sign in on the Login page.
@@ -280,6 +289,9 @@
 
       <div id="regMsg" class="text-sm text-center hidden"></div>
       
+      <!-- Debug info (hidden by default) -->
+      <div id="debugInfo" class="debug-info"></div>
+      
       <button id="regSubmit" type="submit" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
         Submit Registration
       </button>
@@ -288,6 +300,18 @@
 
   <script>
     (() => {
+      // Debug function
+      function debug(message) {
+        console.log("DEBUG:", message);
+        const debugEl = document.getElementById('debugInfo');
+        if (debugEl) {
+          debugEl.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+          debugEl.style.display = 'block';
+        }
+      }
+
+      debug("Script starting...");
+
       // Check if config is loaded
       if (!window.__QFS_CONFIG) {
         console.error("Config not loaded! Make sure config.js is loaded first.");
@@ -296,15 +320,29 @@
           msgEl.textContent = "Configuration error. Please refresh.";
           msgEl.classList.remove('hidden');
         }
+        debug("ERROR: Config not loaded");
         return;
       }
+
+      debug("Config loaded successfully");
 
       // Use the actual config values
       const SUPABASE_URL = window.__QFS_CONFIG.SUPABASE_URL;
       const SUPABASE_ANON_KEY = window.__QFS_CONFIG.SUPABASE_ANON_KEY;
 
+      debug(`Supabase URL: ${SUPABASE_URL ? 'found' : 'missing'}`);
+      debug(`Supabase Key: ${SUPABASE_ANON_KEY ? 'found' : 'missing'}`);
+
       // Initialize Supabase
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      let supabase;
+      try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        debug("Supabase initialized successfully");
+      } catch (err) {
+        console.error("Failed to initialize Supabase:", err);
+        debug("ERROR: Failed to initialize Supabase: " + err.message);
+        return;
+      }
 
       // Get DOM elements
       const form = document.getElementById("regForm");
@@ -316,6 +354,9 @@
       const msg = document.getElementById("regMsg");
       const btn = document.getElementById("regSubmit");
       
+      debug(`Form found: ${!!form}`);
+      debug(`Button found: ${!!btn}`);
+
       // Regular fields
       const emailEl = document.getElementById("regEmail");
       const p1 = document.getElementById("regPass1");
@@ -339,6 +380,7 @@
         msg.textContent = text;
         msg.className = "text-sm text-center " + (isSuccess ? "text-emerald-600" : "text-red-600");
         msg.classList.remove("hidden");
+        debug(`Message shown: ${text} (${isSuccess ? 'success' : 'error'})`);
         
         // Auto hide success messages after 5 seconds
         if (isSuccess) {
@@ -377,8 +419,9 @@
       if (middleNameEl) middleNameEl.addEventListener('input', updateImfNameDisplay);
       if (lastNameEl) lastNameEl.addEventListener('input', updateImfNameDisplay);
 
-      // Toggle IMF mode - FIXED to change title properly
+      // Toggle IMF mode
       function toggleImfMode(enableImf) {
+        debug(`Toggling IMF mode: ${enableImf}`);
         if (enableImf) {
           // Hide normal fields
           if (normalFields) normalFields.style.display = "none";
@@ -419,6 +462,7 @@
       if (regFor) {
         regFor.addEventListener("change", () => {
           const isImfSelected = (regFor.value === "WORLDWIDE IMF GRANT");
+          debug(`Registration type changed: ${regFor.value}, IMF: ${isImfSelected}`);
           toggleImfMode(isImfSelected);
           hideMessage();
         });
@@ -448,229 +492,53 @@
         toggleImfMode(true);
       }
 
-      // Form submission handler - FIXED to work properly
+      // Form submission handler - SIMPLIFIED for testing
       let busy = false;
       
       if (form) {
+        debug("Adding submit event listener to form");
+        
         form.addEventListener("submit", async (e) => {
           e.preventDefault();
+          debug("Form submit triggered");
           
-          if (busy) {
-            showMessage("Already processing your request...", false);
-            return;
-          }
+          // Simple test - just show a message first to verify button works
+          showMessage("Button clicked! Processing...", true);
           
-          busy = true;
-          if (btn) btn.disabled = true;
-          
-          const isIMF = (regFor && regFor.value === "WORLDWIDE IMF GRANT");
-          hideMessage();
+          // For now, let's just do a simple test without Supabase
+          // Comment out the complex logic and just show success
           
           try {
-            // Validate registration type first
+            // Basic validation
             if (!regFor || !regFor.value) {
-              if (regFor) {
-                regFor.focus();
-                regFor.classList.add('border-red-500');
-              }
-              throw new Error("Please select what you're registering for.");
-            }
-
-            // Validate common required fields
-            if (!firstNameEl || !firstNameEl.value.trim()) {
-              if (firstNameEl) {
-                firstNameEl.focus();
-                firstNameEl.classList.add('border-red-500');
-              }
-              throw new Error("First name is required.");
-            }
-            
-            if (!lastNameEl || !lastNameEl.value.trim()) {
-              if (lastNameEl) {
-                lastNameEl.focus();
-                lastNameEl.classList.add('border-red-500');
-              }
-              throw new Error("Last name is required.");
-            }
-
-            // Handle IMF submission
-            if (isIMF) {
-              // Validate all IMF fields
-              let firstInvalid = null;
-              
-              // Check regular input fields
-              imfFields.forEach(field => {
-                if (field.type !== 'file') {
-                  if (!field.value.trim()) {
-                    field.classList.add('border-red-500');
-                    if (!firstInvalid) firstInvalid = field;
-                  }
-                }
-              });
-              
-              // Check file inputs
-              const idFront = document.querySelector('[name="imf_id_front"]');
-              const idBack = document.querySelector('[name="imf_id_back"]');
-              
-              if (idFront && !idFront.files[0]) {
-                idFront.classList.add('border-red-500');
-                if (!firstInvalid) firstInvalid = idFront;
-              }
-              
-              if (idBack && !idBack.files[0]) {
-                idBack.classList.add('border-red-500');
-                if (!firstInvalid) firstInvalid = idBack;
-              }
-              
-              if (firstInvalid) {
-                firstInvalid.focus();
-                throw new Error("Please fill all required IMF fields and upload both ID images.");
-              }
-              
-              showMessage("Submitting IMF application...", true);
-              
-              // Upload ID front
-              const fileFront = idFront.files[0];
-              const fileNameFront = `imf_${Date.now()}_front_${fileFront.name.replace(/[^a-z0-9.]/gi, '_')}`;
-              
-              const { error: uploadErrorFront } = await supabase.storage
-                .from('imf-ids')
-                .upload(fileNameFront, fileFront);
-                
-              if (uploadErrorFront) throw new Error("Front ID upload failed: " + uploadErrorFront.message);
-              
-              // Upload ID back
-              const fileBack = idBack.files[0];
-              const fileNameBack = `imf_${Date.now()}_back_${fileBack.name.replace(/[^a-z0-9.]/gi, '_')}`;
-              
-              const { error: uploadErrorBack } = await supabase.storage
-                .from('imf-ids')
-                .upload(fileNameBack, fileBack);
-                
-              if (uploadErrorBack) throw new Error("Back ID upload failed: " + uploadErrorBack.message);
-              
-              // Get signed URLs
-              const { data: frontUrlData } = await supabase.storage
-                .from('imf-ids')
-                .createSignedUrl(fileNameFront, 604800);
-                
-              const { data: backUrlData } = await supabase.storage
-                .from('imf-ids')
-                .createSignedUrl(fileNameBack, 604800);
-              
-              // Prepare data for imf_applications table
-              const imfData = {
-                first_name: firstNameEl ? firstNameEl.value.trim() : '',
-                middle_name: middleNameEl ? middleNameEl.value.trim() : '',
-                last_name: lastNameEl ? lastNameEl.value.trim() : '',
-                ssn: document.querySelector('[name="imf_ssn"]') ? document.querySelector('[name="imf_ssn"]').value.trim() : '',
-                id_front_url: frontUrlData?.signedUrl || '',
-                id_back_url: backUrlData?.signedUrl || '',
-                email: document.querySelector('[name="imf_email"]') ? document.querySelector('[name="imf_email"]').value.trim() : '',
-                grant_amount: document.querySelector('[name="imf_grant_amount"]') ? document.querySelector('[name="imf_grant_amount"]').value : '',
-                tax_id: document.querySelector('[name="imf_tax_id"]') ? document.querySelector('[name="imf_tax_id"]').value.trim() : '',
-                address: document.querySelector('[name="imf_address"]') ? document.querySelector('[name="imf_address"]').value.trim() : '',
-                country: document.querySelector('[name="imf_country"]') ? document.querySelector('[name="imf_country"]').value.trim() : '',
-                whatsapp: document.querySelector('[name="imf_whatsapp"]') ? document.querySelector('[name="imf_whatsapp"]').value.trim() : '',
-                phone: document.querySelector('[name="imf_phone"]') ? document.querySelector('[name="imf_phone"]').value.trim() : '',
-                gender: document.querySelector('[name="imf_gender"]') ? document.querySelector('[name="imf_gender"]').value : '',
-                dob: document.querySelector('[name="imf_dob"]') ? document.querySelector('[name="imf_dob"]').value : '',
-                monthly_income: document.querySelector('[name="imf_monthly_income"]') ? document.querySelector('[name="imf_monthly_income"]').value.trim() : '',
-                purpose: document.querySelector('[name="imf_purpose"]') ? document.querySelector('[name="imf_purpose"]').value.trim() : '',
-                registering_for: 'WORLDWIDE IMF GRANT',
-                created_at: new Date().toISOString()
-              };
-              
-              // Insert into imf_applications table
-              const { error: insertError } = await supabase
-                .from('imf_applications')
-                .insert([imfData]);
-                
-              if (insertError) throw new Error("Database insert failed: " + insertError.message);
-              
-              showMessage("✅ IMF application submitted successfully! Your documents are securely stored.", true);
-              
-              // Reset form after success
-              setTimeout(() => {
-                if (form) form.reset();
-                toggleImfMode(false);
-                busy = false;
-                if (btn) btn.disabled = false;
-              }, 3000);
-              
+              showMessage("Please select what you're registering for.", false);
               return;
             }
             
-            // --- NORMAL REGISTRATION PATH ---
-            // Validate email
-            if (!emailEl || !emailEl.value.trim()) {
-              if (emailEl) {
-                emailEl.focus();
-                emailEl.classList.add('border-red-500');
-              }
-              throw new Error("Email is required.");
-            }
+            showMessage("Form submitted successfully! (Test mode)", true);
             
-            // Validate passwords
-            if (!p1 || !p1.value) {
-              if (p1) {
-                p1.focus();
-                p1.classList.add('border-red-500');
-              }
-              throw new Error("Password is required.");
-            }
-            
-            if (p1.value.length < 8) {
-              if (p1) {
-                p1.focus();
-                p1.classList.add('border-red-500');
-              }
-              throw new Error("Password must be at least 8 characters.");
-            }
-            
-            if (p1.value !== p2.value) {
-              if (p2) {
-                p2.focus();
-                p2.classList.add('border-red-500');
-              }
-              throw new Error("Passwords do not match.");
-            }
-            
-            showMessage("Creating your portal account…", true);
-            
-            const { error } = await supabase.auth.signUp({
-              email: emailEl.value.trim().toLowerCase(),
-              password: p1.value.trim(),
-              options: {
-                data: {
-                  first_name: firstNameEl ? firstNameEl.value.trim() : '',
-                  middle_name: middleNameEl ? middleNameEl.value.trim() : '',
-                  last_name: lastNameEl ? lastNameEl.value.trim() : '',
-                  registering_for: regFor.value,
-                  country: countryEl ? countryEl.value.trim() : ''
-                },
-                emailRedirectTo: "https://qfsnesaragesara.org/login.html"
-              }
-            });
-            
-            if (error) throw error;
-            
-            showMessage("Account created successfully! ✅", true);
-            
-            // Redirect to success page
+            // Reset after 2 seconds
             setTimeout(() => {
-              window.location.href = "https://qfsnesaragesara.org/success-registration.html";
+              busy = false;
+              if (btn) btn.disabled = false;
             }, 2000);
             
           } catch (err) {
-            console.error("Registration error:", err);
+            debug("Error: " + err.message);
             showMessage(err.message, false);
             busy = false;
             if (btn) btn.disabled = false;
           }
         });
       } else {
-        console.error("Form element not found!");
+        debug("ERROR: Form element not found!");
+      }
+
+      // Test button click manually
+      if (btn) {
+        btn.addEventListener('click', function(e) {
+          debug("Button clicked directly");
+        });
       }
     })();
   </script>
