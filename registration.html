@@ -36,6 +36,24 @@
       border-color: #ef4444 !important;
       border-width: 2px !important;
     }
+    #debugPanel {
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      margin-top: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+    .debug-header {
+      font-weight: bold;
+      margin-bottom: 5px;
+      cursor: pointer;
+      color: #2563eb;
+    }
   </style>
   <!-- Load config FIRST, then Supabase -->
   <script src="config.js"></script>
@@ -280,6 +298,12 @@
 
       <div id="regMsg" class="text-sm text-center hidden"></div>
       
+      <!-- Debug Panel Toggle -->
+      <div class="debug-header" onclick="document.getElementById('debugPanel').style.display = document.getElementById('debugPanel').style.display === 'none' ? 'block' : 'none'">
+        🔧 Toggle Debug Info
+      </div>
+      <div id="debugPanel"></div>
+      
       <button id="regSubmit" type="submit" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
         Submit Registration
       </button>
@@ -288,6 +312,18 @@
 
   <script>
     (() => {
+      // Debug logging function
+      function debugLog(message, data = null) {
+        console.log("🔍", message, data || '');
+        const panel = document.getElementById('debugPanel');
+        if (panel) {
+          const line = document.createElement('div');
+          line.textContent = `[${new Date().toLocaleTimeString()}] ${message} ${data ? JSON.stringify(data) : ''}`;
+          panel.appendChild(line);
+          panel.scrollTop = panel.scrollHeight;
+        }
+      }
+
       // Check if config is loaded
       if (!window.__QFS_CONFIG) {
         console.error("Config not loaded! Make sure config.js is loaded first.");
@@ -296,8 +332,11 @@
           msgEl.textContent = "Configuration error. Please refresh.";
           msgEl.classList.remove('hidden');
         }
+        debugLog("ERROR: Config not loaded");
         return;
       }
+
+      debugLog("Config loaded", { url: window.__QFS_CONFIG.SUPABASE_URL ? "present" : "missing" });
 
       // Use the actual config values
       const SUPABASE_URL = window.__QFS_CONFIG.SUPABASE_URL;
@@ -307,12 +346,86 @@
       let supabase;
       try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        debugLog("Supabase initialized");
       } catch (err) {
         console.error("Failed to initialize Supabase:", err);
+        debugLog("Supabase init failed: " + err.message);
         return;
       }
 
-      // Get DOM elements
+      // Check Supabase schema
+      async function checkIMFSchema() {
+        debugLog("Checking imf_applications table schema...");
+        
+        try {
+          // Try to get one record
+          const { data, error } = await supabase
+            .from('imf_applications')
+            .select('*')
+            .limit(1);
+          
+          if (error) {
+            debugLog("Error fetching data: " + error.message);
+            
+            // Try to get column info from error message
+            if (error.message.includes('Could not find')) {
+              const match = error.message.match(/Could not find the '(.+?)'/);
+              if (match) {
+                debugLog("Column that doesn't exist: " + match[1]);
+              }
+            }
+          } else if (data && data.length > 0) {
+            const columns = Object.keys(data[0]);
+            debugLog("✅ Existing columns:", columns);
+          } else {
+            debugLog("Table is empty, can't determine schema");
+          }
+        } catch (err) {
+          debugLog("Schema check error: " + err.message);
+        }
+      }
+
+      // Check storage buckets
+      async function checkStorageBuckets() {
+        debugLog("Checking storage buckets...");
+        
+        try {
+          const { data, error } = await supabase.storage.listBuckets();
+          
+          if (error) {
+            debugLog("Error listing buckets: " + error.message);
+            return;
+          }
+          
+          const bucketNames = data.map(b => b.name);
+          debugLog("Available buckets:", bucketNames);
+          
+          if (bucketNames.includes('imf-ids')) {
+            debugLog("✅ imf-ids bucket exists");
+            
+            // List files
+            const { data: files, error: filesError } = await supabase.storage
+              .from('imf-ids')
+              .list();
+              
+            if (filesError) {
+              debugLog("Error listing files: " + filesError.message);
+            } else {
+              debugLog(`Files in bucket: ${files.length}`);
+            }
+          } else {
+            debugLog("❌ imf-ids bucket does not exist");
+          }
+        } catch (err) {
+          debugLog("Bucket check error: " + err.message);
+        }
+      }
+
+      // Run checks after a short delay
+      setTimeout(checkIMFSchema, 1000);
+      setTimeout(checkStorageBuckets, 2000);
+
+      // Get DOM elements (rest of your existing code...)
       const form = document.getElementById("regForm");
       const regFor = document.getElementById("regFor");
       const normalFields = document.getElementById("normalFields");
@@ -361,6 +474,7 @@
         msg.textContent = text;
         msg.className = "text-sm text-center " + (isSuccess ? "text-emerald-600" : "text-red-600");
         msg.classList.remove("hidden");
+        debugLog("Message: " + text);
         
         // Auto hide success messages after 5 seconds
         if (isSuccess) {
@@ -401,6 +515,7 @@
 
       // Toggle IMF mode
       function toggleImfMode(enableImf) {
+        debugLog("Toggle IMF mode: " + enableImf);
         if (enableImf) {
           // Hide normal fields section
           if (normalFields) normalFields.style.display = "none";
@@ -480,42 +595,7 @@
         toggleImfMode(true);
       }
 
-      // Function to check table schema - for debugging
-      async function checkTableSchema() {
-        try {
-          const { data, error } = await supabase
-            .from('imf_applications')
-            .select('*')
-            .limit(1);
-          
-          if (error) {
-            console.log("Schema check error:", error);
-            return null;
-          }
-          
-          if (data && data.length > 0) {
-            console.log("Existing columns:", Object.keys(data[0]));
-            return Object.keys(data[0]);
-          }
-          
-          // Try to get column info from an empty insert
-          const { error: insertError } = await supabase
-            .from('imf_applications')
-            .insert({});
-            
-          if (insertError) {
-            // Parse error message for column names
-            console.log("Insert error message:", insertError.message);
-          }
-          
-          return null;
-        } catch (err) {
-          console.log("Schema check failed:", err);
-          return null;
-        }
-      }
-
-      // Form submission handler - SIMPLIFIED to match your table schema
+      // Form submission handler
       let busy = false;
       
       if (form) {
@@ -600,6 +680,7 @@
                 // Upload ID front
                 const fileFront = idFront.files[0];
                 const fileNameFront = `imf_${Date.now()}_front_${fileFront.name.replace(/[^a-z0-9.]/gi, '_')}`;
+                debugLog("Uploading front ID: " + fileNameFront);
                 
                 const { error: uploadErrorFront } = await supabase.storage
                   .from('imf-ids')
@@ -609,10 +690,12 @@
                   });
                   
                 if (uploadErrorFront) throw new Error("Front ID upload failed: " + uploadErrorFront.message);
+                debugLog("Front ID uploaded successfully");
                 
                 // Upload ID back
                 const fileBack = idBack.files[0];
                 const fileNameBack = `imf_${Date.now()}_back_${fileBack.name.replace(/[^a-z0-9.]/gi, '_')}`;
+                debugLog("Uploading back ID: " + fileNameBack);
                 
                 const { error: uploadErrorBack } = await supabase.storage
                   .from('imf-ids')
@@ -622,6 +705,7 @@
                   });
                   
                 if (uploadErrorBack) throw new Error("Back ID upload failed: " + uploadErrorBack.message);
+                debugLog("Back ID uploaded successfully");
                 
                 // Get public URLs
                 const { data: frontPublicUrl } = supabase.storage
@@ -632,10 +716,11 @@
                   .from('imf-ids')
                   .getPublicUrl(fileNameBack);
                 
-                // Prepare data for imf_applications table - USING ONLY THE FIELDS FROM YOUR SCREENSHOT
-                // Based on your screenshot, the table seems to have these fields:
+                debugLog("Front URL: " + frontPublicUrl?.publicUrl);
+                
+                // Prepare data for imf_applications table
                 const imfData = {
-                  // Using the field names from your original form that worked
+                  // Based on your original form that worked
                   imf_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
                   imf_ssn: document.getElementById('imf_ssn').value.trim(),
                   imf_id: frontPublicUrl?.publicUrl || '',
@@ -645,7 +730,6 @@
                   imf_income: document.getElementById('imf_monthly_income').value.trim(),
                   imf_purpose: document.getElementById('imf_purpose').value.trim(),
                   email: document.getElementById('imf_email').value.trim(),
-                  // Add the common fields that might be in the table
                   first_name: firstNameEl.value.trim(),
                   last_name: lastNameEl.value.trim(),
                   gender: document.getElementById('imf_gender').value,
@@ -654,7 +738,7 @@
                   created_at: new Date().toISOString()
                 };
                 
-                console.log("Submitting IMF data:", imfData);
+                debugLog("Submitting IMF data:", imfData);
                 
                 // Insert into imf_applications table
                 const { error: insertError } = await supabase
@@ -663,9 +747,11 @@
                   
                 if (insertError) {
                   console.error("Insert error details:", insertError);
-                  throw new Error("Database insert failed: " + insertError.message + " - Check console for details");
+                  debugLog("Insert error: " + insertError.message);
+                  throw new Error("Database insert failed: " + insertError.message);
                 }
                 
+                debugLog("Insert successful!");
                 showMessage("✅ IMF application submitted successfully! Your documents are securely stored.", true);
                 
                 // Reset form after success
@@ -678,6 +764,7 @@
                 
               } catch (uploadErr) {
                 console.error("Upload error details:", uploadErr);
+                debugLog("Upload error: " + uploadErr.message);
                 throw new Error("Upload failed: " + uploadErr.message);
               }
               
