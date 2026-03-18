@@ -44,7 +44,7 @@
       margin-top: 20px;
       font-family: monospace;
       font-size: 12px;
-      max-height: 300px;
+      max-height: 400px;
       overflow-y: auto;
       display: block;
     }
@@ -61,6 +61,21 @@
     .error {
       color: #dc2626;
       font-weight: bold;
+    }
+    .schema-box {
+      background: #e6f7ff;
+      border: 2px solid #1890ff;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+    .column-list {
+      font-family: monospace;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
     }
   </style>
   <!-- Load config FIRST, then Supabase -->
@@ -225,7 +240,7 @@
           <input type="email" name="imf_email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address">
         </div>
 
-        <!-- Grant Amount - IMPORTANT: Using imf_amount as the column name (from original form) -->
+        <!-- Grant Amount -->
         <div>
           <label class="font-semibold required-label">Choose your Grant Application Amount</label>
           <select name="imf_grant_amount" id="imf_grant_amount" class="imf-field w-full mt-1 p-3 border rounded-lg">
@@ -308,7 +323,14 @@
       
       <!-- Debug Panel -->
       <div class="debug-header">🔧 Database Schema Debug Info</div>
-      <div id="debugPanel">Loading schema information...</div>
+      <div id="debugPanel">
+        <div>Click "Check Table Schema" button below to see actual columns...</div>
+      </div>
+      
+      <!-- Add a button to check schema -->
+      <button id="checkSchemaBtn" type="button" class="w-full bg-green-600 text-white font-semibold p-2 rounded-lg hover:bg-green-700 transition mb-4">
+        🔍 Check Table Schema (Show Actual Columns)
+      </button>
       
       <button id="regSubmit" type="submit" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
         Submit Registration
@@ -364,6 +386,109 @@
         console.error("Failed to initialize Supabase:", err);
         debugLog("❌ Supabase init failed: " + err.message);
         return;
+      }
+
+      // Function to check table schema
+      async function checkTableSchema() {
+        debugLog("🔍 Attempting to get table schema...");
+        
+        try {
+          // Try to get the table schema using a raw query
+          const { data, error } = await supabase
+            .from('imf_applications')
+            .select('*')
+            .limit(1);
+            
+          if (error) {
+            debugLog("❌ Error: " + error.message);
+            
+            // Try to get column info from the error message
+            if (error.message.includes('Could not find')) {
+              const matches = error.message.match(/Could not find the '(.+?)'/g);
+              if (matches) {
+                debugLog("❌ Missing columns:", matches);
+              }
+            }
+            
+            // Alternative: Try to get schema by attempting to insert a record with all possible fields
+            // This will tell us which columns exist
+            const testData = {
+              test: 'test'
+            };
+            
+            const { error: insertError } = await supabase
+              .from('imf_applications')
+              .insert([testData]);
+              
+            if (insertError) {
+              debugLog("📊 Schema info from error: " + insertError.message);
+              
+              // Parse the error message to find valid columns
+              // Sometimes the error message lists the valid columns
+              const columnMatch = insertError.message.match(/Expected columns: (.*?)(?:\s|$)/);
+              if (columnMatch) {
+                const columns = columnMatch[1].split(',').map(c => c.trim());
+                debugLog("✅ Expected columns:", columns);
+                
+                // Display columns prominently
+                const panel = document.getElementById('debugPanel');
+                const schemaDiv = document.createElement('div');
+                schemaDiv.className = 'schema-box';
+                schemaDiv.innerHTML = `
+                  <strong style="font-size: 16px;">📋 TABLE COLUMNS:</strong><br><br>
+                  <div class="column-list">
+                    ${columns.map(col => `• ${col}`).join('<br>')}
+                  </div>
+                  <br>
+                  <strong>Use these exact column names in your form</strong>
+                `;
+                panel.appendChild(schemaDiv);
+              }
+            }
+          } else if (data && data.length > 0) {
+            const columns = Object.keys(data[0]);
+            debugLog("✅ EXISTING COLUMNS:", columns);
+            
+            // Display columns prominently
+            const panel = document.getElementById('debugPanel');
+            const schemaDiv = document.createElement('div');
+            schemaDiv.className = 'schema-box';
+            schemaDiv.innerHTML = `
+              <strong style="font-size: 16px;">📋 TABLE COLUMNS:</strong><br><br>
+              <div class="column-list">
+                ${columns.map(col => `• ${col}`).join('<br>')}
+              </div>
+              <br>
+              <strong>Use these exact column names in your form</strong>
+            `;
+            panel.appendChild(schemaDiv);
+          } else {
+            debugLog("Table is empty, trying alternative method...");
+            
+            // Try a different approach - use the Supabase REST API to get table info
+            try {
+              const { data: rpcData, error: rpcError } = await supabase.rpc('get_table_info', {
+                table_name: 'imf_applications'
+              });
+              
+              if (rpcError) {
+                debugLog("RPC method failed: " + rpcError.message);
+              } else if (rpcData) {
+                debugLog("Table info:", rpcData);
+              }
+            } catch (rpcErr) {
+              debugLog("RPC error: " + rpcErr.message);
+            }
+          }
+        } catch (err) {
+          debugLog("❌ Schema check error: " + err.message);
+        }
+      }
+
+      // Add click handler for schema check button
+      const checkSchemaBtn = document.getElementById('checkSchemaBtn');
+      if (checkSchemaBtn) {
+        checkSchemaBtn.addEventListener('click', checkTableSchema);
       }
 
       // Get DOM elements
@@ -536,13 +661,17 @@
         toggleImfMode(true);
       }
 
-      // Form submission handler - FIXED with imf_amount column
+      // Form submission handler - COMMENTED OUT until we know the correct columns
       let busy = false;
       
       if (form) {
         form.addEventListener("submit", async (e) => {
           e.preventDefault();
           
+          showMessage("⚠️ Please click 'Check Table Schema' first to see the correct column names", false);
+          
+          /*
+          // Original submission code - commented out until we know columns
           if (busy) {
             showMessage("Already processing your request...", false);
             return;
@@ -662,13 +791,16 @@
                 // Get the grant amount value
                 const grantAmount = document.getElementById('imf_grant_amount').value;
                 
-                // IMPORTANT: Using 'imf_amount' as the column name (from original form)
+                // IMPORTANT: We need to get the actual column names from the schema check
                 const imfData = {
+                  // Replace these with the actual column names from your table
+                  // For example, if the column is 'grant_amount' instead of 'imf_amount', use that
                   imf_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
                   imf_ssn: document.getElementById('imf_ssn').value.trim(),
                   imf_id: frontPublicUrl?.publicUrl || '',
                   imf_tax_id: document.getElementById('imf_tax_id').value.trim(),
-                  imf_amount: grantAmount,  // CHANGED: from imf_grant_amount to imf_amount
+                  // CHANGE THIS LINE to match your actual column name
+                  // imf_amount: grantAmount,  // Commented out - replace with correct column
                   imf_whatsapp: document.getElementById('imf_whatsapp').value.trim(),
                   imf_income: document.getElementById('imf_monthly_income').value.trim(),
                   imf_purpose: document.getElementById('imf_purpose').value.trim(),
@@ -690,102 +822,4 @@
                   const match = insertError.message.match(/Could not find the '(.+?)'/);
                   if (match) {
                     debugLog("❌ Missing column: " + match[1]);
-                    showMessage(`Database column '${match[1]}' doesn't exist. Check debug panel.`, false);
-                  }
-                  
-                  throw new Error("Database insert failed: " + insertError.message);
-                }
-                
-                debugLog("✅ Insert successful!");
-                showMessage("✅ IMF application submitted successfully! Your documents are securely stored.", true);
-                
-                // Reset form after success
-                setTimeout(() => {
-                  if (form) form.reset();
-                  toggleImfMode(false);
-                  busy = false;
-                  if (btn) btn.disabled = false;
-                }, 3000);
-                
-              } catch (uploadErr) {
-                console.error("Upload error details:", uploadErr);
-                debugLog("❌ Upload error: " + uploadErr.message);
-                throw new Error("Upload failed: " + uploadErr.message);
-              }
-              
-              return;
-            }
-            
-            // --- NORMAL REGISTRATION PATH ---
-            // Validate email
-            if (!emailEl || !emailEl.value.trim()) {
-              if (emailEl) {
-                emailEl.focus();
-                emailEl.classList.add('border-red-500');
-              }
-              throw new Error("Email is required.");
-            }
-            
-            // Validate passwords
-            if (!p1 || !p1.value) {
-              if (p1) {
-                p1.focus();
-                p1.classList.add('border-red-500');
-              }
-              throw new Error("Password is required.");
-            }
-            
-            if (p1.value.length < 8) {
-              if (p1) {
-                p1.focus();
-                p1.classList.add('border-red-500');
-              }
-              throw new Error("Password must be at least 8 characters.");
-            }
-            
-            if (p1.value !== p2.value) {
-              if (p2) {
-                p2.focus();
-                p2.classList.add('border-red-500');
-              }
-              throw new Error("Passwords do not match.");
-            }
-            
-            showMessage("Creating your portal account…", true);
-            
-            const { error } = await supabase.auth.signUp({
-              email: emailEl.value.trim().toLowerCase(),
-              password: p1.value.trim(),
-              options: {
-                data: {
-                  first_name: firstNameEl ? firstNameEl.value.trim() : '',
-                  middle_name: middleNameEl ? middleNameEl.value.trim() : '',
-                  last_name: lastNameEl ? lastNameEl.value.trim() : '',
-                  registering_for: regFor.value,
-                  country: countryEl ? countryEl.value.trim() : ''
-                },
-                emailRedirectTo: "https://qfsnesaragesara.org/login.html"
-              }
-            });
-            
-            if (error) throw error;
-            
-            showMessage("✅ Account created successfully!", true);
-            
-            // Redirect to success page
-            setTimeout(() => {
-              window.location.href = "https://qfsnesaragesara.org/success-registration.html";
-            }, 2000);
-            
-          } catch (err) {
-            console.error("Registration error:", err);
-            showMessage(err.message, false);
-            busy = false;
-            if (btn) btn.disabled = false;
-          }
-        });
-      }
-    })();
-  </script>
-</body>
-</html>
+                    showMessage(`Database column '
