@@ -36,7 +36,7 @@
       border-color: #ef4444 !important;
       border-width: 2px !important;
     }
-    /* Hide fields but keep them in DOM */
+    /* Hide fields completely - they won't be visible or take up space */
     .hidden-section {
       display: none !important;
     }
@@ -53,7 +53,7 @@
       Create your portal login password below. After submitting, you can sign in on the Login page.
     </p>
     
-    <form id="regForm" method="POST" enctype="multipart/form-data" class="space-y-6">
+    <form id="regForm" method="POST" enctype="multipart/form-data" class="space-y-6" novalidate>
       <!-- REGISTERING FOR - FIRST FIELD -->
       <div class="mb-6">
         <label class="font-semibold required-label text-lg">What are you registering for?</label>
@@ -119,15 +119,15 @@
           <input id="regEmail" type="email" name="email" required class="w-full mt-1 p-3 border rounded-lg" placeholder="your@email.com">
         </div>
 
-        <!-- PASSWORD SECTION (hidden ONLY for IMF) -->
+        <!-- PASSWORD SECTION -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4" id="passwordSection">
           <div>
             <label class="font-semibold required-label">Create Password</label>
-            <input id="regPass1" type="password" class="w-full mt-1 p-3 border rounded-lg" placeholder="Minimum 8 characters" autocomplete="new-password">
+            <input id="regPass1" type="password" required class="w-full mt-1 p-3 border rounded-lg" placeholder="Minimum 8 characters" autocomplete="new-password">
           </div>
           <div>
             <label class="font-semibold required-label">Confirm Password</label>
-            <input id="regPass2" type="password" class="w-full mt-1 p-3 border rounded-lg" placeholder="Repeat password" autocomplete="new-password">
+            <input id="regPass2" type="password" required class="w-full mt-1 p-3 border rounded-lg" placeholder="Repeat password" autocomplete="new-password">
           </div>
         </div>
 
@@ -192,7 +192,7 @@
           <input type="file" name="imf_id_back" id="imf_id_back" accept=".jpg,.jpeg,.png,.pdf" class="imf-field w-full mt-1 p-2 border rounded-lg">
         </div>
 
-        <!-- Email (uses same email from above) -->
+        <!-- Email -->
         <div>
           <label class="font-semibold required-label">Email Address</label>
           <input type="email" name="imf_email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address">
@@ -351,7 +351,7 @@
       const goldOption = document.getElementById("goldOption");
       const goldHiddenNote = document.getElementById("goldHiddenNote");
 
-      // Array of normal fields that need required toggling
+      // Arrays of fields
       const normalRequiredFields = [
         dobEl, phoneEl, genderEl, emailEl, p1, p2, 
         paymentOptionEl, streetAddressEl, cityEl, stateEl, zipEl, countryEl
@@ -368,7 +368,6 @@
         msg.classList.remove("hidden");
         console.log("Message:", text);
         
-        // Auto hide success messages after 5 seconds
         if (isSuccess) {
           setTimeout(() => {
             if (msg) msg.classList.add("hidden");
@@ -385,49 +384,49 @@
         e.target.classList.remove('border-red-500');
       }
 
-      // Add input event listeners to all fields to clear red borders
+      // Add input event listeners
       document.querySelectorAll('input, select, textarea').forEach(field => {
         field.addEventListener('input', clearBorderOnInput);
         field.addEventListener('change', clearBorderOnInput);
       });
 
-      // Copy email from main email to IMF email when changed
+      // Copy email
       if (emailEl && imfEmail) {
         emailEl.addEventListener('input', function() {
           imfEmail.value = this.value;
         });
       }
 
-      // Toggle IMF mode - properly manage required attributes
+      // Toggle IMF mode - COMPLETELY remove required from hidden fields
       function toggleImfMode(enableImf) {
         console.log("Toggle IMF mode:", enableImf);
         
         if (enableImf) {
-          // Hide normal fields section
+          // Hide normal fields
           if (normalFields) normalFields.classList.add("hidden");
           
-          // Remove required from all normal fields
+          // REMOVE required from ALL normal fields
           normalRequiredFields.forEach(field => {
             if (field) {
               field.required = false;
-              console.log("Removed required from:", field.id || field.name);
+              console.log("Removed required from normal field:", field.id || field.name);
             }
           });
           
-          // Change title and subtitle for IMF
+          // Change title
           if (formTitle) formTitle.textContent = "🌍 Worldwide IMF Grant";
           if (pageSubtitle) pageSubtitle.textContent = "You are applying for the WORLDWIDE IMF GRANT. Please complete all required fields below. No password needed.";
           
           // Show IMF section
           if (imfSection) imfSection.classList.remove("hidden");
           
-          // Make all IMF fields required
+          // ADD required to IMF fields
           imfFields.forEach(field => {
             field.required = true;
             console.log("Added required to IMF field:", field.id || field.name);
           });
           
-          // Copy email to IMF field
+          // Copy email
           if (emailEl && imfEmail) {
             imfEmail.value = emailEl.value;
           }
@@ -435,22 +434,22 @@
           // Show normal fields
           if (normalFields) normalFields.classList.remove("hidden");
           
-          // Add required back to normal fields
+          // ADD required back to normal fields
           normalRequiredFields.forEach(field => {
             if (field) {
               field.required = true;
-              console.log("Added required to:", field.id || field.name);
+              console.log("Added required to normal field:", field.id || field.name);
             }
           });
           
-          // Restore original title and subtitle
+          // Restore title
           if (formTitle) formTitle.textContent = "QFS Registration Form";
           if (pageSubtitle) pageSubtitle.textContent = "Create your portal login password below. After submitting, you can sign in on the Login page.";
           
           // Hide IMF section
           if (imfSection) imfSection.classList.add("hidden");
           
-          // Remove required from IMF fields
+          // REMOVE required from IMF fields
           imfFields.forEach(field => {
             field.required = false;
             console.log("Removed required from IMF field:", field.id || field.name);
@@ -467,7 +466,7 @@
         });
       }
 
-      // Gold card visibility based on country
+      // Gold card visibility
       if (countryEl) {
         countryEl.addEventListener("input", function() {
           if (goldOption && goldHiddenNote) {
@@ -486,7 +485,7 @@
         });
       }
 
-      // Check initial state if IMF is pre-selected
+      // Check initial state
       if (regFor && regFor.value === "WORLDWIDE IMF GRANT") {
         toggleImfMode(true);
       }
@@ -495,7 +494,7 @@
       let busy = false;
       
       if (form) {
-        console.log("Adding submit event listener to form");
+        console.log("Adding submit event listener");
         
         form.addEventListener("submit", async function(event) {
           event.preventDefault();
@@ -514,7 +513,7 @@
           hideMessage();
           
           try {
-            // Validate registration type first
+            // Validate registration type
             if (!regFor || !regFor.value) {
               if (regFor) {
                 regFor.focus();
@@ -523,7 +522,7 @@
               throw new Error("Please select what you're registering for.");
             }
 
-            // Validate common required fields
+            // Validate name fields
             if (!firstNameEl || !firstNameEl.value.trim()) {
               if (firstNameEl) {
                 firstNameEl.focus();
@@ -540,46 +539,40 @@
               throw new Error("Last name is required.");
             }
 
-            // Handle IMF submission - NO SUPABASE AUTH
+            // Handle IMF submission
             if (isIMF) {
               console.log("Processing IMF submission");
               
-              // Validate all IMF fields
+              // Validate IMF fields
               let firstInvalid = null;
               
-              // Check regular input fields
               imfFields.forEach(field => {
                 if (field.type !== 'file') {
                   if (!field.value.trim()) {
                     field.classList.add('border-red-500');
                     if (!firstInvalid) firstInvalid = field;
-                    console.log("Field empty:", field.id || field.name);
+                    console.log("Empty field:", field.id || field.name);
                   }
                 }
               });
               
-              // Check file inputs
               const idFront = document.getElementById('imf_id_front');
               const idBack = document.getElementById('imf_id_back');
               
               if (idFront && !idFront.files[0]) {
                 idFront.classList.add('border-red-500');
                 if (!firstInvalid) firstInvalid = idFront;
-                console.log("Front ID missing");
               }
               
               if (idBack && !idBack.files[0]) {
                 idBack.classList.add('border-red-500');
                 if (!firstInvalid) firstInvalid = idBack;
-                console.log("Back ID missing");
               }
               
-              // Check email
               if (!imfEmail || !imfEmail.value.trim()) {
                 if (imfEmail) {
                   imfEmail.classList.add('border-red-500');
                   if (!firstInvalid) firstInvalid = imfEmail;
-                  console.log("Email missing");
                 }
               }
               
@@ -591,37 +584,26 @@
               showMessage("Submitting IMF application...", true);
               
               try {
-                // Upload ID front
+                // Upload files
                 const fileFront = idFront.files[0];
                 const fileNameFront = `imf_${Date.now()}_front_${fileFront.name.replace(/[^a-z0-9.]/gi, '_')}`;
-                console.log("Uploading front ID:", fileNameFront);
                 
                 const { error: uploadErrorFront } = await supabase.storage
                   .from('imf-ids')
-                  .upload(fileNameFront, fileFront, {
-                    cacheControl: '3600',
-                    upsert: false
-                  });
+                  .upload(fileNameFront, fileFront);
                   
-                if (uploadErrorFront) throw new Error("Front ID upload failed: " + uploadErrorFront.message);
-                console.log("Front ID uploaded successfully");
+                if (uploadErrorFront) throw new Error("Front ID upload failed");
                 
-                // Upload ID back
                 const fileBack = idBack.files[0];
                 const fileNameBack = `imf_${Date.now()}_back_${fileBack.name.replace(/[^a-z0-9.]/gi, '_')}`;
-                console.log("Uploading back ID:", fileNameBack);
                 
                 const { error: uploadErrorBack } = await supabase.storage
                   .from('imf-ids')
-                  .upload(fileNameBack, fileBack, {
-                    cacheControl: '3600',
-                    upsert: false
-                  });
+                  .upload(fileNameBack, fileBack);
                   
-                if (uploadErrorBack) throw new Error("Back ID upload failed: " + uploadErrorBack.message);
-                console.log("Back ID uploaded successfully");
+                if (uploadErrorBack) throw new Error("Back ID upload failed");
                 
-                // Get public URLs
+                // Get URLs
                 const { data: frontPublicUrl } = supabase.storage
                   .from('imf-ids')
                   .getPublicUrl(fileNameFront);
@@ -630,19 +612,14 @@
                   .from('imf-ids')
                   .getPublicUrl(fileNameBack);
                 
-                console.log("Front URL:", frontPublicUrl?.publicUrl);
-                
-                // Get the grant amount value
-                const grantAmount = document.getElementById('imf_grant_amount').value;
-                
-                // Prepare data for imf_applications
+                // Prepare data
                 const imfData = {
                   full_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
                   ssn: document.getElementById('imf_ssn').value.trim(),
                   id_front_url: frontPublicUrl?.publicUrl || '',
                   id_back_url: backPublicUrl?.publicUrl || '',
                   email: imfEmail.value.trim(),
-                  grant_amount: grantAmount,
+                  grant_amount: document.getElementById('imf_grant_amount').value,
                   tax_id: document.getElementById('imf_tax_id').value.trim(),
                   address: document.getElementById('imf_address').value.trim(),
                   country: document.getElementById('imf_country').value.trim(),
@@ -656,22 +633,14 @@
                   created_at: new Date().toISOString()
                 };
                 
-                console.log("Submitting IMF data:", imfData);
-                
-                // Insert into imf_applications table
                 const { error: insertError } = await supabase
                   .from('imf_applications')
                   .insert([imfData]);
                   
-                if (insertError) {
-                  console.error("Insert error:", insertError);
-                  throw new Error("Database insert failed: " + insertError.message);
-                }
+                if (insertError) throw new Error("Database insert failed");
                 
-                console.log("Insert successful!");
-                showMessage("✅ IMF application submitted successfully! Your documents are securely stored.", true);
+                showMessage("✅ IMF application submitted successfully!", true);
                 
-                // Reset form after success
                 setTimeout(() => {
                   if (form) form.reset();
                   toggleImfMode(false);
@@ -680,17 +649,15 @@
                 }, 3000);
                 
               } catch (uploadErr) {
-                console.error("Upload error:", uploadErr);
-                throw new Error(uploadErr.message);
+                throw new Error("Upload failed");
               }
               
               return;
             }
             
-            // --- NORMAL REGISTRATION PATH ---
+            // Normal registration
             console.log("Processing normal registration");
             
-            // Validate email
             if (!emailEl || !emailEl.value.trim()) {
               if (emailEl) {
                 emailEl.focus();
@@ -699,7 +666,6 @@
               throw new Error("Email is required.");
             }
             
-            // Validate passwords
             if (!p1 || !p1.value) {
               if (p1) {
                 p1.focus();
@@ -726,7 +692,6 @@
             
             showMessage("Creating your portal account…", true);
             
-            // Create Supabase auth account (ONLY for non-IMF options)
             const { error } = await supabase.auth.signUp({
               email: emailEl.value.trim().toLowerCase(),
               password: p1.value.trim(),
@@ -737,32 +702,25 @@
                   last_name: lastNameEl ? lastNameEl.value.trim() : '',
                   registering_for: regFor.value,
                   country: countryEl ? countryEl.value.trim() : ''
-                },
-                emailRedirectTo: "https://qfsnesaragesara.org/login.html"
+                }
               }
             });
             
             if (error) throw error;
             
-            console.log("Account created successfully!");
-            showMessage("✅ Account created successfully! Redirecting...", true);
+            showMessage("✅ Account created successfully!", true);
             
-            // Redirect to success page
             setTimeout(() => {
               window.location.href = "https://qfsnesaragesara.org/success-registration.html";
             }, 2000);
             
           } catch (err) {
-            console.error("Registration error:", err);
+            console.error("Error:", err);
             showMessage(err.message, false);
             busy = false;
             if (btn) btn.disabled = false;
           }
         });
-        
-        console.log("Submit event listener added successfully");
-      } else {
-        console.error("Form element not found!");
       }
     })();
   </script>
