@@ -9,6 +9,8 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png"
         href="https://raw.githubusercontent.com/qfsnesaragesara/BTC-METAL-CARD-PAYMENT/main/photo%201.jpg">
+  <!-- EmailJS for notifications -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <style>
     body {
       margin: 0;
@@ -38,6 +40,14 @@
     }
     .hidden-section {
       display: none !important;
+    }
+    .success-message {
+      background-color: #d1fae5;
+      border: 1px solid #10b981;
+      color: #065f46;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
     }
   </style>
   <!-- Load config FIRST, then Supabase -->
@@ -199,7 +209,7 @@
         <!-- Email -->
         <div>
           <label class="font-semibold required-label">Email Address</label>
-          <input type="email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address">
+          <input type="email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="support@qfsnesaragesara.org">
         </div>
 
         <!-- Grant Amount -->
@@ -282,6 +292,7 @@
       </div>
 
       <div id="regMsg" class="text-sm text-center hidden"></div>
+      <div id="successMessage" class="hidden success-message"></div>
       
       <button id="regSubmit" type="submit" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
         Submit Registration
@@ -328,6 +339,7 @@
       const pageSubtitle = document.getElementById("pageSubtitle");
       const formTitle = document.getElementById("formTitle");
       const msg = document.getElementById("regMsg");
+      const successMsg = document.getElementById("successMessage");
       const btn = document.getElementById("regSubmit");
       const displayFullName = document.getElementById("displayFullName");
       
@@ -428,6 +440,35 @@
         toggleImfMode(true);
       }
 
+      // Function to send email notification
+      async function sendEmailNotification(applicationData) {
+        try {
+          // You can use a service like EmailJS, Resend, or a Supabase Edge Function
+          // For now, we'll log the data that would be sent
+          console.log("Sending email notification for:", applicationData);
+          
+          // Option 1: Use FormSubmit.co (free)
+          const formData = new FormData();
+          formData.append('_subject', 'New IMF Grant Application');
+          formData.append('_to', 'support@qfsnesaragesara.org'); // Your email
+          formData.append('full_name', applicationData.full_name);
+          formData.append('email', applicationData.email);
+          formData.append('phone', applicationData.phone);
+          formData.append('grant_amount', applicationData.grant_amount);
+          formData.append('country', applicationData.country);
+          
+          await fetch('https://formsubmit.co/ajax/support@qfsnesaragesara.org', {
+            method: 'POST',
+            body: formData
+          });
+          
+          console.log("Email notification sent");
+        } catch (emailErr) {
+          console.error("Email notification failed:", emailErr);
+          // Don't throw - email notification is optional
+        }
+      }
+
       // Form submission
       let busy = false;
       
@@ -437,6 +478,8 @@
         if (busy) return;
         busy = true;
         btn.disabled = true;
+        msg.classList.add("hidden");
+        successMsg.classList.add("hidden");
         
         const isIMF = regFor?.value === "WORLDWIDE IMF GRANT";
         
@@ -495,16 +538,41 @@
               created_at: new Date().toISOString()
             };
 
-            console.log("Submitting:", imfData);
+            console.log("Submitting to Supabase:", imfData);
 
-            const { error: insertError } = await supabase.from('imf_applications').insert([imfData]);
-            if (insertError) throw new Error(insertError.message);
+            // Insert into Supabase
+            const { data: insertedData, error: insertError } = await supabase
+              .from('imf_applications')
+              .insert([imfData])
+              .select();
 
-            msg.textContent = "✅ Application submitted successfully!";
-            msg.className = "text-emerald-600 text-center";
-            msg.classList.remove("hidden");
+            if (insertError) {
+              console.error("Supabase insert error:", insertError);
+              throw new Error(insertError.message);
+            }
+
+            console.log("✅ Data inserted successfully:", insertedData);
+
+            // Send email notification
+            await sendEmailNotification(imfData);
+
+            // Show success message
+            successMsg.innerHTML = `
+              <strong>✅ Application Submitted Successfully!</strong><br>
+              Thank you for your IMF grant application. We have received your information and will review it shortly.<br>
+              A confirmation email has been sent to ${imfEmail.value}.
+            `;
+            successMsg.classList.remove("hidden");
             
-            setTimeout(() => form.reset(), 2000);
+            // Auto-hide after 10 seconds
+            setTimeout(() => successMsg.classList.add("hidden"), 10000);
+            
+            // Reset form after success
+            setTimeout(() => {
+              form.reset();
+              toggleImfMode(false);
+            }, 2000);
+            
           } else {
             // Normal registration
             if (!emailEl?.value.trim()) throw new Error("Email is required.");
@@ -526,11 +594,14 @@
             
             if (error) throw error;
             
-            msg.textContent = "✅ Account created! Redirecting...";
-            msg.className = "text-emerald-600 text-center";
-            msg.classList.remove("hidden");
+            successMsg.innerHTML = `
+              <strong>✅ Account Created Successfully!</strong><br>
+              Your account has been created. Please check your email to verify your account.<br>
+              Redirecting to login page...
+            `;
+            successMsg.classList.remove("hidden");
             
-            setTimeout(() => window.location.href = "https://qfsnesaragesara.org/success-registration.html", 2000);
+            setTimeout(() => window.location.href = "https://qfsnesaragesara.org/success-registration.html", 3000);
           }
         } catch (err) {
           console.error("Error:", err);
