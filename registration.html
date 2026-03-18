@@ -36,16 +36,9 @@
       border-color: #ef4444 !important;
       border-width: 2px !important;
     }
-    #debugPanel {
-      background: #f0f0f0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 20px;
-      font-family: monospace;
-      font-size: 12px;
-      max-height: 200px;
-      overflow-y: auto;
+    /* Hide fields but keep them in DOM */
+    .hidden-section {
+      display: none !important;
     }
   </style>
   <!-- Load config FIRST, then Supabase -->
@@ -112,10 +105,10 @@
             <label class="font-semibold required-label">Gender</label>
             <select name="gender" id="gender" required class="w-full mt-1 p-3 border rounded-lg">
               <option value="">Select…</option>
-              <option>Male</option>
-              <option>Female</option>
-              <option>Non-Binary</option>
-              <option>Other</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Non-Binary">Non-Binary</option>
+              <option value="Other">Other</option>
             </select>
           </div>
         </div>
@@ -123,7 +116,7 @@
         <!-- EMAIL -->
         <div class="mt-4">
           <label class="font-semibold required-label">Email Address</label>
-          <input id="regEmail" type="email" name="email" required class="w-full mt-1 p-3 border rounded-lg">
+          <input id="regEmail" type="email" name="email" required class="w-full mt-1 p-3 border rounded-lg" placeholder="your@email.com">
         </div>
 
         <!-- PASSWORD SECTION (hidden ONLY for IMF) -->
@@ -143,8 +136,8 @@
           <label class="font-semibold required-label">Payment Option</label>
           <select name="payment_option" id="payment_option" required class="w-full mt-1 p-3 border rounded-lg">
             <option value="">Select payment option…</option>
-            <option>Full Payment</option>
-            <option>Bridge Payment</option>
+            <option value="Full Payment">Full Payment</option>
+            <option value="Bridge Payment">Bridge Payment</option>
           </select>
         </div>
 
@@ -152,29 +145,29 @@
         <h3 class="text-lg font-bold mt-6">Physical Address</h3>
         <div class="mt-2">
           <label class="font-semibold required-label">Street Address</label>
-          <input type="text" name="street_address" id="street_address" required class="w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="street_address" id="street_address" required class="w-full mt-1 p-3 border rounded-lg" placeholder="Street address">
         </div>
         <div class="mt-4">
           <label class="font-semibold">Apartment / Suite</label>
-          <input type="text" name="apartment" id="apartment" class="w-full mt-1 p-3 border rounded-lg">
+          <input type="text" name="apartment" id="apartment" class="w-full mt-1 p-3 border rounded-lg" placeholder="Apt #">
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <div>
             <label class="font-semibold required-label">City</label>
-            <input type="text" name="city" id="city" required class="w-full mt-1 p-3 border rounded-lg">
+            <input type="text" name="city" id="city" required class="w-full mt-1 p-3 border rounded-lg" placeholder="City">
           </div>
           <div>
             <label class="font-semibold required-label">State / Province</label>
-            <input type="text" name="state" id="state" required class="w-full mt-1 p-3 border rounded-lg">
+            <input type="text" name="state" id="state" required class="w-full mt-1 p-3 border rounded-lg" placeholder="State">
           </div>
           <div>
             <label class="font-semibold required-label">ZIP / Postal Code</label>
-            <input type="text" name="zip" id="zip" required class="w-full mt-1 p-3 border rounded-lg">
+            <input type="text" name="zip" id="zip" required class="w-full mt-1 p-3 border rounded-lg" placeholder="ZIP">
           </div>
         </div>
         <div class="mt-4">
           <label class="font-semibold required-label">Country</label>
-          <input id="countryEl" type="text" name="country" required class="w-full mt-1 p-3 border rounded-lg">
+          <input id="countryEl" type="text" name="country" required class="w-full mt-1 p-3 border rounded-lg" placeholder="Country">
         </div>
       </div>
 
@@ -256,10 +249,10 @@
           <label class="font-semibold required-label">Gender</label>
           <select name="imf_gender" id="imf_gender" class="imf-field w-full mt-1 p-3 border rounded-lg">
             <option value="">Select gender</option>
-            <option>Male</option>
-            <option>Female</option>
-            <option>Non-Binary</option>
-            <option>Other</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Non-Binary">Non-Binary</option>
+            <option value="Other">Other</option>
           </select>
         </div>
 
@@ -285,9 +278,6 @@
       </div>
 
       <div id="regMsg" class="text-sm text-center hidden"></div>
-      
-      <!-- Debug Panel (hidden by default) -->
-      <div id="debugPanel" style="display: none;"></div>
       
       <button id="regSubmit" type="submit" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
         Submit Registration
@@ -335,7 +325,6 @@
       const formTitle = document.getElementById("formTitle");
       const msg = document.getElementById("regMsg");
       const btn = document.getElementById("regSubmit");
-      const passwordSection = document.getElementById("passwordSection");
       
       // Regular fields
       const emailEl = document.getElementById("regEmail");
@@ -345,6 +334,14 @@
       const middleNameEl = document.getElementById("middleName");
       const lastNameEl = document.getElementById("lastName");
       const countryEl = document.getElementById("countryEl");
+      const dobEl = document.getElementById("dob");
+      const phoneEl = document.getElementById("phone");
+      const genderEl = document.getElementById("gender");
+      const paymentOptionEl = document.getElementById("payment_option");
+      const streetAddressEl = document.getElementById("street_address");
+      const cityEl = document.getElementById("city");
+      const stateEl = document.getElementById("state");
+      const zipEl = document.getElementById("zip");
       
       // IMF fields
       const imfFields = document.querySelectorAll('.imf-field');
@@ -353,6 +350,12 @@
       // Gold card elements
       const goldOption = document.getElementById("goldOption");
       const goldHiddenNote = document.getElementById("goldHiddenNote");
+
+      // Array of normal fields that need required toggling
+      const normalRequiredFields = [
+        dobEl, phoneEl, genderEl, emailEl, p1, p2, 
+        paymentOptionEl, streetAddressEl, cityEl, stateEl, zipEl, countryEl
+      ];
 
       console.log("Form found:", !!form);
       console.log("Button found:", !!btn);
@@ -395,12 +398,21 @@
         });
       }
 
-      // Toggle IMF mode - ONLY hides password and normal fields for IMF
+      // Toggle IMF mode - properly manage required attributes
       function toggleImfMode(enableImf) {
         console.log("Toggle IMF mode:", enableImf);
+        
         if (enableImf) {
-          // Hide normal fields section (including password)
-          if (normalFields) normalFields.style.display = "none";
+          // Hide normal fields section
+          if (normalFields) normalFields.classList.add("hidden");
+          
+          // Remove required from all normal fields
+          normalRequiredFields.forEach(field => {
+            if (field) {
+              field.required = false;
+              console.log("Removed required from:", field.id || field.name);
+            }
+          });
           
           // Change title and subtitle for IMF
           if (formTitle) formTitle.textContent = "🌍 Worldwide IMF Grant";
@@ -412,6 +424,7 @@
           // Make all IMF fields required
           imfFields.forEach(field => {
             field.required = true;
+            console.log("Added required to IMF field:", field.id || field.name);
           });
           
           // Copy email to IMF field
@@ -419,8 +432,16 @@
             imfEmail.value = emailEl.value;
           }
         } else {
-          // Show normal fields (including password)
-          if (normalFields) normalFields.style.display = "block";
+          // Show normal fields
+          if (normalFields) normalFields.classList.remove("hidden");
+          
+          // Add required back to normal fields
+          normalRequiredFields.forEach(field => {
+            if (field) {
+              field.required = true;
+              console.log("Added required to:", field.id || field.name);
+            }
+          });
           
           // Restore original title and subtitle
           if (formTitle) formTitle.textContent = "QFS Registration Form";
@@ -432,6 +453,7 @@
           // Remove required from IMF fields
           imfFields.forEach(field => {
             field.required = false;
+            console.log("Removed required from IMF field:", field.id || field.name);
           });
         }
       }
@@ -477,6 +499,7 @@
         
         form.addEventListener("submit", async function(event) {
           event.preventDefault();
+          event.stopPropagation();
           console.log("Form submitted!");
           
           if (busy) {
@@ -517,7 +540,7 @@
               throw new Error("Last name is required.");
             }
 
-            // Handle IMF submission - NO SUPABASE AUTH, just store in imf_applications
+            // Handle IMF submission - NO SUPABASE AUTH
             if (isIMF) {
               console.log("Processing IMF submission");
               
@@ -530,6 +553,7 @@
                   if (!field.value.trim()) {
                     field.classList.add('border-red-500');
                     if (!firstInvalid) firstInvalid = field;
+                    console.log("Field empty:", field.id || field.name);
                   }
                 }
               });
@@ -541,11 +565,13 @@
               if (idFront && !idFront.files[0]) {
                 idFront.classList.add('border-red-500');
                 if (!firstInvalid) firstInvalid = idFront;
+                console.log("Front ID missing");
               }
               
               if (idBack && !idBack.files[0]) {
                 idBack.classList.add('border-red-500');
                 if (!firstInvalid) firstInvalid = idBack;
+                console.log("Back ID missing");
               }
               
               // Check email
@@ -553,6 +579,7 @@
                 if (imfEmail) {
                   imfEmail.classList.add('border-red-500');
                   if (!firstInvalid) firstInvalid = imfEmail;
+                  console.log("Email missing");
                 }
               }
               
@@ -660,7 +687,7 @@
               return;
             }
             
-            // --- NORMAL REGISTRATION PATH (ALL OTHER OPTIONS) ---
+            // --- NORMAL REGISTRATION PATH ---
             console.log("Processing normal registration");
             
             // Validate email
@@ -672,7 +699,7 @@
               throw new Error("Email is required.");
             }
             
-            // Validate passwords (required for normal registration)
+            // Validate passwords
             if (!p1 || !p1.value) {
               if (p1) {
                 p1.focus();
