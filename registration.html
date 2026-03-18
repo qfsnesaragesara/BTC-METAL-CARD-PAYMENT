@@ -353,79 +353,7 @@
         return;
       }
 
-      // Check Supabase schema
-      async function checkIMFSchema() {
-        debugLog("Checking imf_applications table schema...");
-        
-        try {
-          // Try to get one record
-          const { data, error } = await supabase
-            .from('imf_applications')
-            .select('*')
-            .limit(1);
-          
-          if (error) {
-            debugLog("Error fetching data: " + error.message);
-            
-            // Try to get column info from error message
-            if (error.message.includes('Could not find')) {
-              const match = error.message.match(/Could not find the '(.+?)'/);
-              if (match) {
-                debugLog("Column that doesn't exist: " + match[1]);
-              }
-            }
-          } else if (data && data.length > 0) {
-            const columns = Object.keys(data[0]);
-            debugLog("✅ Existing columns:", columns);
-          } else {
-            debugLog("Table is empty, can't determine schema");
-          }
-        } catch (err) {
-          debugLog("Schema check error: " + err.message);
-        }
-      }
-
-      // Check storage buckets
-      async function checkStorageBuckets() {
-        debugLog("Checking storage buckets...");
-        
-        try {
-          const { data, error } = await supabase.storage.listBuckets();
-          
-          if (error) {
-            debugLog("Error listing buckets: " + error.message);
-            return;
-          }
-          
-          const bucketNames = data.map(b => b.name);
-          debugLog("Available buckets:", bucketNames);
-          
-          if (bucketNames.includes('imf-ids')) {
-            debugLog("✅ imf-ids bucket exists");
-            
-            // List files
-            const { data: files, error: filesError } = await supabase.storage
-              .from('imf-ids')
-              .list();
-              
-            if (filesError) {
-              debugLog("Error listing files: " + filesError.message);
-            } else {
-              debugLog(`Files in bucket: ${files.length}`);
-            }
-          } else {
-            debugLog("❌ imf-ids bucket does not exist");
-          }
-        } catch (err) {
-          debugLog("Bucket check error: " + err.message);
-        }
-      }
-
-      // Run checks after a short delay
-      setTimeout(checkIMFSchema, 1000);
-      setTimeout(checkStorageBuckets, 2000);
-
-      // Get DOM elements (rest of your existing code...)
+      // Get DOM elements
       const form = document.getElementById("regForm");
       const regFor = document.getElementById("regFor");
       const normalFields = document.getElementById("normalFields");
@@ -595,7 +523,7 @@
         toggleImfMode(true);
       }
 
-      // Form submission handler
+      // Form submission handler - UPDATED to use only columns from original form
       let busy = false;
       
       if (form) {
@@ -718,9 +646,9 @@
                 
                 debugLog("Front URL: " + frontPublicUrl?.publicUrl);
                 
-                // Prepare data for imf_applications table
+                // Prepare data for imf_applications table - USING ONLY COLUMNS FROM ORIGINAL FORM
+                // Based on your original form that worked, these are the columns:
                 const imfData = {
-                  // Based on your original form that worked
                   imf_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
                   imf_ssn: document.getElementById('imf_ssn').value.trim(),
                   imf_id: frontPublicUrl?.publicUrl || '',
@@ -729,13 +657,7 @@
                   imf_whatsapp: document.getElementById('imf_whatsapp').value.trim(),
                   imf_income: document.getElementById('imf_monthly_income').value.trim(),
                   imf_purpose: document.getElementById('imf_purpose').value.trim(),
-                  email: document.getElementById('imf_email').value.trim(),
-                  first_name: firstNameEl.value.trim(),
-                  last_name: lastNameEl.value.trim(),
-                  gender: document.getElementById('imf_gender').value,
-                  country: document.getElementById('imf_country').value.trim(),
-                  phone: document.getElementById('imf_phone').value.trim(),
-                  created_at: new Date().toISOString()
+                  email: document.getElementById('imf_email').value.trim()
                 };
                 
                 debugLog("Submitting IMF data:", imfData);
@@ -748,6 +670,13 @@
                 if (insertError) {
                   console.error("Insert error details:", insertError);
                   debugLog("Insert error: " + insertError.message);
+                  
+                  // Try to parse which column is missing
+                  const match = insertError.message.match(/Could not find the '(.+?)'/);
+                  if (match) {
+                    debugLog("Missing column: " + match[1]);
+                  }
+                  
                   throw new Error("Database insert failed: " + insertError.message);
                 }
                 
