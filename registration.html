@@ -46,7 +46,7 @@
       font-size: 12px;
       max-height: 300px;
       overflow-y: auto;
-      display: block; /* Always show for debugging */
+      display: block;
     }
     .debug-header {
       font-weight: bold;
@@ -54,11 +54,12 @@
       cursor: pointer;
       color: #2563eb;
     }
-    .column-display {
-      background: #e6f3ff;
-      padding: 10px;
-      border-radius: 5px;
-      margin-top: 10px;
+    .success {
+      color: #059669;
+      font-weight: bold;
+    }
+    .error {
+      color: #dc2626;
       font-weight: bold;
     }
   </style>
@@ -224,7 +225,7 @@
           <input type="email" name="imf_email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address">
         </div>
 
-        <!-- Grant Amount -->
+        <!-- Grant Amount - IMPORTANT: Using imf_amount as the column name (from original form) -->
         <div>
           <label class="font-semibold required-label">Choose your Grant Application Amount</label>
           <select name="imf_grant_amount" id="imf_grant_amount" class="imf-field w-full mt-1 p-3 border rounded-lg">
@@ -305,7 +306,7 @@
 
       <div id="regMsg" class="text-sm text-center hidden"></div>
       
-      <!-- Debug Panel - Always visible -->
+      <!-- Debug Panel -->
       <div class="debug-header">🔧 Database Schema Debug Info</div>
       <div id="debugPanel">Loading schema information...</div>
       
@@ -323,7 +324,14 @@
         const panel = document.getElementById('debugPanel');
         if (panel) {
           const line = document.createElement('div');
-          line.textContent = `[${new Date().toLocaleTimeString()}] ${message} ${data ? JSON.stringify(data) : ''}`;
+          const timestamp = new Date().toLocaleTimeString();
+          if (message.includes('✅')) {
+            line.innerHTML = `<span class="success">[${timestamp}] ${message}</span>`;
+          } else if (message.includes('❌') || message.includes('error')) {
+            line.innerHTML = `<span class="error">[${timestamp}] ${message}</span>`;
+          } else {
+            line.textContent = `[${timestamp}] ${message} ${data ? JSON.stringify(data) : ''}`;
+          }
           panel.appendChild(line);
           panel.scrollTop = panel.scrollHeight;
         }
@@ -337,11 +345,11 @@
           msgEl.textContent = "Configuration error. Please refresh.";
           msgEl.classList.remove('hidden');
         }
-        debugLog("ERROR: Config not loaded");
+        debugLog("❌ ERROR: Config not loaded");
         return;
       }
 
-      debugLog("Config loaded", { url: window.__QFS_CONFIG.SUPABASE_URL ? "present" : "missing" });
+      debugLog("✅ Config loaded");
 
       // Use the actual config values
       const SUPABASE_URL = window.__QFS_CONFIG.SUPABASE_URL;
@@ -351,70 +359,12 @@
       let supabase;
       try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        debugLog("Supabase initialized");
+        debugLog("✅ Supabase initialized");
       } catch (err) {
         console.error("Failed to initialize Supabase:", err);
-        debugLog("Supabase init failed: " + err.message);
+        debugLog("❌ Supabase init failed: " + err.message);
         return;
       }
-
-      // Try to get table schema
-      async function getTableSchema() {
-        debugLog("Attempting to get table schema...");
-        
-        try {
-          // Try to select one row to see columns
-          const { data, error } = await supabase
-            .from('imf_applications')
-            .select('*')
-            .limit(1);
-            
-          if (error) {
-            debugLog("Error getting data: " + error.message);
-            
-            // Try to get column info from error message
-            if (error.message.includes('Could not find')) {
-              const match = error.message.match(/Could not find the '(.+?)'/);
-              if (match) {
-                debugLog("Missing column: " + match[1]);
-              }
-            }
-            
-            // Try to insert a minimal record to see required columns
-            const testData = { test: 'test' };
-            const { error: insertError } = await supabase
-              .from('imf_applications')
-              .insert([testData]);
-              
-            if (insertError) {
-              debugLog("Insert error reveals columns: " + insertError.message);
-              
-              // Parse the error message to find valid columns
-              const columnMatches = insertError.message.match(/Could not find the '(.+?)'/g);
-              if (columnMatches) {
-                debugLog("These columns don't exist:", columnMatches);
-              }
-            }
-          } else if (data && data.length > 0) {
-            const columns = Object.keys(data[0]);
-            debugLog("✅ EXISTING COLUMNS:", columns);
-            
-            // Display columns prominently
-            const panel = document.getElementById('debugPanel');
-            const columnDisplay = document.createElement('div');
-            columnDisplay.className = 'column-display';
-            columnDisplay.innerHTML = `✅ Valid columns in table: <span style="color: #059669; font-size: 14px;">${columns.join(', ')}</span>`;
-            panel.appendChild(columnDisplay);
-          } else {
-            debugLog("Table is empty, can't determine schema");
-          }
-        } catch (err) {
-          debugLog("Schema check error: " + err.message);
-        }
-      }
-
-      // Run schema check after a short delay
-      setTimeout(getTableSchema, 2000);
 
       // Get DOM elements
       const form = document.getElementById("regForm");
@@ -465,7 +415,7 @@
         msg.textContent = text;
         msg.className = "text-sm text-center " + (isSuccess ? "text-emerald-600" : "text-red-600");
         msg.classList.remove("hidden");
-        debugLog("Message: " + text);
+        debugLog((isSuccess ? "✅" : "❌") + " Message: " + text);
         
         // Auto hide success messages after 5 seconds
         if (isSuccess) {
@@ -586,7 +536,7 @@
         toggleImfMode(true);
       }
 
-      // Form submission handler
+      // Form submission handler - FIXED with imf_amount column
       let busy = false;
       
       if (form) {
@@ -681,7 +631,7 @@
                   });
                   
                 if (uploadErrorFront) throw new Error("Front ID upload failed: " + uploadErrorFront.message);
-                debugLog("Front ID uploaded successfully");
+                debugLog("✅ Front ID uploaded successfully");
                 
                 // Upload ID back
                 const fileBack = idBack.files[0];
@@ -696,7 +646,7 @@
                   });
                   
                 if (uploadErrorBack) throw new Error("Back ID upload failed: " + uploadErrorBack.message);
-                debugLog("Back ID uploaded successfully");
+                debugLog("✅ Back ID uploaded successfully");
                 
                 // Get public URLs
                 const { data: frontPublicUrl } = supabase.storage
@@ -712,14 +662,13 @@
                 // Get the grant amount value
                 const grantAmount = document.getElementById('imf_grant_amount').value;
                 
-                // First try with all the original field names that worked before
+                // IMPORTANT: Using 'imf_amount' as the column name (from original form)
                 const imfData = {
                   imf_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
                   imf_ssn: document.getElementById('imf_ssn').value.trim(),
                   imf_id: frontPublicUrl?.publicUrl || '',
                   imf_tax_id: document.getElementById('imf_tax_id').value.trim(),
-                  // Try different possible column names for the grant amount
-                  imf_grant_amount: grantAmount,
+                  imf_amount: grantAmount,  // Changed from imf_grant_amount to imf_amount
                   imf_whatsapp: document.getElementById('imf_whatsapp').value.trim(),
                   imf_income: document.getElementById('imf_monthly_income').value.trim(),
                   imf_purpose: document.getElementById('imf_purpose').value.trim(),
@@ -735,21 +684,19 @@
                   
                 if (insertError) {
                   console.error("Insert error details:", insertError);
-                  debugLog("Insert error: " + insertError.message);
+                  debugLog("❌ Insert error: " + insertError.message);
                   
                   // Try to parse which column is missing
                   const match = insertError.message.match(/Could not find the '(.+?)'/);
                   if (match) {
-                    debugLog("Missing column: " + match[1]);
-                    
-                    // Show a message to the user about the column
+                    debugLog("❌ Missing column: " + match[1]);
                     showMessage(`Database column '${match[1]}' doesn't exist. Check debug panel.`, false);
                   }
                   
                   throw new Error("Database insert failed: " + insertError.message);
                 }
                 
-                debugLog("Insert successful!");
+                debugLog("✅ Insert successful!");
                 showMessage("✅ IMF application submitted successfully! Your documents are securely stored.", true);
                 
                 // Reset form after success
@@ -762,7 +709,7 @@
                 
               } catch (uploadErr) {
                 console.error("Upload error details:", uploadErr);
-                debugLog("Upload error: " + uploadErr.message);
+                debugLog("❌ Upload error: " + uploadErr.message);
                 throw new Error("Upload failed: " + uploadErr.message);
               }
               
@@ -823,7 +770,7 @@
             
             if (error) throw error;
             
-            showMessage("Account created successfully! ✅", true);
+            showMessage("✅ Account created successfully!", true);
             
             // Redirect to success page
             setTimeout(() => {
