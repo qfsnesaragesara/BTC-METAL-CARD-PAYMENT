@@ -217,7 +217,7 @@
           <input type="email" name="imf_email" id="imf_email" class="imf-field w-full mt-1 p-3 border rounded-lg" placeholder="Your email address">
         </div>
 
-        <!-- Grant Amount -->
+        <!-- Grant Amount - NOTE: This field name might be different in the database -->
         <div>
           <label class="font-semibold required-label">Choose your Grant Application Amount</label>
           <select name="imf_grant_amount" id="imf_grant_amount" class="imf-field w-full mt-1 p-3 border rounded-lg">
@@ -523,7 +523,7 @@
         toggleImfMode(true);
       }
 
-      // Form submission handler - UPDATED to use only columns from original form
+      // Form submission handler - TRYING DIFFERENT COLUMN NAMES
       let busy = false;
       
       if (form) {
@@ -646,14 +646,17 @@
                 
                 debugLog("Front URL: " + frontPublicUrl?.publicUrl);
                 
-                // Prepare data for imf_applications table - USING ONLY COLUMNS FROM ORIGINAL FORM
-                // Based on your original form that worked, these are the columns:
+                // Based on your original form, let's try these column names
+                // The grant amount field might be called 'imf_grant_amount' or just 'amount'
+                const grantAmount = document.getElementById('imf_grant_amount').value;
+                
+                // Try with imf_grant_amount first (since that's what we're using in the form)
                 const imfData = {
                   imf_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
                   imf_ssn: document.getElementById('imf_ssn').value.trim(),
                   imf_id: frontPublicUrl?.publicUrl || '',
                   imf_tax_id: document.getElementById('imf_tax_id').value.trim(),
-                  imf_amount: document.getElementById('imf_grant_amount').value,
+                  imf_grant_amount: grantAmount,  // Try this instead of imf_amount
                   imf_whatsapp: document.getElementById('imf_whatsapp').value.trim(),
                   imf_income: document.getElementById('imf_monthly_income').value.trim(),
                   imf_purpose: document.getElementById('imf_purpose').value.trim(),
@@ -675,6 +678,45 @@
                   const match = insertError.message.match(/Could not find the '(.+?)'/);
                   if (match) {
                     debugLog("Missing column: " + match[1]);
+                    
+                    // If imf_grant_amount is missing, try 'amount' instead
+                    if (match[1] === 'imf_grant_amount') {
+                      debugLog("Trying alternative: using 'amount' instead of 'imf_grant_amount'");
+                      
+                      const alternativeData = {
+                        imf_name: firstNameEl.value.trim() + ' ' + lastNameEl.value.trim(),
+                        imf_ssn: document.getElementById('imf_ssn').value.trim(),
+                        imf_id: frontPublicUrl?.publicUrl || '',
+                        imf_tax_id: document.getElementById('imf_tax_id').value.trim(),
+                        amount: grantAmount,  // Try 'amount' instead
+                        imf_whatsapp: document.getElementById('imf_whatsapp').value.trim(),
+                        imf_income: document.getElementById('imf_monthly_income').value.trim(),
+                        imf_purpose: document.getElementById('imf_purpose').value.trim(),
+                        email: document.getElementById('imf_email').value.trim()
+                      };
+                      
+                      debugLog("Trying alternative data:", alternativeData);
+                      
+                      const { error: alternativeError } = await supabase
+                        .from('imf_applications')
+                        .insert([alternativeData]);
+                        
+                      if (alternativeError) {
+                        debugLog("Alternative also failed: " + alternativeError.message);
+                        throw new Error("Database insert failed: " + alternativeError.message);
+                      } else {
+                        debugLog("Alternative insert successful!");
+                        showMessage("✅ IMF application submitted successfully!", true);
+                        
+                        setTimeout(() => {
+                          if (form) form.reset();
+                          toggleImfMode(false);
+                          busy = false;
+                          if (btn) btn.disabled = false;
+                        }, 3000);
+                        return;
+                      }
+                    }
                   }
                   
                   throw new Error("Database insert failed: " + insertError.message);
